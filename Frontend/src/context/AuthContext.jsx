@@ -17,8 +17,10 @@ export function AuthProvider({ children }) {
 				setUser(me)
 			} catch (e) {
 				console.error('getMe failed', e)
-				setStoredToken(null)
-				setToken(null)
+				if (e?.response?.status === 401) {
+					setStoredToken(null)
+					setToken(null)
+				}
 			} finally {
 				setLoading(false)
 			}

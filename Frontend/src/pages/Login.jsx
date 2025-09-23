@@ -16,7 +16,7 @@ export default function Login() {
 		setLoading(true)
 		try {
 			await login(ehrmsCode, password)
-			navigate('/')
+			navigate('/home', { replace: true })
 		} catch (e) {
 			setError(e.message || 'Login failed')
 		} finally {

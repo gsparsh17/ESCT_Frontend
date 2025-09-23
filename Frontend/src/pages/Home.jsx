@@ -1,23 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import api from '../lib/api/client'
 import { fetchAllClaims } from '../lib/api/claims'
 import ClaimCard from '../components/ClaimCard'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function Home() {
 	const [claims, setClaims] = useState([])
 	const [loading, setLoading] = useState(true)
+	const { user } = useAuth()
+	
+	const userId = useMemo(
+		() => user?._id || user?.id || user?.userId || user?.ehrmsCode || null,
+		[user]
+	)
+
+	const displayName = user?.personalDetails?.fullName || user?.name || user?.ehrmsCode || 'Member'
 
 	useEffect(() => {
+		if (!userId) return; // wait until AuthContext finishes loading the user
 		(async () => {
 			try {
-				const data = await fetchAllClaims(api)
-				setClaims(data)
+				const all = await fetchAllClaims(api)
+				const mine = all.filter((c) => {
+					const raisedBy = c?.raisedBy?._id || c?.raisedBy?.id || c?.raisedBy?.userId || c?.raisedBy
+				return String(raisedBy) === String(userId)
+				})
+				setClaims(mine)
 			} finally {
 				setLoading(false)
 			}
 		})()
-	}, [])
+	}, [userId])
 
 	function Section({ title, empty }) {
 		return (
@@ -38,11 +52,12 @@ export default function Home() {
 					<img src="https://i.pravatar.cc/100?img=1" alt="avatar" className="h-12 w-12 sm:h-16 sm:w-16 rounded-full border-2 sm:border-4 border-white/40" />
 					<div>
 						<p className="text-sm sm:text-lg opacity-90">Welcome</p>
-						<p className="text-xl sm:text-3xl font-semibold">Shivam</p>
+						<p className="text-xl sm:text-3xl font-semibold">{displayName}</p>
 					</div>
 				</div>
 			</div>
 
+			
 			<div className="py-4 sm:py-6">
 				<Section title="Current Donations" empty="No donations in this category." />
 				<Section title="Ongoing Donations" empty="No donations in this category." />
