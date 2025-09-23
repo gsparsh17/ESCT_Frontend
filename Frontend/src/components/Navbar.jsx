@@ -13,14 +13,14 @@ export default function Navbar() {
 
   const navLinks = (
     <>
-      <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to={token ? '/home' : '/'} onClick={handleLinkClick}>Home</Link>
-      <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/about" onClick={handleLinkClick}>About Us</Link>
-      <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/privacy" onClick={handleLinkClick}>Privacy</Link>
-      <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/terms" onClick={handleLinkClick}>Terms</Link>
-      {token ? (
+      <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to={token ? '/home' : '/home'} onClick={handleLinkClick}>Home</Link>
+      <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/legal/about" onClick={handleLinkClick}>About Us</Link>
+      {/* <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/legal/privacy" onClick={handleLinkClick}>Privacy</Link>
+      <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/legal/terms" onClick={handleLinkClick}>Terms</Link> */}
+      {!token ? (
         <>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/claims" onClick={handleLinkClick}>Claims</Link>
-          <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/nominees" onClick={handleLinkClick}>Nominees</Link>
+          <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/profile" onClick={handleLinkClick}>Profile</Link>
           <button onClick={() => { logout(); handleLinkClick(); }} className="rounded-full bg-teal-600 px-4 py-2 text-white text-sm font-semibold shadow-md hover:bg-teal-700 transition-colors">Logout</button>
         </>
       ) : (
