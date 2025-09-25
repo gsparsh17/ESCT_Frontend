@@ -17,7 +17,7 @@ export default function Navbar() {
       <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/legal/about" onClick={handleLinkClick}>About Us</Link>
       {/* <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/legal/privacy" onClick={handleLinkClick}>Privacy</Link>
       <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/legal/terms" onClick={handleLinkClick}>Terms</Link> */}
-      {!token ? (
+      {token ? (
         <>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/claims" onClick={handleLinkClick}>Claims</Link>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/profile" onClick={handleLinkClick}>Profile</Link>
