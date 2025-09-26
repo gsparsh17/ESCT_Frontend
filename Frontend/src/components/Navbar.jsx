@@ -21,6 +21,7 @@ export default function Navbar() {
         <>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/claims" onClick={handleLinkClick}>Claims</Link>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/profile" onClick={handleLinkClick}>Profile</Link>
+          <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/donation-queue" onClick={handleLinkClick}>Donation Queue</Link>
           <button onClick={() => { logout(); handleLinkClick(); }} className="rounded-full bg-teal-600 px-4 py-2 text-white text-sm font-semibold shadow-md hover:bg-teal-700 transition-colors">Logout</button>
         </>
       ) : (

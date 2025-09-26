@@ -14,6 +14,7 @@ import Landing from './pages/Landing.jsx'
 import LegalPages from './pages/Static.jsx' // Correctly import the new component
 import './index.css'
 import App from './App.jsx'
+import MyDonationQueue from './pages/MyDonationQueue.jsx'
 
 const router = createBrowserRouter([
  {
@@ -24,7 +25,7 @@ const router = createBrowserRouter([
  { path: 'legal/:tab', element: <LegalPages /> }, // Use a single route for all legal pages
  { path: 'home', element: <Home /> },
  { path: 'claims/:id', element: <DonationDetails /> },
- { path: 'categories', element: <CategoryList /> },
+ { path: 'claims-list', element: <CategoryList /> },
  { path: 'login', element: <Login /> },
  { path: 'register', element: <Register /> },
  {
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
  children: [
   { path: 'claims', element: <Claims /> },
   { path: 'profile', element: <Profile /> },
+  { path: 'donation-queue', element: <MyDonationQueue/>}
  ],
  },
  ],

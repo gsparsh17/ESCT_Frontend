@@ -1,17 +1,14 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-// Import real API functions
 import { fetchAllClaims } from '../lib/api/claims'; 
-import { getDonationQueue, getMe } from '../lib/api/donations'; // Import getMe and getDonationQueue
+import { getDonationQueue, getMe } from '../lib/api/donations'; 
 
-// --- MOCK DATA REMAINS ---
 const staticNews = [
     { id: 1, title: 'ESCT Reaches New Milestone in Donations', summary: 'The Employee Self Care Team has surpassed a major milestone in total donations collected for members in need.', image: 'https://picsum.photos/seed/news1/600/400' },
     { id: 2, title: 'Annual General Meeting Announced', summary: 'The Annual General Meeting will be held on December 10, 2025. All members are encouraged to attend.', image: 'https://picsum.photos/seed/news2/600/400' },
     { id: 3, title: 'New Membership Benefits Roll Out', summary: 'Exciting new benefits for all ESCT members are now live. Check out the new details in your dashboard.', image: 'https://picsum.photos/seed/news3/600/400' },
 ];
 
-// Mock ClaimCard component (Kept for component functionality)
-const ClaimCard = ({ claim, type }) => {
+  const ClaimCard = ({ claim, type }) => {
     const isOutgoing = type === 'outgoing';
     const categoryClass = (category) => {
         switch (category) {
@@ -24,19 +21,11 @@ const ClaimCard = ({ claim, type }) => {
         }
     };
 
-    // For outgoing donations, 'claim' is actually a queue item containing claimId: { claim details }
     const displayClaim = isOutgoing ? claim.claimId || claim : claim;
-
-    // Use the actual donation amount from the queue item for outgoing cards
     const donationAmount = isOutgoing ? claim.amount : null;
 
-    // Calculate progress for incoming claims view
-    const progress = displayClaim.amountRequested > 0 
-        ? Math.min(100, Math.round((displayClaim.amountRaised / displayClaim.amountRequested) * 100)) 
-        : 0;
-
     return (
-        <div className="flex-none p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 flex flex-col justify-between">
+        <div className="flex-none p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex flex-col justify-between">
             <div>
                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${categoryClass(displayClaim.type || displayClaim.category)}`}>
                     {displayClaim.type || displayClaim.category}
@@ -66,20 +55,18 @@ const ClaimCard = ({ claim, type }) => {
     );
 };
 
-// Main component
 const Home = () => {
     const [allClaims, setAllClaims] = useState([]);
-    const [myDonationsQueue, setMyDonationsQueue] = useState([]); // Renamed from allDonations
-    const [currentUser, setCurrentUser] = useState(null); // New state for current user
+    const [myDonationsQueue, setMyDonationsQueue] = useState([]);
+    const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // Determine the unique user ID and display name from the fetched user data
     const { userId, displayName, totalUserContribution } = useMemo(() => {
         const user = currentUser;
         const id = user?._id || user?.id || user?.userId || user?.ehrmsCode || null;
         const name = user?.personalDetails?.fullName || user?.name || user?.ehrmsCode || 'Member';
-        const contribution = user?.totalDonationsCompleted || 0; // Assuming totalDonationsCompleted is a direct field on the User object
+        const contribution = user?.totalDonationsCompleted || 0;
         
         return { 
             userId: id, 
@@ -88,18 +75,18 @@ const Home = () => {
         };
     }, [currentUser]);
     
-    // Fetch Data from Real API Endpoints
+    const getCategoryUrl = useCallback((categoryName) => {
+        const encodedCategory = encodeURIComponent(categoryName);
+        return `/claims-list?category=${encodedCategory}`;
+    }, []);
+
     const fetchData = useCallback(async () => {
         try {
             setError(null);
             setLoading(true);
-
-            // Fetch current user data first
             const user = await getMe();
             setCurrentUser(user);
-
             if (user) {
-                // Use Promise.all to fetch claims and donations simultaneously
                 const [claimsData, donationQueueData] = await Promise.all([
                     fetchAllClaims(), 
                     getDonationQueue() 
@@ -120,27 +107,39 @@ const Home = () => {
         fetchData();
     }, [fetchData]);
 
-    // --- Data Filtering and Processing ---
-
-    // Filter claims by the Mongoose 'type' enum names
     const filterClaimsByType = (claims, type) => claims.filter(c => c.type === type);
 
-    // Claims filtering logic based on Mongoose schema statuses
     const upcomingClaims = allClaims.filter(c => c.status === 'Pending Verification');
-    const myClaims = allClaims.filter(c => c.raisedBy === userId); // Filter claims raised by current user ID
-    const ongoingClaims = allClaims.filter(c => c.status === 'Approved'); // 'Approved' claims are the active/ongoing ones
+    const myClaims = allClaims.filter(c => c.raisedBy === userId);
+    const ongoingClaims = allClaims.filter(c => c.status === 'Approved');
 
     if (loading) return <div className="text-center py-12">Loading dashboard...</div>;
     if (error) return <div className="text-center py-12 text-red-600">{error}</div>;
 
-    function CategorySliderWindow({ title, claims, emptyMessage }) {
+    const CategoryWindowLinkWrapper = ({ categoryName, children }) => {
+        const url = getCategoryUrl(categoryName);
         return (
-            <div className="w-full flex-none sm:w-1/3 p-2">
+            <a 
+                href={url}
+                className="w-full flex-none sm:w-1/3 p-2 group block"
+            >
+                <div className="transition-transform duration-300 transform group-hover:scale-[1.03] group-active:scale-[0.98] cursor-pointer">
+                    {children}
+                </div>
+            </a>
+        );
+    };
+
+    function CategorySliderWindow({ title, claims, emptyMessage }) {
+        const categoryName = title; 
+
+        return (
+            <CategoryWindowLinkWrapper categoryName={categoryName}>
                 <h3 className="text-lg font-semibold text-teal-800 mb-2">{title}</h3>
-                <div className="h-64 overflow-y-auto space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
+                <div className="h-64 overflow-y-hidden space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
                     {claims.length > 0 ? (
-                        claims.map((claim) => (
-                            <div key={claim._id || claim.claimId} className="h-full w-full snap-start">
+                        claims.slice(0, 3).map((claim) => ( // Show first few claims as preview
+                            <div key={claim._id || claim.claimId} className="w-full">
                                 <ClaimCard claim={claim} type="incoming" /> 
                             </div>
                         ))
@@ -150,22 +149,21 @@ const Home = () => {
                         </div>
                     )}
                 </div>
-            </div>
+            </CategoryWindowLinkWrapper>
         );
     }
     
     function OutgoingDonationWindow({ title, donations, emptyMessage, claimTypeFilter }) {
-        // Filter the queue based on the claim type within the queue item
         const filteredDonations = donations.filter(d => d.claimId?.type === claimTypeFilter);
+        const categoryName = claimTypeFilter; 
 
         return (
-            <div className="w-full flex-none sm:w-1/3 p-2">
+            <CategoryWindowLinkWrapper categoryName={categoryName}>
                 <h3 className="text-lg font-semibold text-teal-800 mb-2">{title}</h3>
-                <div className="h-64 overflow-y-auto space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
+                <div className="h-64 overflow-y-hidden space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
                     {filteredDonations.length > 0 ? (
-                        filteredDonations.map((donation) => (
-                            // Use the queue item ID for the key, assuming it has one
-                            <div key={donation._id || donation.claimId._id} className="h-full w-full snap-start">
+                        filteredDonations.slice(0, 3).map((donation) => (
+                            <div key={donation._id || donation.claimId._id} className="w-full">
                                 <ClaimCard claim={donation} type="outgoing" />
                             </div>
                         ))
@@ -175,13 +173,12 @@ const Home = () => {
                         </div>
                     )}
                 </div>
-            </div>
+            </CategoryWindowLinkWrapper>
         );
     }
 
     return (
         <div className="min-h-screen pb-12 lg:-m-6 -m-2">
-            {/* Welcome header */}
             <div className="rounded-b-3xl bg-gradient-to-br from-teal-500 to-teal-700 text-white p-6 shadow-lg">
                 <div className="max-w-7xl mx-auto flex items-center gap-4">
                     <img src="https://placehold.co/100x100/5eead4/115e59?text=JD" alt="avatar" className="h-16 w-16 rounded-full border-4 border-white/40 shadow-lg" />
@@ -193,15 +190,12 @@ const Home = () => {
             </div>
             
             <div className="max-w-7xl mx-auto mt-6 px-4">
-                {/* Main Content Area */}
                 <div className="bg-white rounded-3xl p-6">
                     
-                    {/* Donation Stats Section (MOCK DATA KEPT FOR UI STRUCTURE) */}
                     <section className="mb-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">ESCT Financial Overview</h2>
                         <div className="rounded-2xl bg-teal-700 text-white p-6 shadow-lg">
                             <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none]">
-                                {/* Placeholder for Total Donation amount */}
                                 {[2, 4, 5, 7, 8, 9, 5, 0].map((n, i) => (
                                     <div key={i} className="rounded-lg bg-teal-800/70 px-4 py-2 text-3xl font-bold flex-shrink-0 shadow-inner">
                                         {n}
@@ -210,7 +204,6 @@ const Home = () => {
                             </div>
                             <p className="mt-4 text-lg font-medium">Total Donation on ESCT Till Date</p>
                             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-medium opacity-90">
-                                {/* Placeholder for Category Totals */}
                                 <div className="flex justify-between"><span>Death After Service</span><span className="font-semibold">₹65,42,300</span></div>
                                 <div className="flex justify-between"><span>Retirement</span><span className="font-semibold">₹87,35,650</span></div>
                                 <div className="flex justify-between"><span>Death During Service</span><span className="font-semibold">₹45,20,100</span></div>
@@ -221,58 +214,76 @@ const Home = () => {
                     
                     <hr className="my-8" />
 
-                    {/* Upcoming Claims Section (Using real API data) */}
                     <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Upcoming Claims</h2>
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Ongoing Claims (Approved)</h2>
+                        <div className="flex flex-col sm:flex-row -m-2">
                             <CategorySliderWindow
-                                title="Retirement"
+                                title="Retirement Farewell"
+                                claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
+                                emptyMessage="No ongoing retirement claims."
+                            />
+                            <CategorySliderWindow
+                                title="Death After Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death After Service')}
+                                emptyMessage="No ongoing death after service claims."
+                            />
+                            <CategorySliderWindow
+                                title="Death During Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death During Service')}
+                                emptyMessage="No ongoing death during service claims."
+                            />
+                        </div>
+                    </section>
+
+                    <hr className="my-8" />
+
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Current Claims (Benefeciaries)</h2>
+                        <div className="flex flex-col sm:flex-row -m-2">
+                            <CategorySliderWindow
+                                title="Retirement Farewell"
+                                claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
+                                emptyMessage="No ongoing retirement claims."
+                            />
+                            <CategorySliderWindow
+                                title="Death After Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death After Service')}
+                                emptyMessage="No ongoing death after service claims."
+                            />
+                            <CategorySliderWindow
+                                title="Death During Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death During Service')}
+                                emptyMessage="No ongoing death during service claims."
+                            />
+                        </div>
+                    </section>
+                    
+                    <hr className="my-8" />
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Upcoming Claims (Pending Verification)</h2>
+                        <div className="flex flex-col sm:flex-row -m-2">
+                            <CategorySliderWindow
+                                title="Retirement Farewell"
                                 claims={filterClaimsByType(upcomingClaims, 'Retirement Farewell')}
-                                emptyMessage="No upcoming retirement claims."
+                                emptyMessage="No pending retirement claims."
                             />
                             <CategorySliderWindow
                                 title="Death After Service"
                                 claims={filterClaimsByType(upcomingClaims, 'Death After Service')}
-                                emptyMessage="No upcoming death after service claims."
+                                emptyMessage="No pending death after service claims."
                             />
                             <CategorySliderWindow
                                 title="Death During Service"
-                                claims={filterClaimsByType(upcomingClaims, 'Death During Service')}
-                                emptyMessage="No upcoming death during service claims."
+                                claims={filterClaimsByType(upcomingClaims, "Death During Service")}
+                                emptyMessage="No ongoing death during service claims."
                             />
                         </div>
                     </section>
                     
                     <hr className="my-8" />
-
-                    {/* My Claims Section (Using real API data) */}
-                    <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">My Claims (Raised)</h2>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <CategorySliderWindow
-                                title="Retirement"
-                                claims={filterClaimsByType(myClaims, 'Retirement Farewell')}
-                                emptyMessage="You haven't raised any retirement claims."
-                            />
-                            <CategorySliderWindow
-                                title="Daughter's Marriage"
-                                claims={filterClaimsByType(myClaims, "Daughter's Marriage")}
-                                emptyMessage="You haven't raised any marriage claims."
-                            />
-                            <CategorySliderWindow
-                                title="Medical Claim"
-                                claims={filterClaimsByType(myClaims, 'Medical Claim')}
-                                emptyMessage="You haven't raised any medical claims."
-                            />
-                        </div>
-                    </section>
-                    
-                    <hr className="my-8" />
-
-                    {/* My Outgoing Donations Section (Using real API data - Donation Queue) */}
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">My Outgoing Donations (Queue)</h2>
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-col sm:flex-row -m-2">
                             <OutgoingDonationWindow
                                 title="Retirement"
                                 donations={myDonationsQueue}
@@ -293,10 +304,7 @@ const Home = () => {
                             />
                         </div>
                     </section>
-                    
                     <hr className="my-8" />
-
-                    {/* Gallery Section (MOCK DATA KEPT) */}
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Gallery</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -305,8 +313,6 @@ const Home = () => {
                             ))}
                         </div>
                     </section>
-
-                    {/* News & Blog Section (MOCK DATA KEPT) */}
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Latest News & Blog</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -325,13 +331,11 @@ const Home = () => {
                         </div>
                     </section>
 
-                    {/* Know Your Contribution Section (Using real API data) */}
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Know Your Contribution</h2>
                         <div className="rounded-2xl bg-teal-600 text-white p-6 shadow-lg text-center">
                             <p className="text-base font-medium opacity-90">Your Total Contribution to the Community</p>
                             <p className="mt-2 text-5xl font-extrabold">
-                                {/* Display total contribution from user state */}
                                 ₹{totalUserContribution.toLocaleString()}
                             </p>
                             <a href="/my-donations" className="mt-4 inline-block px-6 py-2 bg-white text-teal-600 font-semibold rounded-full shadow-md hover:bg-teal-50 transition-colors">

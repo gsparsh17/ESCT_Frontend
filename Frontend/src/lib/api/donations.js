@@ -1,3 +1,5 @@
+// File: lib/api/donations.js
+
 import { api } from './client'; 
 
 export async function getDonationQueue() {
@@ -10,17 +12,23 @@ export async function getMe() {
     return res.data?.data;
 }
 
-export async function createDonationOrder(claimId) {
-    const res = await api.post('/donations/create-order', { claimId });
+// --- UPDATED FUNCTION ---
+// Now takes a donationId and sends it to the new endpoint
+export async function createDonationOrder(donationId) {
+    const res = await api.post('/donations/create-order', { donationId });
     return res.data?.data;
 }
 
-export async function addToDonationQueue(claimId) {
-    const res = await api.post('/donations/add-to-queue', { claimId });
+// --- NEW/RENAMED FUNCTION ---
+// This is the new 'add to queue' function that creates the pending donation
+export async function initiateDonation(claimId) {
+    const res = await api.post('/donations/queue', { claimId });
     return res.data?.data;
 }
 
-export async function removeDonationFromQueue(claimId) {
-    const res = await api.delete(`/donations/queue/${claimId}`);
+// --- UPDATED FUNCTION ---
+// Now removes by donationId
+export async function removeDonationFromQueue(donationId) {
+    const res = await api.delete(`/donations/queue/${donationId}`);
     return res.data?.data;
 }
