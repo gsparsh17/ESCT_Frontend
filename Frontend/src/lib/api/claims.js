@@ -7,9 +7,9 @@ export async function fetchAllClaims() {
 }
 
 export async function createClaim(body) {
-    // The body should look like: { type, title, description, beneficiary: beneficiaryId, supportingDocuments: [...] }
     const res = await api.post('/claims', body);
-    return res.data?.message || 'Claim created successfully and sent for verification.';
+    console.log(res.data)
+    return res.data ;
 }
 
 export async function fetchClaimById(id) {
@@ -32,4 +32,9 @@ export async function getClaimsByType(type, filter = {}, page = 1, limit = 10) {
         params: { ...filter, page, limit }
     });
     return res.data?.data?.claims ?? [];
+}
+
+export async function getMyClaims() {
+    const res = await api.get('/claims/my-claims');
+    return res.data?.data ?? [];
 }

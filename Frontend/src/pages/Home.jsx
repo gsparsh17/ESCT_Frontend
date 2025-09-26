@@ -1,6 +1,78 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+
 import { fetchAllClaims } from '../lib/api/claims'; 
 import { getDonationQueue, getMe } from '../lib/api/donations'; 
+import { getDonationCalendar } from '../lib/api/calendar'; // Import the calendar API
+import { useNavigate } from 'react-router-dom';
+
+// Assuming the fixed donation amount is 200 INR
+const DONATION_AMOUNT = 200;
+
+// Month names array for calendar rendering
+const MONTH_NAMES = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+// Helper function to process flat event array into a nested structure by year
+const processCalendarData = (events) => {
+    const calendar = {};
+    let totalDonations = 0;
+
+    events.forEach(event => {
+        // Handle YYYY-MM format
+        const [year, monthIndex] = event.monthYear.split('-').map(v => parseInt(v)); 
+        
+        if (!calendar[year]) {
+            // Initialize array for 12 months with default null values
+            calendar[year] = Array(12).fill(null);
+        }
+
+        // Store the event at the correct index (monthIndex - 1)
+        calendar[year][monthIndex - 1] = event;
+        
+        totalDonations += event.donationsCompleted || 0;
+    });
+
+    return { calendar, totalDonations };
+};
+
+const MonthBox = ({ month, status }) => {
+    let bgColor, icon;
+    
+    if (status === 'COMPLETED') {
+        bgColor = 'bg-green-100 text-green-700 border-green-300';
+        icon = (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+        ); 
+    } else if (status === 'PARTIAL') {
+        bgColor = 'bg-yellow-100 text-yellow-700 border-yellow-300';
+        icon = (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+        ); 
+    } else {
+        bgColor = 'text-red-700';
+        icon = (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+        ); 
+    }
+
+    return (
+        <div className={`p-2 sm:p-3 flex flex-col items-center justify-center rounded-lg shadow-sm border ${bgColor} transition-shadow hover:shadow-md`}>
+            <span className="text-xs font-semibold">{month}</span>
+            <div className="mt-1">{icon}</div>
+        </div>
+    );
+};
+
 
 const staticNews = [
     { id: 1, title: 'ESCT Reaches New Milestone in Donations', summary: 'The Employee Self Care Team has surpassed a major milestone in total donations collected for members in need.', image: 'https://picsum.photos/seed/news1/600/400' },
@@ -8,7 +80,7 @@ const staticNews = [
     { id: 3, title: 'New Membership Benefits Roll Out', summary: 'Exciting new benefits for all ESCT members are now live. Check out the new details in your dashboard.', image: 'https://picsum.photos/seed/news3/600/400' },
 ];
 
-  const ClaimCard = ({ claim, type }) => {
+const ClaimCard = ({ claim, type }) => {
     const isOutgoing = type === 'outgoing';
     const categoryClass = (category) => {
         switch (category) {
@@ -22,7 +94,8 @@ const staticNews = [
     };
 
     const displayClaim = isOutgoing ? claim.claimId || claim : claim;
-    const donationAmount = isOutgoing ? claim.amount : null;
+    // Assuming monthly donation amount is stored on the queue item or is fixed at 200
+    const donationAmount = isOutgoing ? claim.donationId?.amount || DONATION_AMOUNT : null;
 
     return (
         <div className="flex-none p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex flex-col justify-between">
@@ -56,24 +129,38 @@ const staticNews = [
 };
 
 const Home = () => {
+    const navigate = useNavigate();
     const [allClaims, setAllClaims] = useState([]);
     const [myDonationsQueue, setMyDonationsQueue] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    
+    // --- NEW STATE ADDED ---
+    const [calendarData, setCalendarData] = useState({}); // { year: [month events] }
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    const { userId, displayName, totalUserContribution } = useMemo(() => {
+    const { userId, displayName } = useMemo(() => {
         const user = currentUser;
         const id = user?._id || user?.id || user?.userId || user?.ehrmsCode || null;
         const name = user?.personalDetails?.fullName || user?.name || user?.ehrmsCode || 'Member';
-        const contribution = user?.totalDonationsCompleted || 0;
         
         return { 
             userId: id, 
-            displayName: name,
-            totalUserContribution: contribution
+            displayName: name
         };
     }, [currentUser]);
+
+    // Calculate total contribution from the calendar data
+    const totalUserContribution = useMemo(() => {
+        let totalDonations = 0;
+        Object.values(calendarData).forEach(yearEvents => {
+            yearEvents.forEach(event => {
+                totalDonations += event?.donationsCompleted || 0;
+            });
+        });
+        return totalDonations * DONATION_AMOUNT;
+    }, [calendarData]);
     
     const getCategoryUrl = useCallback((categoryName) => {
         const encodedCategory = encodeURIComponent(categoryName);
@@ -84,16 +171,25 @@ const Home = () => {
         try {
             setError(null);
             setLoading(true);
-            const user = await getMe();
+            
+            // Fetch multiple data sources concurrently
+            const [user, claimsData, donationQueueData, calendarEvents] = await Promise.all([
+                getMe(),
+                fetchAllClaims(), 
+                getDonationQueue(),
+                getDonationCalendar() // Fetch the calendar data
+            ]);
+
             setCurrentUser(user);
+            
             if (user) {
-                const [claimsData, donationQueueData] = await Promise.all([
-                    fetchAllClaims(), 
-                    getDonationQueue() 
-                ]);
-                
                 setAllClaims(claimsData);
                 setMyDonationsQueue(donationQueueData);
+                
+                // Process and set calendar data
+                const { calendar } = processCalendarData(calendarEvents);
+                setCalendarData(calendar);
+
             }
         } catch (e) {
             console.error("Home Data Fetch Error:", e);
@@ -110,10 +206,9 @@ const Home = () => {
     const filterClaimsByType = (claims, type) => claims.filter(c => c.type === type);
 
     const upcomingClaims = allClaims.filter(c => c.status === 'Pending Verification');
-    const myClaims = allClaims.filter(c => c.raisedBy === userId);
     const ongoingClaims = allClaims.filter(c => c.status === 'Approved');
 
-    if (loading) return <div className="text-center py-12">Loading dashboard...</div>;
+    if (loading) return <div className="text-center py-12 text-teal-600 font-semibold text-xl">Loading dashboard...</div>;
     if (error) return <div className="text-center py-12 text-red-600">{error}</div>;
 
     const CategoryWindowLinkWrapper = ({ categoryName, children }) => {
@@ -196,6 +291,7 @@ const Home = () => {
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">ESCT Financial Overview</h2>
                         <div className="rounded-2xl bg-teal-700 text-white p-6 shadow-lg">
                             <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none]">
+                                {/* Placeholder for total community contributions */}
                                 {[2, 4, 5, 7, 8, 9, 5, 0].map((n, i) => (
                                     <div key={i} className="rounded-lg bg-teal-800/70 px-4 py-2 text-3xl font-bold flex-shrink-0 shadow-inner">
                                         {n}
@@ -211,6 +307,8 @@ const Home = () => {
                             </div>
                         </div>
                     </section>
+                    
+                    
                     
                     <hr className="my-8" />
 
@@ -330,20 +428,61 @@ const Home = () => {
                             ))}
                         </div>
                     </section>
-
+                    <hr className="my-8" />
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Know Your Contribution</h2>
-                        <div className="rounded-2xl bg-teal-600 text-white p-6 shadow-lg text-center">
-                            <p className="text-base font-medium opacity-90">Your Total Contribution to the Community</p>
-                            <p className="mt-2 text-5xl font-extrabold">
-                                ₹{totalUserContribution.toLocaleString()}
-                            </p>
-                            <a href="/my-donations" className="mt-4 inline-block px-6 py-2 bg-white text-teal-600 font-semibold rounded-full shadow-md hover:bg-teal-50 transition-colors">
-                                View My Donations
-                            </a>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="rounded-2xl bg-teal-600 text-white p-6 shadow-xl text-center mb-6 md:col-span-1">
+                                <p className="text-base font-medium opacity-90">Your Total Contribution to the Community</p>
+                                <p className="mt-2 text-4xl sm:text-5xl font-extrabold">
+                                    {loading ? (
+                                        <span className="inline-block w-3/4 h-10 sm:h-12 bg-teal-700 rounded-full animate-pulse"></span>
+                                    ) : (
+                                        `₹${totalUserContribution.toLocaleString('en-IN')}`
+                                    )}
+                                </p>
+                                <button 
+                                    onClick={() => navigate('/my-donations')}
+                                    className="mt-4 inline-block px-6 py-2 bg-white text-teal-600 font-semibold rounded-full shadow-md hover:bg-teal-50 transition-colors"
+                                >
+                                    View All Donations
+                                </button>
+                            </div>
+
+                            {/* Calendar Report (col-span-2 or 3) */}
+                            <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 md:col-span-2">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Donation History Compliance</h3>
+                                {loading ? (
+                                    <div className="text-center text-gray-500 py-6">Loading calendar...</div>
+                                ) : error ? (
+                                    <div className="text-red-600 text-center text-sm py-4">{error}</div>
+                                ) : Object.keys(calendarData).length === 0 ? (
+                                    <div className="text-gray-500 text-center text-sm py-4">No donation history found since joining.</div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {/* Render each year */}
+                                        {Object.keys(calendarData).sort((a, b) => b - a).map(year => (
+                                            <div key={year}>
+                                                <h4 className="text-sm font-bold text-gray-700 mb-2">{year}</h4>
+                                                <div className="grid grid-cols-6 sm:grid-cols-12 gap-1 sm:gap-2">
+                                                    {/* Render 12 months for the current year */}
+                                                    {calendarData[year].map((event, index) => (
+                                                        <MonthBox 
+                                                            key={index}
+                                                            month={MONTH_NAMES[index]}
+                                                            // Pass 'COMPLETED', 'PARTIAL', 'PENDING' or null
+                                                            status={event ? event.status : 'PENDING'} 
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </section>
-
                 </div>
             </div>
         </div>
