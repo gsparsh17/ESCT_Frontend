@@ -120,9 +120,9 @@ const ClaimCard = ({ claim, type }) => {
                         {displayClaim.amountRequested ? `Need: ₹${displayClaim.amountRequested.toLocaleString()}` : 'No amount specified'}
                     </span>
                 )}
-                <a href={`/claims/${displayClaim._id || displayClaim.claimId}`} className="text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
+                {/* <a href={`/claims/${displayClaim._id || displayClaim.claimId}`} className="text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
                     View Details
-                </a>
+                </a> */}
             </div>
         </div>
     );
@@ -185,6 +185,7 @@ const Home = () => {
             if (user) {
                 setAllClaims(claimsData);
                 setMyDonationsQueue(donationQueueData);
+                console.log(claimsData)
                 
                 // Process and set calendar data
                 const { calendar } = processCalendarData(calendarEvents);
