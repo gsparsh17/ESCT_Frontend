@@ -15,7 +15,13 @@ export async function getMe(api) {
 
 export async function registerUser(payload, api) {
 	// payload should mirror Flutter register flow combining user + nominee
-	const res = await api.post('/auth/register', payload)
+	const res = await api.post('/auth/register', payload,
+		 {
+    headers: {
+        'Content-Type': 'multipart/form-data'
+    }
+}
+	)
 	const token = res.data?.data?.token
 	if (!token) throw new Error('Token missing after registration')
 	return token

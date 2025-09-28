@@ -1,7 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Select from "react-select";
 import { FaUser, FaBuilding, FaWallet, FaUsers, FaArrowRight, FaArrowLeft, FaPlus, FaTrash, FaCheckCircle, FaSpinner, FaUpload, FaChevronDown } from 'react-icons/fa';
+import organisations from '../constants/organisations';
+import departments from '../constants/departments';
 
 // Updated Step Titles for clarity and UX (Step 2 is conditional)
 const STEP_TITLES = [
@@ -10,6 +13,10 @@ const STEP_TITLES = [
   'Employment / Bank Details', // Combined title
   'Nominee Details',
 ];
+
+const CSC_API_KEY = import.meta.env.VITE_CSC_API_KEY;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+const COUNTRY_CODE = import.meta.env.VITE_COUNTRY_CODE;
 
 const Register = () => {
   const { register } = useAuth();
@@ -30,8 +37,8 @@ const Register = () => {
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [profile, setProfile] = useState(null); // Changed to null for consistency
-
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [aadhaarDocument, setAadhaarDocument] = useState(null);
   // Main User Bank Details
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmAccountNumber, setConfirmAccountNumber] = useState(''); // <--- ADDED
@@ -41,9 +48,15 @@ const Register = () => {
   // Employment Details
   const [empState, setEmpState] = useState('');
   const [empDistrict, setEmpDistrict] = useState('');
+  const [empOrganisation, setEmpOrganisation] = useState('');
   const [empDepartment, setEmpDepartment] = useState('');
   const [empDesignation, setEmpDesignation] = useState('');
   const [empDoj, setEmpDoj] = useState('');
+
+  const [apiStates, setApiStates] = useState([]);
+  const [apiCities, setApiCities] = useState([]);
+  const [selectedStateCode, setSelectedStateCode] = useState(''); // For API calls
+  const [isApiLoading, setIsApiLoading] = useState(false);
 
   // Nominee Details
   const [nominees, setNominees] = useState([]);
@@ -51,6 +64,9 @@ const Register = () => {
   // UI state
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const orgOptions = organisations.map((org) => ({ label: org, value: org }));
+  const deptOptions = departments.map((dept) => ({ label: dept, value: dept }));
 
   const calcAgeFromDob = (isoDate) => {
     const dob = new Date(isoDate);
@@ -61,6 +77,81 @@ const Register = () => {
     if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
     return age;
   };
+
+  useEffect(() => {
+    if (!CSC_API_KEY) {
+        console.warn("API Key missing. Cannot fetch geographical data.");
+        return;
+    }
+    
+    const fetchStates = async () => {
+        setIsApiLoading(true);
+        try {
+          // console.log(CSC_API_KEY)
+            const response = await fetch(`${BASE_URL}/countries/${COUNTRY_CODE}/states`, {
+                headers: { 'X-CSCAPI-KEY': CSC_API_KEY }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch states from API.');
+            }
+
+            const states = await response.json();
+            setApiStates(states);
+        } catch (error) {
+            console.error('Error fetching states:', error);
+            setErrors(prev => ({ ...prev, api: 'Could not load states.' }));
+        } finally {
+            setIsApiLoading(false);
+        }
+    };
+    fetchStates();
+  }, []);
+
+  // 2. Fetch Cities when State is selected
+  useEffect(() => {
+    if (!selectedStateCode || !CSC_API_KEY ) {
+        setApiCities([]);
+        setEmpDistrict('');
+        return;
+    }
+
+    const fetchCities = async () => {
+        setIsApiLoading(true);
+        try {
+            const response = await fetch(`${BASE_URL}/countries/${COUNTRY_CODE}/states/${selectedStateCode}/cities`, {
+                headers: { 'X-CSCAPI-KEY': CSC_API_KEY }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch cities.');
+            }
+
+            const cities = await response.json();
+            // Sort cities alphabetically for better UX
+            cities.sort((a, b) => a.name.localeCompare(b.name));
+            setApiCities(cities);
+        } catch (error) {
+            console.error('Error fetching cities:', error);
+            setErrors(prev => ({ ...prev, api: 'Could not load cities.' }));
+        } finally {
+            setIsApiLoading(false);
+        }
+    };
+    fetchCities();
+  }, [selectedStateCode]);
+
+  const handleStateChange = (e) => {
+    // e.target.value is the State ISO code (e.g., 'MH')
+    setSelectedStateCode(e.target.value); 
+    // Set display name for validation/submission later
+    const selectedState = apiStates.find(s => s.iso2 === e.target.value);
+    setEmpState(selectedState ? selectedState.name : '');
+
+    // Reset city/district fields when state changes
+    setEmpDistrict('');
+    setApiCities([]);
+  };
 
   // Adjust step flow dynamically for Pensioners
   const finalSteps = useMemo(() => {
@@ -82,6 +173,7 @@ const Register = () => {
         setEhrmsCode('');
         setEmpState('');
         setEmpDistrict('');
+        setEmpOrganisation('');
         setEmpDepartment('');
         setEmpDesignation('');
         setEmpDoj('');
@@ -103,12 +195,11 @@ const Register = () => {
         newErrors.pensionerNumber = 'Pensioner number is required.';
         isValid = false;
       }
-      // Aligned password length to backend schema (minlength: 8)
-      // if (!password || password.length < 8) {
-      //   newErrors.password = 'Password must be at least 8 characters.';
-      //   isValid = false;
-      // }
-    } else if (currentStep === 1) { // Personal Details
+    } else if (currentStep === 1) { 
+      if (!aadhaarDocument) {
+        newErrors.aadhaarDocument = 'Aadhaar document upload is required.';
+        isValid = false;
+      }
       if (!fullName.trim()) {
         newErrors.fullName = 'Full name is required.';
         isValid = false;
@@ -146,6 +237,10 @@ const Register = () => {
         newErrors.empDistrict = 'Employment District is required.';
         isValid = false;
       }
+      if (!empOrganisation.trim()) {
+        newErrors.empOrganisation = 'Employment Organisation is required.';
+        isValid = false;
+      }
       if (!empDepartment.trim()) {
         newErrors.empDepartment = 'Employment Department is required.';
         isValid = false;
@@ -159,12 +254,10 @@ const Register = () => {
         isValid = false;
       }
       
-      // Bank Details (required for both, but placed in Step 2 for employee)
       if (!accountNumber.trim()) {
         newErrors.accountNumber = 'Account number is required.';
         isValid = false;
       }
-      // ADDED CONFIRMATION CHECK to align with backend schema validation
       if (accountNumber.trim() !== confirmAccountNumber.trim()) { 
         newErrors.confirmAccountNumber = 'Account numbers do not match.';
         isValid = false;
@@ -260,10 +353,10 @@ const Register = () => {
         relation: '', 
         dateOfBirth: '', 
         aadhaarNumber: '',
-        accountNumber: '', // <--- ADDED
-        ifscCode: '',      // <--- ADDED
-        bankName: '',      // <--- ADDED
-        branchName: '',    // <--- ADDED
+        accountNumber: '', 
+        ifscCode: '',      
+        bankName: '',      
+        branchName: '',    
         isPrimary: nominees.length === 0 
       }]);
     }
@@ -288,60 +381,62 @@ const Register = () => {
   };
 
   async function onSubmit() {
-    if (!validateStep()) {
-      return;
-    }
+    if (!validateStep()) {
+      return;
+    }
 
-    setLoading(true);
-    setErrors({});
+    setLoading(true);
+    setErrors({});
 
-    try {
-      const age = calcAgeFromDob(dateOfBirth);
-      const personalDetails = { fullName, dateOfBirth, age, sex, aadhaarNumber, phone, email };
-      // Included confirmAccountNumber for backend validation, although it is not stored
-      const bankDetails = { accountNumber, confirmAccountNumber, ifscCode, bankName }; 
-      const employmentDetails = { state: empState, district: empDistrict, department: empDepartment, designation: empDesignation, dateOfJoining: empDoj };
+    try {
+      const age = calcAgeFromDob(dateOfBirth);
+      // Prepare JSON objects
+      const personalDetails = { fullName, dateOfBirth, age, sex, aadhaarNumber, phone, email };
+      const bankDetails = { accountNumber, confirmAccountNumber, ifscCode, bankName }; 
+      const employmentDetails = userType === 'EMPLOYEE' ? 
+        { state: empState, district: empDistrict, organisation: empOrganisation, department: empDepartment, designation: empDesignation, dateOfJoining: empDoj } : 
+        {}; 
 
-      // Reformat nominees to match backend schema (nested bankDetails) <--- CRITICAL FIX
-      const formattedNominees = nominees.map(n => ({
-        name: n.name,
-        relation: n.relation,
-        dateOfBirth: n.dateOfBirth,
-        aadhaarNumber: n.aadhaarNumber,
-        isPrimary: n.isPrimary,
-        bankDetails: {
-            accountNumber: n.accountNumber,
-            ifscCode: n.ifscCode,
-            bankName: n.bankName,
-            branchName: n.branchName, 
-        }
-      }));
+      // Reformat nominees to match backend schema (nested bankDetails) 
+      const formattedNominees = nominees.map(n => ({
+        name: n.name,
+        relation: n.relation,
+        dateOfBirth: n.dateOfBirth,
+        aadhaarNumber: n.aadhaarNumber,
+        isPrimary: n.isPrimary,
+        bankDetails: {
+            accountNumber: n.accountNumber,
+            ifscCode: n.ifscCode,
+            bankName: n.bankName,
+            branchName: n.branchName, 
+        }
+      }));
 
-      // The 'profile' state holds the FileList. We pass the File object (profile[0])
-      // Assuming 'register' uses FormData to send the file and JSON data correctly.
-      const payload = {
-        userType,
-        password,
-        personalDetails,
-        bankDetails,
-        employmentDetails,
-        nominees: formattedNominees, 
-        profileFile: profile?.[0], // Pass the file itself
-      };
+      const formData = new FormData();
 
-      if (userType === 'EMPLOYEE') payload.ehrmsCode = ehrmsCode;
-      else payload.pensionerNumber = pensionerNumber;
+      // 1. Append simple fields
+      formData.append('userType', userType);
+      formData.append('password', password);
+      if (userType === 'EMPLOYEE') formData.append('ehrmsCode', ehrmsCode);
+      else formData.append('pensionerNumber', pensionerNumber);
 
-      await register(payload);
-      navigate('/');
-    } catch (e) {
-      setErrors({ form: e?.response?.data?.message || e.message || 'Registration failed.' });
-    } finally {
-      setLoading(false);
-    }
-  }
+      formData.append('personalDetails', JSON.stringify(personalDetails));
+      formData.append('bankDetails', JSON.stringify(bankDetails));
+      formData.append('employmentDetails', JSON.stringify(employmentDetails));
+      formData.append('nominees', JSON.stringify(formattedNominees));
+      if (profilePhoto && profilePhoto[0]) formData.append('profilePhoto', profilePhoto[0]);
+      if (aadhaarDocument && aadhaarDocument[0]) formData.append('aadhaarDocument', aadhaarDocument[0]);
 
-  // --- Conditional Step Rendering ---
+
+      await register(formData); 
+      navigate('/');
+    } catch (e) {
+      setErrors({ form: e?.response?.data?.message || e.message || 'Registration failed.' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const currentStepTitle = finalSteps[currentStep];
 
   const renderCurrentStep = () => {
@@ -397,12 +492,28 @@ const Register = () => {
               id="profilePhoto"
               className="hidden"
               accept="image/jpeg,image/png"
-              onChange={(e) =>setProfile(e.target.files)}
+              onChange={(e) =>setProfilePhoto(e.target.files)}
             />
             <label htmlFor="profilePhoto" className="cursor-pointer">
               <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
               <p className="text-sm font-medium text-gray-700">
-                {profile ? profile[0].name : 'Upload Profile Photo'}
+                {profilePhoto ? profilePhoto[0].name : 'Upload Profile Photo'}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
+            </label>
+          </div>
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
+            <input
+              type="file"
+              id="adhaarPhoto"
+              className="hidden"
+              accept="image/jpeg,image/png"
+              onChange={(e) =>setAadhaarDocument(e.target.files)}
+            />
+            <label htmlFor="adhaarPhoto" className="cursor-pointer">
+              <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700">
+                {aadhaarDocument ? aadhaarDocument[0].name : 'Upload Adhaar Card Photo'}
               </p>
               <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
             </label>
@@ -492,35 +603,69 @@ const Register = () => {
               <h3 className="text-lg font-medium text-teal-800">Employment Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">State</label>
-                  <input
-                    className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
-                    value={empState}
-                    onChange={(e) => setEmpState(e.target.value)}
-                    placeholder="Enter state"
-                  />
-                  {errors.empState && <p className="mt-1 text-xs text-red-600">{errors.empState}</p>}
-                </div>
+                  <label className="block text-sm font-medium text-gray-700">State</label>
+                  <div className="relative">
+                        <select
+                            className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
+                            value={selectedStateCode}
+                            onChange={handleStateChange}
+                            disabled={isApiLoading || apiStates.length === 0}
+                        >
+                            <option value="">
+                                {isApiLoading ? 'Loading States...' : apiStates.length === 0 ? 'No States Found (Check API Key)' : 'Select State'}
+                            </option>
+                            {apiStates.map((state) => (
+                                <option key={state.iso2} value={state.iso2}>
+                                    {state.name}
+                                </option>
+                            ))}
+                        </select>
+                        <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  {errors.empState && <p className="mt-1 text-xs text-red-600">{errors.empState}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">District (City)</label>
+                    <div className="relative">
+                        <select
+                            className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
+                            value={empDistrict}
+                            onChange={(e) => setEmpDistrict(e.target.value)}
+                            disabled={isApiLoading || apiCities.length === 0 || !selectedStateCode}
+                        >
+                            <option value="">
+                                {isApiLoading ? 'Loading Cities...' : apiCities.length === 0 && selectedStateCode ? 'No Cities Found' : 'Select District/City'}
+                            </option>
+                            {apiCities.map((city) => (
+                                <option key={city.id} value={city.name}>
+                                    {city.name}
+                                </option>
+                            ))}
+                        </select>
+                        <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  {errors.empDistrict && <p className="mt-1 text-xs text-red-600">{errors.empDistrict}</p>}
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">District</label>
-                  <input
-                    className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
-                    value={empDistrict}
-                    onChange={(e) => setEmpDistrict(e.target.value)}
-                    placeholder="Enter district"
-                  />
-                  {errors.empDistrict && <p className="mt-1 text-xs text-red-600">{errors.empDistrict}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Department</label>
-                  <input
-                    className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
-                    value={empDepartment}
-                    onChange={(e) => setEmpDepartment(e.target.value)}
-                    placeholder="Enter department"
-                  />
-                  {errors.empDepartment && <p className="mt-1 text-xs text-red-600">{errors.empDepartment}</p>}
-                </div>
+        <label className="block text-sm font-medium text-gray-700">Organisation</label>
+        <Select
+          options={orgOptions}
+          value={orgOptions.find((o) => o.value === empOrganisation)}
+          onChange={(selected) => setEmpOrganisation(selected.value)}
+          placeholder="-- Select Organisation --"
+          isSearchable
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Department</label>
+        <Select
+          options={deptOptions}
+          value={deptOptions.find((d) => d.value === empDepartment)}
+          onChange={(selected) => setEmpDepartment(selected.value)}
+          placeholder="-- Select Department --"
+          isSearchable
+        />
+      </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Designation</label>
                   <input
@@ -817,7 +962,7 @@ const Register = () => {
   );
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-10 bg-gray-50">
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-10">
       {renderForm()}
     </div>
   );
