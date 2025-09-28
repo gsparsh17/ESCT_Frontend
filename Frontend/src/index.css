@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom Scrollbar Styles for the Teal Theme */
+/* This code should be placed in your main CSS file (e.g., index.css) */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px; /* Width of the vertical scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #0d9488; /* Tailwind's teal-600 */
+    border-radius: 10px; /* Rounded corners for the thumb */
+    border: 2px solid #f9fafb; /* Light border/padding to separate from the track (optional) */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f0fdfa; /* Tailwind's teal-50 for the track */
+    border-radius: 10px;
+}
+
+/* For Firefox (alternative property, cannot fully style the thumb/track separately) */
+.custom-scrollbar {
+    scrollbar-width: thin; /* "auto" or "thin" */
+    scrollbar-color: #0d9488 #f0fdfa; /* thumb color | track color */
+}

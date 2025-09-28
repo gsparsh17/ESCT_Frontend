@@ -1,5 +1,5 @@
 // Navbar.jsx
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { FaBars, FaTimes } from 'react-icons/fa'; // Import icons from react-icons
@@ -8,7 +8,8 @@ export default function Navbar() {
   const { token, logout } = useAuth();
   const [open, setOpen] = useState(false);
 
-  // A helper function for the mobile menu links to close the menu on click
+
+	const navigate = useNavigate()
   const handleLinkClick = () => setOpen(false);
 
   const navLinks = (
@@ -22,7 +23,7 @@ export default function Navbar() {
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/claims" onClick={handleLinkClick}>Claims</Link>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/profile" onClick={handleLinkClick}>Profile</Link>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/donation-queue" onClick={handleLinkClick}>Donation Queue</Link>
-          <button onClick={() => { logout(); handleLinkClick(); }} className="rounded-full bg-teal-600 px-4 py-2 text-white text-sm font-semibold shadow-md hover:bg-teal-700 transition-colors">Logout</button>
+          <button onClick={() => { logout(); handleLinkClick(); navigate('/') }} className="rounded-full bg-teal-600 px-4 py-2 text-white text-sm font-semibold shadow-md hover:bg-teal-700 transition-colors">Logout</button>
         </>
       ) : (
         <>
@@ -37,7 +38,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-lg border-b border-teal-200 shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between py-3">
         <Link to={token ? '/home' : '/'} className="flex items-center gap-3">
-          <img src="/icon.png" alt="ESCT" className="h-9 w-9" />
+          <img src="/icon2.png" alt="ESCT" className="h-9 w-16" />
           <span className="font-extrabold text-xl text-teal-800 tracking-wider">ESCT</span>
         </Link>
 

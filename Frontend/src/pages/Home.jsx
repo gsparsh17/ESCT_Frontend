@@ -82,6 +82,10 @@ const staticNews = [
 
 const ClaimCard = ({ claim, type }) => {
     const isOutgoing = type === 'outgoing';
+    const displayClaim = isOutgoing ? claim.claimId || claim : claim;
+    // Assuming monthly donation amount is stored on the queue item or is fixed at 200
+    const donationAmount = isOutgoing ? claim.donationId?.amount || DONATION_AMOUNT : null;
+
     const categoryClass = (category) => {
         switch (category) {
             case 'Death During Service': return 'bg-red-200 text-red-800';
@@ -93,24 +97,43 @@ const ClaimCard = ({ claim, type }) => {
         }
     };
 
-    const displayClaim = isOutgoing ? claim.claimId || claim : claim;
-    // Assuming monthly donation amount is stored on the queue item or is fixed at 200
-    const donationAmount = isOutgoing ? claim.donationId?.amount || DONATION_AMOUNT : null;
-
     return (
-        <div className="flex-none p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex flex-col justify-between">
-            <div>
+        <div className="flex p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex-row items-center justify-between space-x-3">
+           <div className='w-1/3'>
+            {displayClaim.beneficiary.photoUrl && (
+                                <img
+                                    src={displayClaim.beneficiary.photoUrl}
+                                    alt={displayClaim.beneficiary.personalDetails?.fullName || 'Beneficiary'}
+                                    className="rounded-xl object-cover border border-gray-200"
+                                />
+                            )}
+         </div>
+            <div className='w-2/3'>
                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${categoryClass(displayClaim.type || displayClaim.category)}`}>
                     {displayClaim.type || displayClaim.category}
                 </span>
                 <h4 className="mt-2 text-lg font-semibold text-teal-900 truncate">
                     {displayClaim.title || `Donation for ${displayClaim.type} Claim`}
                 </h4>
-                <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                    {isOutgoing ? `Monthly contribution amount: ₹${donationAmount?.toLocaleString()}` : displayClaim.description}
-                </p>
-            </div>
-            <div className="mt-4 flex justify-between items-center">
+
+                {!isOutgoing && displayClaim.beneficiary && (
+                    <div className="mt-4 border-t pt-3">
+                        <h5 className="text-sm font-semibold text-gray-700 mb-2">Beneficiary Details</h5>
+                        <div className="flex items-center space-x-3">
+                            <div className="text-sm text-gray-600">
+                                <p className="text-lg text-gray-800">{displayClaim.beneficiary.personalDetails?.fullName}</p>
+                                {/* Bank Details */}
+                                {displayClaim.beneficiary.bankDetails && (
+                                    <>
+                                        <p>A/C: {displayClaim.beneficiary.bankDetails.accountNumber}</p>
+                                        <p>IFSC: {displayClaim.beneficiary.bankDetails.ifscCode}</p>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div className="mt-4 flex justify-between items-center">
                 {isOutgoing ? (
                     <span className="text-xl font-bold text-teal-600">
                         ₹{donationAmount?.toLocaleString()} / month
@@ -123,6 +146,126 @@ const ClaimCard = ({ claim, type }) => {
                 {/* <a href={`/claims/${displayClaim._id || displayClaim.claimId}`} className="text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
                     View Details
                 </a> */}
+            </div>
+            </div>
+            
+        </div>
+    );
+};
+
+// Assuming DONATION_AMOUNT is defined elsewhere, e.g., const DONATION_AMOUNT = 200;
+// You would import your images like this if not using the public folder
+// import garlandImage from '../assets/images/garland.png'; 
+// import partyPopperImage from '../assets/images/party-popper.png'; 
+
+const ClaimCard2 = ({ claim, type }) => {
+    const isOutgoing = type === 'outgoing';
+    const displayClaim = isOutgoing ? claim.claimId || claim : claim;
+    // Assuming monthly donation amount is stored on the queue item or is fixed at 200
+    const donationAmount = isOutgoing ? claim.donationId?.amount || 200 : null; // Changed DONATION_AMOUNT to 200 for example
+
+    const claimType = displayClaim.type || displayClaim.category;
+    const isDeathClaim = claimType === 'Death During Service' || claimType === 'Death After Service';
+    const isFarewellClaim = claimType === 'Retirement Farewell';
+
+    // Helper for category specific background colors/text colors
+    const categoryClass = (category) => {
+        switch (category) {
+            case 'Death During Service': return 'bg-red-200 text-red-800';
+            case 'Death After Service': return 'bg-gray-200 text-gray-800';
+            case 'Retirement Farewell': return 'bg-yellow-200 text-yellow-800';
+            case "Daughter's Marriage": return 'bg-pink-200 text-pink-800';
+            case 'Medical Claim': return 'bg-blue-200 text-blue-800';
+            default: return 'bg-teal-200 text-teal-800';
+        }
+    };
+
+    return (
+        <div className="flex p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex-row items-center justify-between space-x-4">
+            
+            {/* Beneficiary Photo Section */}
+            <div className="w-1/2 flex-shrink-0 relative aspect-square flex-col items-center justify-center"> {/* Added aspect-square for consistent photo sizing */}
+                {!isOutgoing && displayClaim.beneficiary && displayClaim.beneficiary.photoUrl && (
+                    <>
+                        {/* Base Photo */}
+                        <img
+                            src={displayClaim.beneficiary.photoUrl}
+                            alt={displayClaim.beneficiary.personalDetails?.fullName || 'Beneficiary'}
+                            className={`w-full h-full object-cover rounded-xl ${isDeathClaim ? '' : isFarewellClaim ? 'rounded-full' : ''}`}
+                        />
+                        {isDeathClaim && (
+                            <>
+                                <img
+                                    src="/images/garland.png" // Adjust path as needed
+                                    alt="Garland"
+                                    className="absolute inset-0 -top-5 w-full h-full object-contain z-10"
+                                />
+                            </>
+                        )}
+
+                        {isFarewellClaim && (
+                            <>
+                                <img
+                                    src="/images/party-popper.png" // Adjust path as needed
+                                    alt="Party Popper"
+                                    className="absolute top-28 left-0 w-1/2 h-auto object-contain z-10 transform translate-x-1 -translate-y-1" // Position bottom-left
+                                />
+                            </>
+                        )}
+                    </>
+                )}
+                        {isDeathClaim && (
+                                <div className="flex flex-col items-center mt-2 justify-center z-20 rounded-xl">
+                                    <p className="text-red text-sm font-bold px-4 py-1 rounded-lg tracking-wider">
+                                        ॐ शांति
+                                    </p>
+                                    <p className="text-gray-600 bg-teal-100/70 text-xs rounded-md px-2 py-0.5">May their soul rest in peace.</p>
+                                </div>
+                        )}
+                        {isFarewellClaim && (
+                                <div className="flex flex-col items-center justify-center z-20 rounded-full text-center"> {/* Ensure text is visible over the round photo */}
+                                    <p className="text-yellow-600 text-sm font-bold px-3 py-1 rounded-full mt-auto mb-2">
+                                        शुभकामनाएँ!
+                                    </p>
+                                    <p className="text-yellow-900 text-xs text-center bg-yellow-100/70 rounded-md px-2 py-0.5">Wishing a joyful retirement!</p>
+                                </div>
+                        )}
+            </div>
+
+            <div className="w-1/2 flex flex-col justify-between h-full">
+                <div>
+                    {/* Category Tag */}
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${categoryClass(claimType)}`}>
+                        {claimType}
+                    </span>
+                    {/* Claim Title */}
+                    <h4 className="mt-2 text-lg font-bold text-teal-900 truncate">
+                        {displayClaim.title || `Donation for ${claimType} Claim`}
+                    </h4>
+
+                    {/* Beneficiary Name Only */}
+                    {!isOutgoing && displayClaim.beneficiary && (
+                        <div className="mt-2">
+                            <p className="text-sm text-gray-700 font-medium">
+                                Beneficiary: 
+                                <span className="ml-1 text-base text-gray-800 font-bold">{displayClaim.beneficiary.personalDetails?.fullName}</span>
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Donation Amount */}
+                <div className="mt-4 flex justify-between items-center">
+                    {isOutgoing ? (
+                        <span className="text-xl font-bold text-teal-600">
+                            ₹{donationAmount?.toLocaleString()} / month
+                        </span>
+                    ) : (
+                        <span className="text-sm font-medium text-gray-700">
+                            {displayClaim.amountRequested ? `Need: ₹${displayClaim.amountRequested.toLocaleString()}` : 'No amount specified'}
+                        </span>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -232,11 +375,34 @@ const Home = () => {
         return (
             <CategoryWindowLinkWrapper categoryName={categoryName}>
                 <h3 className="text-lg font-semibold text-teal-800 mb-2">{title}</h3>
-                <div className="h-64 overflow-y-hidden space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
+                <div className="h-64 overflow-y-auto custom-scrollbar space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
                     {claims.length > 0 ? (
                         claims.slice(0, 3).map((claim) => ( // Show first few claims as preview
                             <div key={claim._id || claim.claimId} className="w-full">
                                 <ClaimCard claim={claim} type="incoming" /> 
+                            </div>
+                        ))
+                    ) : (
+                        <div className="h-full flex items-center justify-center p-4 rounded-lg bg-gray-50 text-gray-500 italic text-sm">
+                            <p className="text-center">{emptyMessage}</p>
+                        </div>
+                    )}
+                </div>
+            </CategoryWindowLinkWrapper>
+        );
+    }
+
+    function CategorySliderWindow2({ title, claims, emptyMessage }) {
+        const categoryName = title; 
+
+        return (
+            <CategoryWindowLinkWrapper categoryName={categoryName}>
+                <h3 className="text-lg font-semibold text-teal-800 mb-2">{title}</h3>
+                <div className="h-64 overflow-y-auto custom-scrollbar space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
+                    {claims.length > 0 ? (
+                        claims.slice(0, 3).map((claim) => ( // Show first few claims as preview
+                            <div key={claim._id || claim.claimId} className="w-full">
+                                <ClaimCard2 claim={claim} type="incoming" /> 
                             </div>
                         ))
                     ) : (
@@ -256,7 +422,7 @@ const Home = () => {
         return (
             <CategoryWindowLinkWrapper categoryName={categoryName}>
                 <h3 className="text-lg font-semibold text-teal-800 mb-2">{title}</h3>
-                <div className="h-64 overflow-y-hidden space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
+                <div className="h-64 overflow-y-auto custom-scrollbar space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
                     {filteredDonations.length > 0 ? (
                         filteredDonations.slice(0, 3).map((donation) => (
                             <div key={donation._id || donation.claimId._id} className="w-full">
@@ -289,25 +455,43 @@ const Home = () => {
                 <div className="bg-white rounded-3xl p-6">
                     
                     <section className="mb-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">ESCT Financial Overview</h2>
-                        <div className="rounded-2xl bg-teal-700 text-white p-6 shadow-lg">
-                            <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none]">
-                                {/* Placeholder for total community contributions */}
-                                {[2, 4, 5, 7, 8, 9, 5, 0].map((n, i) => (
-                                    <div key={i} className="rounded-lg bg-teal-800/70 px-4 py-2 text-3xl font-bold flex-shrink-0 shadow-inner">
-                                        {n}
-                                    </div>
-                                ))}
-                            </div>
-                            <p className="mt-4 text-lg font-medium">Total Donation on ESCT Till Date</p>
-                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-medium opacity-90">
-                                <div className="flex justify-between"><span>Death After Service</span><span className="font-semibold">₹65,42,300</span></div>
-                                <div className="flex justify-between"><span>Retirement</span><span className="font-semibold">₹87,35,650</span></div>
-                                <div className="flex justify-between"><span>Death During Service</span><span className="font-semibold">₹45,20,100</span></div>
-                                <div className="flex justify-between"><span>Other Help</span><span className="font-semibold">₹47,80,900</span></div>
-                            </div>
-                        </div>
-                    </section>
+    <h2 className="text-2xl font-extrabold text-teal-900 mb-4">
+        Our Collective Impact: ESCT Funds Disbursed
+    </h2>
+    <div className="rounded-3xl bg-teal-700 text-white p-6 shadow-xl transform hover:scale-[1.01] transition-transform duration-300 ease-out">
+        
+        {/* BIG, CATCHY NUMBER DISPLAY */}
+        <p className="text-lg font-semibold opacity-80 uppercase tracking-wider mb-2">Total Aid Provided Till Date</p>
+        <p className="text-center text-4xl sm:text-4xl font-extrabold mt-3">
+            <span className="text-white text-opacity-90">₹2,45,78,950</span>
+        </p>
+
+        {/* CATERGORY BREAKDOWN */}
+        <div className="mt-8 pt-4 border-t border-teal-500">
+            <p className="text-lg font-semibold mb-3">Breakdown by Claim Type (₹)</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-base font-medium">
+                {/* Each row is a key achievement, use bold or slightly different color for value */}
+                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
+                    <span>Death After Service</span>
+                    <span className="font-bold text-lg text-teal-200">₹65,42,300</span>
+                </div>
+                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
+                    <span>Retirement Farewell</span>
+                    <span className="font-bold text-lg text-teal-200">₹87,35,650</span>
+                </div>
+                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
+                    <span>Death During Service</span>
+                    <span className="font-bold text-lg text-teal-200">₹45,20,100</span>
+                </div>
+                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
+                    <span>Other Help Claims</span>
+                    <span className="font-bold text-lg text-teal-200">₹47,80,900</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</section>
                     
                     
                     
@@ -339,17 +523,17 @@ const Home = () => {
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Current Claims (Benefeciaries)</h2>
                         <div className="flex flex-col sm:flex-row -m-2">
-                            <CategorySliderWindow
+                            <CategorySliderWindow2
                                 title="Retirement Farewell"
                                 claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
                                 emptyMessage="No ongoing retirement claims."
                             />
-                            <CategorySliderWindow
+                            <CategorySliderWindow2
                                 title="Death After Service"
                                 claims={filterClaimsByType(ongoingClaims, 'Death After Service')}
                                 emptyMessage="No ongoing death after service claims."
                             />
-                            <CategorySliderWindow
+                            <CategorySliderWindow2
                                 title="Death During Service"
                                 claims={filterClaimsByType(ongoingClaims, 'Death During Service')}
                                 emptyMessage="No ongoing death during service claims."
@@ -379,30 +563,6 @@ const Home = () => {
                         </div>
                     </section>
                     
-                    <hr className="my-8" />
-                    <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">My Outgoing Donations (Queue)</h2>
-                        <div className="flex flex-col sm:flex-row -m-2">
-                            <OutgoingDonationWindow
-                                title="Retirement"
-                                donations={myDonationsQueue}
-                                claimTypeFilter={'Retirement Farewell'}
-                                emptyMessage="You have no retirement claims in your queue."
-                            />
-                            <OutgoingDonationWindow
-                                title="Death After Service"
-                                donations={myDonationsQueue}
-                                claimTypeFilter={'Death After Service'}
-                                emptyMessage="You have no death after service claims in your queue."
-                            />
-                            <OutgoingDonationWindow
-                                title="Death During Service"
-                                donations={myDonationsQueue}
-                                claimTypeFilter={'Death During Service'}
-                                emptyMessage="You have no death during service claims in your queue."
-                            />
-                        </div>
-                    </section>
                     <hr className="my-8" />
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Gallery</h2>
@@ -482,6 +642,30 @@ const Home = () => {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </section>
+                    <hr className="my-8" />
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">My Outgoing Donations (Queue)</h2>
+                        <div className="flex flex-col sm:flex-row -m-2">
+                            <OutgoingDonationWindow
+                                title="Retirement"
+                                donations={myDonationsQueue}
+                                claimTypeFilter={'Retirement Farewell'}
+                                emptyMessage="You have no retirement claims in your queue."
+                            />
+                            <OutgoingDonationWindow
+                                title="Death After Service"
+                                donations={myDonationsQueue}
+                                claimTypeFilter={'Death After Service'}
+                                emptyMessage="You have no death after service claims in your queue."
+                            />
+                            <OutgoingDonationWindow
+                                title="Death During Service"
+                                donations={myDonationsQueue}
+                                claimTypeFilter={'Death During Service'}
+                                emptyMessage="You have no death during service claims in your queue."
+                            />
                         </div>
                     </section>
                 </div>

@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
 	const [token, setToken] = useState(getStoredToken())
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(!!token)
-
 	useEffect(() => {
 		async function init() {
 			if (!token) return

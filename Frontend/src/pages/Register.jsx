@@ -390,14 +390,12 @@ const Register = () => {
 
     try {
       const age = calcAgeFromDob(dateOfBirth);
-      // Prepare JSON objects
       const personalDetails = { fullName, dateOfBirth, age, sex, aadhaarNumber, phone, email };
       const bankDetails = { accountNumber, confirmAccountNumber, ifscCode, bankName }; 
       const employmentDetails = userType === 'EMPLOYEE' ? 
         { state: empState, district: empDistrict, organisation: empOrganisation, department: empDepartment, designation: empDesignation, dateOfJoining: empDoj } : 
         {}; 
 
-      // Reformat nominees to match backend schema (nested bankDetails) 
       const formattedNominees = nominees.map(n => ({
         name: n.name,
         relation: n.relation,
@@ -414,7 +412,6 @@ const Register = () => {
 
       const formData = new FormData();
 
-      // 1. Append simple fields
       formData.append('userType', userType);
       formData.append('password', password);
       if (userType === 'EMPLOYEE') formData.append('ehrmsCode', ehrmsCode);
@@ -429,7 +426,7 @@ const Register = () => {
 
 
       await register(formData); 
-      navigate('/');
+      navigate('/home');
     } catch (e) {
       setErrors({ form: e?.response?.data?.message || e.message || 'Registration failed.' });
     } finally {

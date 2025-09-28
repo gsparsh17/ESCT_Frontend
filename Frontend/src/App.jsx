@@ -3,7 +3,7 @@ import Navbar from './components/Navbar'
 
 function App() {
   return (
-    <div className="min-h-screen bg-teal-50 text-teal-900">
+    <div className="h-screen overflow-y-auto bg-teal-50 text-teal-900 custom-scrollbar">
       <Navbar />
 
       {/* <main className="mx-auto max-w-6xl px-3 sm:px-4 py-4 sm:py-6 lg:py-10"> */}

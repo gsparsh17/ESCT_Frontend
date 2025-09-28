@@ -5,7 +5,7 @@ export default function ClaimCard({ claim }) {
 	const title = claim.title || claim.category || 'Claim'
 	const raisedBy = claim?.raisedBy?.personalDetails?.fullName || 'Unknown'
 	const goal = claim.amountRequested || 0
-	const image = claim.imageUrl || `https://i.pravatar.cc/150?u=${id}`
+	const image = claim.beneficiary.photoUrl || `https://i.pravatar.cc/150?u=${id}`
 	return (
 		<Link to={`/claims/${id}`} className="block rounded-xl sm:rounded-2xl bg-white border border-teal-100 p-2 sm:p-3 shadow-sm hover:shadow">
 			<div className="flex items-center gap-2 sm:gap-3">
