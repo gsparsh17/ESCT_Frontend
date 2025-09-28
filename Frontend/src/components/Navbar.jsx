@@ -40,6 +40,7 @@ export default function Navbar() {
         <Link to={token ? '/home' : '/'} className="flex items-center gap-3">
           <img src="/icon2.png" alt="ESCT" className="h-9 w-16" />
           <span className="font-extrabold text-xl text-teal-800 tracking-wider">ESCT</span>
+          <span className="font-extrabold text-xl text-teal-800 tracking-wider">Total Users: 0</span>
         </Link>
 
         {/* Desktop Navigation */}

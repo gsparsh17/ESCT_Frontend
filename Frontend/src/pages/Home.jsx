@@ -447,6 +447,7 @@ const Home = () => {
                     <div>
                         <p className="text-lg opacity-90 font-medium">Welcome back,</p>
                         <p className="text-3xl font-extrabold">{displayName}</p>
+                        <p className="text-xl">ESCT ID: ESCT00000003</p>
                     </div>
                 </div>
             </div>
