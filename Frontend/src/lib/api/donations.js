@@ -32,3 +32,15 @@ export async function removeDonationFromQueue(donationId) {
     const res = await api.delete(`/donations/queue/${donationId}`);
     return res.data?.data;
 }
+
+export const getMyDonations = async () => {
+    try {
+        const { data } = await api.get('/donations');
+        // The backend wraps the response in a 'data' object
+        return data.data; 
+    } catch (error) {
+        console.error("Failed to fetch user's donations:", error);
+        // Re-throw the error so the component can handle it
+        throw error;
+    }
+};

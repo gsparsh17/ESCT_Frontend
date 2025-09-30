@@ -15,6 +15,7 @@ import LegalPages from './pages/Static.jsx' // Correctly import the new componen
 import './index.css'
 import App from './App.jsx'
 import MyDonationQueue from './pages/MyDonationQueue.jsx'
+import MyDonations from './pages/MyDonations.jsx'
 
 const router = createBrowserRouter([
  {
@@ -33,7 +34,8 @@ const router = createBrowserRouter([
  children: [
   { path: 'claims', element: <Claims /> },
   { path: 'profile', element: <Profile /> },
-  { path: 'donation-queue', element: <MyDonationQueue/>}
+  { path: 'donation-queue', element: <MyDonationQueue/>},
+  { path: 'my-donations', element: <MyDonations /> }
  ],
  },
  ],

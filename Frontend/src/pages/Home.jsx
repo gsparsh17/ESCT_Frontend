@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'; // useRef is no longer used for carousels
 
 import { fetchAllClaims } from '../lib/api/claims'; 
-import { getDonationQueue, getMe } from '../lib/api/donations'; 
+import { getDonationQueue, getMe, getMyDonations } from '../lib/api/donations'; 
 import { getDonationCalendar } from '../lib/api/calendar'; // Import the calendar API
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -425,6 +425,7 @@ const Home = () => {
     
     // --- NEW STATE ADDED ---
     const [calendarData, setCalendarData] = useState({}); // { year: [month events] }
+     const [myDonations, setMyDonations] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -444,15 +445,21 @@ const Home = () => {
     }, [currentUser]);
 
     // Calculate total contribution from the calendar data
+   // --- 3. FIX THE TOTAL CONTRIBUTION CALCULATION ---
     const totalUserContribution = useMemo(() => {
-        let totalDonations = 0;
-        Object.values(calendarData).forEach(yearEvents => {
-            yearEvents.forEach(event => {
-                totalDonations += event?.donationsCompleted || 0;
-            });
-        });
-        return totalDonations * DONATION_AMOUNT;
-    }, [calendarData]);
+        // Calculate total from the actual donations list, not the calendar
+        if (!myDonations || myDonations.length === 0) {
+            return 0;
+        }
+        // Use reduce to sum the 'amount' of all 'COMPLETED' donations
+        return myDonations.reduce((total, donation) => {
+            if (donation.status === 'COMPLETED') {
+                return total + donation.amount;
+            }
+            return total;
+        }, 0);
+    }, [myDonations]); // This now depends on the myDonations state
+    
 
     // --- ADD THIS NEW useMemo HOOK ---
     const claimCounts = useMemo(() => {
@@ -526,11 +533,12 @@ const Home = () => {
             setLoading(true);
             
             // Fetch multiple data sources concurrently
-            const [user, claimsData, donationQueueData, calendarEvents] = await Promise.all([
+            const [user, claimsData, donationQueueData, calendarEvents, userDonations] = await Promise.all([
                 getMe(),
                 fetchAllClaims(), 
                 getDonationQueue(),
-                getDonationCalendar() // Fetch the calendar data
+                getDonationCalendar(), // Fetch the calendar data
+                getMyDonations() // Add the new API call here
             ]);
 
             setCurrentUser(user);
@@ -538,6 +546,7 @@ const Home = () => {
             if (user) {
                 setAllClaims(claimsData);
                 setMyDonationsQueue(donationQueueData);
+                setMyDonations(userDonations); 
                 console.log(claimsData)
                 
                 // Process and set calendar data
