@@ -716,29 +716,29 @@ const Home = () => {
     </h2>
     <div className="rounded-3xl bg-teal-700 text-white p-6 shadow-xl transform hover:scale-[1.01] transition-transform duration-300 ease-out">
         
-        <p className="text-lg font-semibold opacity-80 uppercase tracking-wider mb-2">Total Aid Provided Till Date</p>
+        <p className="text-lg font-semibold opacity-80 uppercase tracking-wider mb-2">Total No. of Donations Till Date</p>
         <p className="text-center text-4xl sm:text-4xl font-extrabold mt-3">
-            <span className="text-white text-opacity-90">₹2,45,78,950</span>
+            <span className="text-white text-opacity-90">1,78,950</span>
         </p>
 
         <div className="mt-8 pt-4 border-t border-teal-500">
-            <p className="text-lg font-semibold mb-3">Breakdown by Claim Type (₹)</p>
+            <p className="text-lg font-semibold mb-3">Breakdown by Claim Type</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-base font-medium">
                 <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
                     <span>Death After Service</span>
-                    <span className="font-bold text-lg text-teal-200">₹65,42,300</span>
+                    <span className="font-bold text-lg text-teal-200">42,300</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
                     <span>Retirement Farewell</span>
-                    <span className="font-bold text-lg text-teal-200">₹87,35,650</span>
+                    <span className="font-bold text-lg text-teal-200">35,650</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
                     <span>Death During Service</span>
-                    <span className="font-bold text-lg text-teal-200">₹45,20,100</span>
+                    <span className="font-bold text-lg text-teal-200">20,100</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
                     <span>Other Help Claims</span>
-                    <span className="font-bold text-lg text-teal-200">₹47,80,900</span>
+                    <span className="font-bold text-lg text-teal-200">28,900</span>
                 </div>
             </div>
         </div>
@@ -746,7 +746,83 @@ const Home = () => {
     </div>
 </section>
 <hr className="my-8" />
-<section className="mt-8">
+                    
+                    
+
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Ongoing Claims (Approved)</h2>
+                        <div className="flex flex-col sm:flex-row -m-2">
+                            <CategorySliderWindow
+                                title="Retirement Farewell"
+                                claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
+                                emptyMessage="No ongoing retirement claims."
+                            />
+                            <CategorySliderWindow
+                                title="Death After Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death After Service')}
+                                emptyMessage="No ongoing death after service claims."
+                            />
+                            <CategorySliderWindow
+                                title="Death During Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death During Service')}
+                                emptyMessage="No ongoing death during service claims."
+                            />
+                        </div>
+                    </section>
+
+                    <hr className="my-8" />
+
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Current Claims (Benefeciaries)</h2>
+                        <div className="flex flex-col sm:flex-row -m-2">
+                            <CategorySliderWindow2
+                                title="Retirement Farewell"
+                                claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
+                                emptyMessage="No ongoing retirement claims."
+                                disableLink={true}
+                            />
+                            <CategorySliderWindow2
+                                title="Death After Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death After Service')}
+                                emptyMessage="No ongoing death after service claims."
+                                disableLink={true}
+                            />
+                            <CategorySliderWindow2
+                                title="Death During Service"
+                                claims={filterClaimsByType(ongoingClaims, 'Death During Service')}
+                                emptyMessage="No ongoing death during service claims."
+                                disableLink={true}
+                            />
+                        </div>
+                    </section>
+                    
+                    <hr className="my-8" />
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Upcoming Claims (Pending Verification)</h2>
+                        <div className="flex flex-col sm:flex-row -m-2">
+                            <CategorySliderWindow
+                                title="Retirement Farewell"
+                                claims={filterClaimsByType(upcomingClaims, 'Retirement Farewell')}
+                                emptyMessage="No pending retirement claims."
+                                disableLink={true}
+                            />
+                            <CategorySliderWindow
+                                title="Death After Service"
+                                claims={filterClaimsByType(upcomingClaims, 'Death After Service')}
+                                emptyMessage="No pending death after service claims."
+                                disableLink={true}
+                            />
+                            <CategorySliderWindow
+                                title="Death During Service"
+                                claims={filterClaimsByType(upcomingClaims, "Death During Service")}
+                                emptyMessage="No ongoing death during service claims."
+                                disableLink={true}
+                            />
+                        </div>
+                    </section>
+                    
+                    <hr className="my-8" />
+                    <section className="mt-8">
     <h2 className="text-2xl font-bold text-teal-900 mb-6">Claims in each Category</h2>
     
     <div className="grid grid-cols-5 gap-3">
@@ -921,82 +997,7 @@ const Home = () => {
         
     </div>
 </section>
-                    
-                    <hr className="my-8" />
-
-                    <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Ongoing Claims (Approved)</h2>
-                        <div className="flex flex-col sm:flex-row -m-2">
-                            <CategorySliderWindow
-                                title="Retirement Farewell"
-                                claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
-                                emptyMessage="No ongoing retirement claims."
-                            />
-                            <CategorySliderWindow
-                                title="Death After Service"
-                                claims={filterClaimsByType(ongoingClaims, 'Death After Service')}
-                                emptyMessage="No ongoing death after service claims."
-                            />
-                            <CategorySliderWindow
-                                title="Death During Service"
-                                claims={filterClaimsByType(ongoingClaims, 'Death During Service')}
-                                emptyMessage="No ongoing death during service claims."
-                            />
-                        </div>
-                    </section>
-
-                    <hr className="my-8" />
-
-                    <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Current Claims (Benefeciaries)</h2>
-                        <div className="flex flex-col sm:flex-row -m-2">
-                            <CategorySliderWindow2
-                                title="Retirement Farewell"
-                                claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
-                                emptyMessage="No ongoing retirement claims."
-                                disableLink={true}
-                            />
-                            <CategorySliderWindow2
-                                title="Death After Service"
-                                claims={filterClaimsByType(ongoingClaims, 'Death After Service')}
-                                emptyMessage="No ongoing death after service claims."
-                                disableLink={true}
-                            />
-                            <CategorySliderWindow2
-                                title="Death During Service"
-                                claims={filterClaimsByType(ongoingClaims, 'Death During Service')}
-                                emptyMessage="No ongoing death during service claims."
-                                disableLink={true}
-                            />
-                        </div>
-                    </section>
-                    
-                    <hr className="my-8" />
-                    <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Upcoming Claims (Pending Verification)</h2>
-                        <div className="flex flex-col sm:flex-row -m-2">
-                            <CategorySliderWindow
-                                title="Retirement Farewell"
-                                claims={filterClaimsByType(upcomingClaims, 'Retirement Farewell')}
-                                emptyMessage="No pending retirement claims."
-                                disableLink={true}
-                            />
-                            <CategorySliderWindow
-                                title="Death After Service"
-                                claims={filterClaimsByType(upcomingClaims, 'Death After Service')}
-                                emptyMessage="No pending death after service claims."
-                                disableLink={true}
-                            />
-                            <CategorySliderWindow
-                                title="Death During Service"
-                                claims={filterClaimsByType(upcomingClaims, "Death During Service")}
-                                emptyMessage="No ongoing death during service claims."
-                                disableLink={true}
-                            />
-                        </div>
-                    </section>
-                    
-                    <hr className="my-8" />
+<hr className="my-8" />
                     
                     {/* --- GALLERY CAROUSEL (NEW CSS METHOD) --- */}
                     <section className="mt-8">
