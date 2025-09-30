@@ -7,6 +7,7 @@ import {
     addNominee, 
     deleteNominee 
 } from '../lib/api/profile'; // ADJUST PATH AS NEEDED
+import { updateNominee } from '../lib/api/profile';
 
 const Profile = () => {
     const [activeTab, setActiveTab] = useState('Personal');
@@ -17,6 +18,8 @@ const Profile = () => {
         bankDetails: {},
     });
     const [nominees, setNominees] = useState([]);
+    const [editingNomineeId, setEditingNomineeId] = useState(null);
+    const [editingNomineeLocal, setEditingNomineeLocal] = useState(null);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null); 
     
@@ -33,6 +36,7 @@ const Profile = () => {
         isPrimary: false,
         bankDetails: {
             accountNumber: '',
+            confirmAccountNumber: '',
             ifscCode: '',
             bankName: '',
             branchName: '',
@@ -43,6 +47,18 @@ const Profile = () => {
         setError(null);
         setSuccessMessage(null);
     }, []);
+
+    // Relation dropdown options for nominees
+    const RELATION_OPTIONS = [
+        'Spouse',
+        'Son',
+        'Daughter',
+        'Father',
+        'Mother',
+        'Brother',
+        'Sister',
+        'Other'
+    ];
 
     useEffect(() => {
         clearMessages();
@@ -142,6 +158,11 @@ const Profile = () => {
             setError('Please fill all required nominee and bank details fields (Name, Relation, DOB, Aadhaar, Bank Name, A/C No, IFSC).');
             return;
         }
+        // Ensure account numbers match
+        if (newNominee.bankDetails.accountNumber !== newNominee.bankDetails.confirmAccountNumber) {
+            setError('Nominee account number and confirmation do not match.');
+            return;
+        }
         
         try {
             const addedNominee = await addNominee(newNominee); 
@@ -169,6 +190,76 @@ const Profile = () => {
         }
     };
 
+    const startEditNominee = (nominee) => {
+        setEditingNomineeId(nominee._id);
+        // Make a shallow copy of nominee for local edits
+        const localCopy = JSON.parse(JSON.stringify(nominee));
+        // Prefill confirm field so UI shows matching value by default
+        if (!localCopy.bankDetails) localCopy.bankDetails = {};
+        localCopy.bankDetails.confirmAccountNumber = localCopy.bankDetails.accountNumber || '';
+        setEditingNomineeLocal(localCopy);
+        clearMessages();
+    };
+
+    const cancelEditNominee = () => {
+        setEditingNomineeId(null);
+        setEditingNomineeLocal(null);
+        clearMessages();
+    };
+
+    const handleEditingNomineeChange = (field, value, isBankDetail = false) => {
+        if (!editingNomineeLocal) return;
+        if (isBankDetail) {
+            setEditingNomineeLocal(prev => ({ ...prev, bankDetails: { ...prev.bankDetails, [field]: value } }));
+        } else {
+            setEditingNomineeLocal(prev => ({ ...prev, [field]: value }));
+        }
+    };
+
+    const saveEditedNominee = async () => {
+        if (!editingNomineeLocal || !editingNomineeId) return;
+        clearMessages();
+        // Validate account confirmation if present
+        const acc = editingNomineeLocal.bankDetails?.accountNumber;
+        const accConfirm = editingNomineeLocal.bankDetails?.confirmAccountNumber;
+        if (acc || accConfirm) {
+            if (String(acc || '') !== String(accConfirm || '')) {
+                setError('Nominee account number and confirmation do not match.');
+                return;
+            }
+        }
+        try {
+            const updated = await updateNominee(editingNomineeId, editingNomineeLocal);
+            setNominees(prev => prev.map(n => (n._id === editingNomineeId ? updated : n)));
+            setSuccessMessage('Nominee updated successfully.');
+            setEditingNomineeId(null);
+            setEditingNomineeLocal(null);
+        } catch (err) {
+            console.error('Update Nominee Error:', err);
+            // Prefer server-provided message if present (common pattern: { message, errors })
+            const serverMessage = err?.response?.data?.message;
+            const serverErrors = err?.response?.data?.errors;
+            const errorMessage = serverMessage || err.message || 'Failed to update nominee.';
+
+            // If there are structured validation errors, append a compact summary
+            let validationSummary = '';
+            if (serverErrors && typeof serverErrors === 'object') {
+                try {
+                    // serverErrors may be an array or object; generate a short joined summary
+                    if (Array.isArray(serverErrors)) {
+                        validationSummary = serverErrors.map(e => e.msg || e.message || JSON.stringify(e)).join('; ');
+                    } else {
+                        validationSummary = Object.values(serverErrors).flat().map(e => e.msg || e.message || JSON.stringify(e)).join('; ');
+                    }
+                } catch (e) {
+                    validationSummary = '';
+                }
+            }
+
+            setError(`Failed to update nominee: ${errorMessage}${validationSummary ? ' — ' + validationSummary : ''}`);
+        }
+    };
+
     const handleDeleteNominee = async (id) => {
         clearMessages();
         try {
@@ -182,6 +273,11 @@ const Profile = () => {
     };
 
     if (loading) return <div className="text-center py-12">Loading profile...</div>;
+
+    // Aadhaar helpers (used to show masked number and image if available)
+    const aadhaarNumber = userData?.personalDetails?.aadhaarNumber;
+    const aadhaarMasked = aadhaarNumber ? `xxxx-xxxx-${String(aadhaarNumber).slice(-4)}` : null;
+    const aadhaarUrl = userData?.personalDetails?.aadhaarUrl;
 
     const getDetails = (tab) => {
         if (tab === 'Personal') return editMode.Personal ? localPersonalDetails : userData.personalDetails;
@@ -262,18 +358,82 @@ const Profile = () => {
                         <div className="mt-4 space-y-4">
                             {nominees.map(n => (
                                 <div key={n._id} className="bg-gray-50 p-4 rounded-lg border">
-                                    <div className="flex justify-between items-start">
+                                    {editingNomineeId === n._id ? (
                                         <div>
-                                            <p className="font-semibold">{n.name} <span className="text-xs text-gray-500">({n.relation})</span></p>
-                                            <p className="text-sm text-gray-500">Aadhaar: {n.aadhaarNumber}</p>
-                                            {n.isPrimary && <span className="text-xs font-semibold text-teal-600">Primary Nominee</span>}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className={labelClasses}>Name</label>
+                                                    <input className={inputClasses} value={editingNomineeLocal.name || ''} onChange={e => handleEditingNomineeChange('name', e.target.value)} />
+                                                </div>
+                                                <div>
+                                                    <label className={labelClasses}>Relation</label>
+                                                    <select className={inputClasses} value={editingNomineeLocal.relation || ''} onChange={e => handleEditingNomineeChange('relation', e.target.value)}>
+                                                        <option value="">Select relation</option>
+                                                        {RELATION_OPTIONS.map(opt => (
+                                                            <option key={opt} value={opt}>{opt}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className={labelClasses}>Date of Birth</label>
+                                                    <input type="date" className={inputClasses} value={editingNomineeLocal.dateOfBirth || ''} onChange={e => handleEditingNomineeChange('dateOfBirth', e.target.value)} />
+                                                </div>
+                                                <div>
+                                                    <label className={labelClasses}>Aadhaar</label>
+                                                    <input className={inputClasses} value={editingNomineeLocal.aadhaarNumber || ''} onChange={e => handleEditingNomineeChange('aadhaarNumber', e.target.value)} />
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4">
+                                                <h5 className="font-medium mb-2">Bank Details</h5>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className={labelClasses}>Bank Name</label>
+                                                        <input className={inputClasses} value={editingNomineeLocal.bankDetails?.bankName || ''} onChange={e => handleEditingNomineeChange('bankName', e.target.value, true)} />
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelClasses}>Account Number</label>
+                                                        <input className={inputClasses} value={editingNomineeLocal.bankDetails?.accountNumber || ''} onChange={e => handleEditingNomineeChange('accountNumber', e.target.value, true)} />
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelClasses}>Confirm A/C Number</label>
+                                                        <input className={inputClasses} value={editingNomineeLocal.bankDetails?.confirmAccountNumber || ''} onChange={e => handleEditingNomineeChange('confirmAccountNumber', e.target.value, true)} />
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelClasses}>IFSC Code</label>
+                                                        <input className={inputClasses} value={editingNomineeLocal.bankDetails?.ifscCode || ''} onChange={e => handleEditingNomineeChange('ifscCode', e.target.value, true)} />
+                                                    </div>
+                                                    <div>
+                                                        <label className={labelClasses}>Branch Name</label>
+                                                        <input className={inputClasses} value={editingNomineeLocal.bankDetails?.branchName || ''} onChange={e => handleEditingNomineeChange('branchName', e.target.value, true)} />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 flex gap-3">
+                                                <button onClick={saveEditedNominee} className="px-4 py-2 bg-green-600 text-white rounded-lg">Save</button>
+                                                <button onClick={cancelEditNominee} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                                            </div>
                                         </div>
-                                        <button onClick={() => handleDeleteNominee(n._id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
-                                    </div>
-                                    {n.bankDetails && (
-                                        <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
-                                            <p className="font-medium">Bank: {n.bankDetails.bankName} {n.bankDetails.branchName ? `(${n.bankDetails.branchName})` : ''}</p>
-                                            <p>A/C No: {n.bankDetails.accountNumber} | IFSC: {n.bankDetails.ifscCode}</p>
+                                    ) : (
+                                        <div>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-semibold">{n.name} <span className="text-xs text-gray-500">({n.relation})</span></p>
+                                                    <p className="text-sm text-gray-500">Aadhaar: {n.aadhaarNumber}</p>
+                                                    {n.isPrimary && <span className="text-xs font-semibold text-teal-600">Primary Nominee</span>}
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <button onClick={() => startEditNominee(n)} className="text-sm text-teal-600 hover:text-teal-800">Edit</button>
+                                                    <button onClick={() => handleDeleteNominee(n._id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
+                                                </div>
+                                            </div>
+                                            {n.bankDetails && (
+                                                <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
+                                                    <p className="font-medium">Bank: {n.bankDetails.bankName} {n.bankDetails.branchName ? `(${n.bankDetails.branchName})` : ''}</p>
+                                                    <p>A/C No: {n.bankDetails.accountNumber} | IFSC: {n.bankDetails.ifscCode}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -286,7 +446,15 @@ const Profile = () => {
                                     <h5 className="font-medium mb-2 text-gray-700">Nominee Details</h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div><label className={labelClasses}>Name*</label><input type="text" value={newNominee.name} onChange={e => handleNewNomineeChange('name', e.target.value)} required className={inputClasses} /></div>
-                                        <div><label className={labelClasses}>Relation*</label><input type="text" value={newNominee.relation} onChange={e => handleNewNomineeChange('relation', e.target.value)} required className={inputClasses} /></div>
+                                        <div>
+                                            <label className={labelClasses}>Relation*</label>
+                                            <select required className={inputClasses} value={newNominee.relation} onChange={e => handleNewNomineeChange('relation', e.target.value)}>
+                                                <option value="">Select relation</option>
+                                                {RELATION_OPTIONS.map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                         <div><label className={labelClasses}>Date of Birth*</label><input type="date" value={newNominee.dateOfBirth} onChange={e => handleNewNomineeChange('dateOfBirth', e.target.value)} required className={inputClasses} /></div>
                                         <div><label className={labelClasses}>Aadhaar*</label><input type="text" value={newNominee.aadhaarNumber} onChange={e => handleNewNomineeChange('aadhaarNumber', e.target.value)} required className={inputClasses} /></div>
                                     </div>
@@ -294,7 +462,14 @@ const Profile = () => {
                                     <h5 className="font-medium mb-2 mt-4 text-gray-700">Bank Details (Nominee's Account)</h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div><label className={labelClasses}>Bank Name*</label><input type="text" value={newNominee.bankDetails.bankName} onChange={e => handleNewNomineeChange('bankName', e.target.value, true)} required className={inputClasses} /></div>
-                                        <div><label className={labelClasses}>A/C Number*</label><input type="text" value={newNominee.bankDetails.accountNumber} onChange={e => handleNewNomineeChange('accountNumber', e.target.value, true)} required className={inputClasses} /></div>
+                                        <div>
+                                            <label className={labelClasses}>A/C Number*</label>
+                                            <input type="text" value={newNominee.bankDetails.accountNumber} onChange={e => handleNewNomineeChange('accountNumber', e.target.value, true)} required className={inputClasses} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>Confirm A/C Number*</label>
+                                            <input type="text" value={newNominee.bankDetails.confirmAccountNumber || ''} onChange={e => handleNewNomineeChange('confirmAccountNumber', e.target.value, true)} required className={inputClasses} />
+                                        </div>
                                         <div><label className={labelClasses}>IFSC Code*</label><input type="text" value={newNominee.bankDetails.ifscCode} onChange={e => handleNewNomineeChange('ifscCode', e.target.value, true)} required className={inputClasses} /></div>
                                         <div><label className={labelClasses}>Branch Name</label><input type="text" value={newNominee.bankDetails.branchName} onChange={e => handleNewNomineeChange('branchName', e.target.value, true)} className={inputClasses} /></div>
                                     </div>
@@ -318,7 +493,40 @@ const Profile = () => {
     return (
         <div className="min-h-screen py-12 px-4">
             <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl border border-gray-200 p-8">
-                <h1 className="text-3xl font-extrabold text-center text-teal-700">My Profile</h1>
+                <div className="flex items-center justify-center gap-6">
+                    <div className="flex items-center gap-4">
+                        <img
+                            src={userData?.photoUrl || userData?.personalDetails?.photoUrl || 'https://placehold.co/100x100/5eead4/115e59?text=User'}
+                            alt={userData?.personalDetails?.fullName || 'Profile'}
+                            className="h-20 w-20 rounded-full object-cover border-4 border-white/40 shadow-lg"
+                        />
+                        <div className="text-left">
+                            <h1 className="text-3xl font-extrabold text-teal-700">My Profile</h1>
+                            <p className="text-sm text-gray-600 mt-1">{userData?.personalDetails?.fullName}</p>
+                        </div>
+                    </div>
+
+                    {/* Aadhaar display */}
+                    <div className="ml-auto flex items-center gap-3">
+                        {aadhaarUrl ? (
+                            <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border">
+                                <img src={aadhaarUrl} alt="Aadhaar" className="h-24 w-36 object-cover rounded-md border" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Aadhaar</p>
+                                    <p className="font-medium">{aadhaarMasked || '—'}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border text-gray-400">
+                                <div className="h-24 w-36 bg-gray-200 rounded-md flex items-center justify-center">No Aadhaar</div>
+                                <div>
+                                    <p className="text-xs">Aadhaar</p>
+                                    <p className="text-sm">Not provided</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
                 
                 {/* Error and Success Messages */}
                 {error && (

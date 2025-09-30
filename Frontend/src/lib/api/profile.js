@@ -53,3 +53,31 @@ export async function deleteNominee(id) {
     console.log(res)
     return res.data
 }
+
+/**
+ * Updates an existing nominee by ID.
+ * Strips out system fields before sending to backend.
+ * @param {string} id - The ID of the nominee to update.
+ * @param {object} nominee - The updated nominee fields.
+ * @returns {Promise<object>} The updated nominee object from the server.
+ */
+export async function updateNominee(id, nominee) {
+    // remove system fields not allowed by backend
+    const {
+        _id,
+        userId,
+        createdAt,
+        updatedAt,
+        __v,
+        ...allowedData
+    } = nominee;
+
+    // ensure date is in ISO string (if dob exists)
+    if (allowedData.dob) {
+        allowedData.dob = new Date(allowedData.dob).toISOString();
+    }
+
+    const res = await api.put(`/nominees/${id}`, allowedData);
+    console.log(res);
+    return res.data?.data;
+}
