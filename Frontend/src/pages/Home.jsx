@@ -37,6 +37,50 @@ const processCalendarData = (events) => {
     return { calendar, totalDonations };
 };
 
+const ImageModal = ({ content, onClose, isOpen }) => {
+    if (!isOpen || !content) return null;
+
+    // Use a basic image for gallery content or structured text for news
+    const isGalleryImage = content.type === 'gallery';
+    const modalContent = isGalleryImage ? (
+        <img src={content.url} alt={content.title} className="max-h-[80vh] max-w-full object-contain" />
+    ) : (
+        <div className="bg-white p-6 rounded-xl max-w-3xl w-full mx-auto shadow-2xl">
+            <h3 className="text-3xl font-bold text-teal-900 mb-4">{content.title}</h3>
+            <img src={content.url} alt={content.title} className="w-full h-64 object-cover rounded-lg mb-4" />
+            <p className="text-gray-700 whitespace-pre-wrap">{content.fullText || content.summary}</p>
+            {/* You could fetch the full news text here if needed */}
+            <p className="mt-4 text-sm text-gray-500">Source: ESCT Blog</p>
+        </div>
+    );
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
+            onClick={onClose} // Close when clicking the backdrop
+            role="dialog"
+            aria-modal="true"
+            aria-label={content.title}
+        >
+            <div
+                className="relative"
+                onClick={e => e.stopPropagation()} // Prevent modal content from closing the modal
+            >
+                {modalContent}
+                <button
+                    onClick={onClose}
+                    className="absolute top-2 right-2 text-white bg-black/50 hover:bg-black/75 rounded-full p-2 transition-colors"
+                    aria-label="Close modal"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const MonthBox = ({ month, status }) => {
     let bgColor, icon;
     
@@ -422,7 +466,8 @@ const Home = () => {
     const [allClaims, setAllClaims] = useState([]);
     const [myDonationsQueue, setMyDonationsQueue] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
-    
+        const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalContent, setModalContent] = useState(null);
     // --- NEW STATE ADDED ---
     const [calendarData, setCalendarData] = useState({}); // { year: [month events] }
      const [myDonations, setMyDonations] = useState([]);
@@ -432,6 +477,15 @@ const Home = () => {
 
     const filterClaimsByType = (claims, type) => claims.filter(c => c.type === type);
 
+    const openModal = useCallback((contentData) => {
+        setModalContent(contentData);
+        setIsModalOpen(true);
+    }, []);
+
+    const closeModal = useCallback(() => {
+        setIsModalOpen(false);
+        setModalContent(null);
+    }, []);
     
     const { userId, displayName } = useMemo(() => {
         const user = currentUser;
@@ -444,10 +498,7 @@ const Home = () => {
         };
     }, [currentUser]);
 
-    // Calculate total contribution from the calendar data
-   // --- 3. FIX THE TOTAL CONTRIBUTION CALCULATION ---
     const totalUserContribution = useMemo(() => {
-        // Calculate total from the actual donations list, not the calendar
         if (!myDonations || myDonations.length === 0) {
             return 0;
         }
@@ -458,74 +509,71 @@ const Home = () => {
             }
             return total;
         }, 0);
-    }, [myDonations]); // This now depends on the myDonations state
+    }, [myDonations]); 
+const sumClaimsRequestedAmount = (claims) => {
+    return claims.reduce((sum, claim) => sum + (claim.amountRequested || 0), 0);
+};
+
+const claimCounts = useMemo(() => {
+    if (!allClaims) {
+        // Initialize with 0 amounts
+        return { retirement: 0, deathAfter: 0, deathDuring: 0, medical: 0, marriage: 0, total: 0 };
+    }
+
+    // 1. Filter claims by type
+    const retirementClaims = filterClaimsByType(allClaims, 'Retirement Farewell');
+    const deathAfterClaims = filterClaimsByType(allClaims, 'Death After Service');
+    const deathDuringClaims = filterClaimsByType(allClaims, 'Death During Service');
+    const medicalClaims = filterClaimsByType(allClaims, 'Medical Claim');
+    const marriageClaims = filterClaimsByType(allClaims, "Daughter's Marriage");
     
+    // 2. Calculate the sum of amountRequested for each filtered set
+    return {
+        retirement: sumClaimsRequestedAmount(retirementClaims),
+        deathAfter: sumClaimsRequestedAmount(deathAfterClaims),
+        deathDuring: sumClaimsRequestedAmount(deathDuringClaims),
+        medical: sumClaimsRequestedAmount(medicalClaims),
+        marriage: sumClaimsRequestedAmount(marriageClaims),
+        // Calculate the total sum of all claims requested amounts
+        total: sumClaimsRequestedAmount(allClaims)
+    };
+}, [allClaims]);
 
-    // --- ADD THIS NEW useMemo HOOK ---
-    const claimCounts = useMemo(() => {
-        if (!allClaims) {
-            return { retirement: 0, deathAfter: 0, deathDuring: 0, medical: 0, marriage: 0, total: 0 };
+const memberCategoryCounts = useMemo(() => {
+    // ... (This hook remains unchanged as it counts unique members, not claims)
+    if (!allClaims) {
+        return { retirement: 0, deathAfter: 0, deathDuring: 0, medical: 0, marriage: 0 };
+    }
+
+    const categoryMap = new Map();
+
+    allClaims.forEach(claim => {
+        const type = claim.type;
+        const beneficiaryId = claim.beneficiary?._id || claim.beneficiary?.ehrmsCode;
+
+        if (!type || !beneficiaryId) return;
+
+        if (!categoryMap.has(type)) {
+            categoryMap.set(type, new Set());
         }
-        
-        // Use the existing filter function to get the length of each category
-        return {
-            retirement: filterClaimsByType(allClaims, 'Retirement Farewell').length,
-            deathAfter: filterClaimsByType(allClaims, 'Death After Service').length,
-            deathDuring: filterClaimsByType(allClaims, 'Death During Service').length,
-            medical: filterClaimsByType(allClaims, 'Medical Claim').length,
-            marriage: filterClaimsByType(allClaims, "Daughter's Marriage").length,
-            total: allClaims.length
-        };
-    }, [allClaims]); // This recalculates only when allClaims changes
+        categoryMap.get(type).add(beneficiaryId);
+    });
 
-    // --- ADD THIS NEW useMemo HOOK ---
-    const memberCategoryCounts = useMemo(() => {
-        if (!allClaims) {
-            return { retirement: 0, deathAfter: 0, deathDuring: 0, medical: 0, marriage: 0 };
-        }
+    const getCount = (category) => categoryMap.get(category)?.size || 0;
 
-        // Use a Map to store Sets of unique beneficiary IDs for each category
-        const categoryMap = new Map();
-
-        allClaims.forEach(claim => {
-            const type = claim.type;
-            
-            // We must assume a unique ID exists on the beneficiary object.
-            // Based on your 'getMe' logic, '_id' or 'ehrmsCode' are likely.
-            const beneficiaryId = claim.beneficiary?._id || claim.beneficiary?.ehrmsCode;
-
-            // Skip if there's no type or no unique ID to count
-            if (!type || !beneficiaryId) return;
-
-            // If the category isn't in the map, add it with a new Set
-            if (!categoryMap.has(type)) {
-                categoryMap.set(type, new Set());
-            }
-            
-            // Add the beneficiary's ID to the Set for that category
-            // A Set only stores unique values, so one member is only counted once.
-            categoryMap.get(type).add(beneficiaryId);
-        });
-
-        // Helper function to get the final size (count) from the Set
-        const getCount = (category) => categoryMap.get(category)?.size || 0;
-
-        return {
-            retirement: getCount('Retirement Farewell'),
-            deathAfter: getCount('Death After Service'),
-            deathDuring: getCount('Death During Service'),
-            medical: getCount('Medical Claim'),
-            marriage: getCount("Daughter's Marriage"),
-        };
-    }, [allClaims]); // This recalculates only when allClaims changes
+    return {
+        retirement: getCount('Retirement Farewell'),
+        deathAfter: getCount('Death After Service'),
+        deathDuring: getCount('Death During Service'),
+        medical: getCount('Medical Claim'),
+        marriage: getCount("Daughter's Marriage"),
+    };
+}, [allClaims]); // This recalculates only when allClaims changes
     
     const getCategoryUrl = useCallback((categoryName) => {
         const encodedCategory = encodeURIComponent(categoryName);
         return `/claims-list?category=${encodedCategory}`;
     }, []);
-
-    // --- CAROUSEL LOGIC IS GONE FROM HERE ---
-    // No more `useRef` or `useAutoScroll` needed.
 
     const fetchData = useCallback(async () => {
         try {
@@ -832,7 +880,7 @@ const Home = () => {
                     
                     <hr className="my-8" />
                     <section className="mt-8">
-    <h2 className="text-2xl font-bold text-teal-900 mb-6">Claims in each Category</h2>
+    <h2 className="text-2xl font-bold text-teal-900 mb-6">Claim Amount Disbursed in each Category</h2>
     
     <div className="grid grid-cols-5 gap-3">
     
@@ -847,7 +895,7 @@ const Home = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{claimCounts.retirement}</p>
+                    <p className="text-2xl font-bold">₹{claimCounts.retirement}</p>
                 </div>
             </div>
         </div>
@@ -863,7 +911,7 @@ const Home = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.876c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{claimCounts.deathDuring}</p>
+                    <p className="text-2xl font-bold">₹{claimCounts.deathDuring}</p>
                 </div>
             </div>
         </div>
@@ -879,7 +927,7 @@ const Home = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{claimCounts.deathAfter}</p>
+                    <p className="text-2xl font-bold">₹{claimCounts.deathAfter}</p>
                 </div>
             </div>
         </div>
@@ -895,7 +943,7 @@ const Home = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1014.625 7.5H9.375A2.625 2.625 0 1012 4.875zM21 11.25H3v-3.75a.75.75 0 01.75-.75h16.5a.75.75 0 01.75.75v3.75z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{claimCounts.marriage}</p>
+                    <p className="text-2xl font-bold">₹{claimCounts.marriage}</p>
                 </div>
             </div>
         </div>
@@ -911,7 +959,7 @@ const Home = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{claimCounts.medical}</p>
+                    <p className="text-2xl font-bold">₹{claimCounts.medical}</p>
                 </div>
             </div>
         </div>
@@ -920,7 +968,7 @@ const Home = () => {
 </section>
 <hr className="my-8" />
 <section className="mt-8">
-    <h2 className="text-2xl font-bold text-teal-900 mb-6">Members at each Category</h2>
+    <h2 className="text-2xl font-bold text-teal-900 mb-6">Claims at each Category</h2>
     
     <div className="grid grid-cols-5 gap-3">
     
@@ -1007,73 +1055,132 @@ const Home = () => {
     </div>
 </section>
 <hr className="my-8" />
-                    
-                    {/* --- GALLERY CAROUSEL (NEW CSS METHOD) --- */}
-                    <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Gallery</h2>
-                        {/* 1. Wrapper hides overflow and the scrollbar (no plugin needed) */}
-                        <div
-                            className="overflow-x-hidden carousel-container py-2"
-                            aria-label="Gallery carousel"
-                        >
-                            {/* 2. Track uses flex, w-max, and applies the animation */}
-                            <div className="flex w-max space-x-4 animate-scroll-gallery pause-on-hover">
-                                {/* 3. Original Items */}
-                                {galleryImages.map((img) => (
-                                    <div key={img.id} className="flex-shrink-0 w-72">
-                                        <a href="#" onClick={(e) => e.preventDefault()} title={`View Gallery Image ${img.id}`}>
-                                            <img className="rounded-2xl h-48 w-full object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] cursor-pointer" src={`https://picsum.photos/seed/${img.seed}/600/400`} alt={`Gallery image ${img.id}`} />
-                                        </a>
-                                    </div>
-                                ))}
-                                {/* 4. DUPLICATE Items (for seamless loop) */}
-                                {galleryImages.map((img) => (
-                                    <div key={`${img.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-72">
-                                        <a href="#" onClick={(e) => e.preventDefault()} title={`View Gallery Image ${img.id}`} tabIndex={-1}>
-                                            <img className="rounded-2xl h-48 w-full object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] cursor-pointer" src={`https://picsum.photos/seed/${img.seed}/600/400`} alt={`Gallery image ${img.id}`} />
-                                        </a>
-                                    </div>
-                                ))}
+ <ImageModal isOpen={isModalOpen} content={modalContent} onClose={closeModal} />
+
+            <section className="mt-8">
+                <h2 className="text-2xl font-bold text-teal-900 mb-4">Gallery</h2>
+                <div
+                    className="overflow-x-hidden carousel-container py-2"
+                    aria-label="Gallery carousel"
+                >
+                    <div className="flex w-max space-x-4 animate-scroll-gallery pause-on-hover">
+                        {/* 3. Original Items */}
+                        {galleryImages.map((img) => (
+                            <div key={img.id} className="flex-shrink-0 w-72">
+                                <a 
+                                    href="#" 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        openModal({
+                                            type: 'gallery',
+                                            url: `https://picsum.photos/seed/${img.seed}/1200/800`, // Use larger image for modal
+                                            title: `Gallery Image ${img.id}`,
+                                            id: img.id,
+                                        });
+                                    }} 
+                                    title={`View Gallery Image ${img.id}`}
+                                >
+                                    <img 
+                                        className="rounded-2xl h-48 w-full object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] cursor-pointer" 
+                                        src={`https://picsum.photos/seed/${img.seed}/600/400`} 
+                                        alt={`Gallery image ${img.id}`} 
+                                    />
+                                </a>
                             </div>
-                        </div>
-                    </section>
-                    
-                    {/* --- LATEST NEWS CAROUSEL (NEW CSS METHOD) --- */}
-                    <section className="mt-8">
-                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Latest News & Blog</h2>
-                        {/* 1. Wrapper */}
-                        <div className="overflow-x-hidden carousel-container py-2">
-                            {/* 2. Track */}
-                            <div className="flex w-max space-x-4 animate-scroll-news pause-on-hover">
-                                {/* 3. Original Items */}
-                                {staticNews.map(item => (
-                                    <div key={item.id} className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                                        <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
-                                        <div className="p-4">
-                                            <h3 className="text-lg font-bold text-teal-900 truncate">{item.title}</h3>
-                                            <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.summary}</p>
-                                            <a href="#" className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
-                                                Read more →
-                                            </a>
-                                        </div>
-                                    </div>
-                                ))}
-                                {/* 4. DUPLICATE Items */}
-                                {staticNews.map(item => (
-                                    <div key={`${item.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                                        <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
-                                        <div className="p-4">
-                                            <h3 className="text-lg font-bold text-teal-900 truncate">{item.title}</h3>
-                                            <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.summary}</p>
-                                            <a href="#" tabIndex={-1} className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
-                                                Read more →
-                                            </a>
-                                        </div>
-                                    </div>
-                                ))}
+                        ))}
+                        {/* 4. DUPLICATE Items (for seamless loop) */}
+                        {galleryImages.map((img) => (
+                            <div key={`${img.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-72">
+                                <a 
+                                    href="#" 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        openModal({
+                                            type: 'gallery',
+                                            url: `https://picsum.photos/seed/${img.seed}/1200/800`,
+                                            title: `Gallery Image ${img.id}`,
+                                            id: img.id,
+                                        });
+                                    }} 
+                                    title={`View Gallery Image ${img.id}`} 
+                                    tabIndex={-1}
+                                >
+                                    <img 
+                                        className="rounded-2xl h-48 w-full object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] cursor-pointer" 
+                                        src={`https://picsum.photos/seed/${img.seed}/600/400`} 
+                                        alt={`Gallery image ${img.id}`} 
+                                    />
+                                </a>
                             </div>
-                        </div>
-                    </section>
+                        ))}
+                    </div>
+                </div>
+            </section>
+            
+            {/* --- LATEST NEWS CAROUSEL (Updated Section) --- */}
+            <section className="mt-8">
+                <h2 className="text-2xl font-bold text-teal-900 mb-4">Latest News & Blog</h2>
+                <div className="overflow-x-hidden carousel-container py-2">
+                    <div className="flex w-max space-x-4 animate-scroll-news pause-on-hover">
+                        {/* 3. Original Items */}
+                        {staticNews.map((item, index) => (
+                            <a 
+                            key={index} 
+                                        href="#" 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            openModal({
+                                                type: 'news',
+                                                title: item.title,
+                                                url: item.image,
+                                                summary: item.summary,
+                                                fullText: `This is the full text for the article titled "${item.title}". The summary is: ${item.summary}. Imagine a much longer blog post here with detailed information, links, and more. This text simulates the full content you would load for the modal.`, // Placeholder for full article content
+                                            });
+                                        }}>
+                            <div className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
+                                <div className="p-4">
+                                    <h3 className="text-lg font-bold text-teal-900 truncate">{item.title}</h3>
+                                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.summary}</p>
+                                    
+                                        <span className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
+                                
+                                        Read more →</span>
+                                    
+                                </div>
+                            </div>
+                            </a>
+                        ))}
+                        {/* 4. DUPLICATE Items */}
+                        {staticNews.map(item => (
+                            <div key={`${item.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
+                                <div className="p-4">
+                                    <h3 className="text-lg font-bold text-teal-900 truncate">{item.title}</h3>
+                                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.summary}</p>
+                                    <a 
+                                        href="#" 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            openModal({
+                                                type: 'news',
+                                                title: item.title,
+                                                url: item.image,
+                                                summary: item.summary,
+                                                fullText: `This is the full text for the article titled "${item.title}". The summary is: ${item.summary}. Imagine a much longer blog post here with detailed information, links, and more. This text simulates the full content you would load for the modal.`,
+                                            });
+                                        }}
+                                        tabIndex={-1} 
+                                        className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors"
+                                    >
+                                        Read more →
+                                    </a>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
                     
 <hr className="my-8" />
 {/* --- TESTIMONIALS CAROUSEL (NEW CSS METHOD) --- */}
@@ -1118,6 +1225,33 @@ const Home = () => {
         </div>
     </div>
 </section>
+                    <hr className="my-8" />
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Amount of Monthly Donations Raised</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="rounded-2xl bg-teal-600 text-white p-6 shadow-xl text-center mb-6 md:col-span-1">
+                                <p className="text-base font-medium opacity-90">Previous Month</p>
+                                <p className="mt-2 text-4xl sm:text-5xl font-extrabold">
+                                    {loading ? (
+                                        <span className="inline-block w-3/4 h-10 sm:h-12 bg-teal-700 rounded-full animate-pulse"></span>
+                                    ) : (
+                                        `₹${totalUserContribution.toLocaleString('en-IN')}`
+                                    )}
+                                </p>
+                            </div>
+                            <div className="rounded-2xl bg-teal-600 text-white p-6 shadow-xl text-center mb-6 md:col-span-1">
+                                <p className="text-base font-medium opacity-90">Current Month</p>
+                                <p className="mt-2 text-4xl sm:text-5xl font-extrabold">
+                                    {loading ? (
+                                        <span className="inline-block w-3/4 h-10 sm:h-12 bg-teal-700 rounded-full animate-pulse"></span>
+                                    ) : (
+                                        `₹${totalUserContribution.toLocaleString('en-IN')}`
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    </section>
                     <hr className="my-8" />
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Know Your Contribution</h2>

@@ -55,7 +55,7 @@ export default function Navbar() {
       try {
         const all = await getAllUsers();
         if (!mounted) return;
-        setUsers(Array.isArray(all) ? all : []);
+        setUsers(all.total - 1);
       } catch (err) {
         if (!mounted) return;
         setUsersError(err.message || 'Failed to load users');
@@ -77,7 +77,7 @@ export default function Navbar() {
           <img src="/icon2.png" alt="ESCT" className="h-9 w-16" />
           <span className="font-extrabold text-xl text-teal-800 tracking-wider">ESCT</span>
           <span className="text-lg text-teal-800 tracking-wider">
-            Total Users: {usersLoading ? '...' : usersError ? '—' : users.length}
+            Total Users: {usersLoading ? '...' : usersError ? '—' : users}
           </span>
         </Link>
 
@@ -101,7 +101,7 @@ export default function Navbar() {
               </button>
 
               {/* Notification Dropdown */}
-              {showNotifications && (
+              {token && showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-800">Notifications</h3>

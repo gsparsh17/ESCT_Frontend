@@ -54,9 +54,9 @@ const Register = () => {
   const [empDoj, setEmpDoj] = useState('');
 
   const [apiStates, setApiStates] = useState([]);
-  const [apiCities, setApiCities] = useState([]);
-  const [selectedStateCode, setSelectedStateCode] = useState(''); // For API calls
-  const [isApiLoading, setIsApiLoading] = useState(false);
+  const [apiCities, setApiCities] = useState([]);
+  const [selectedStateCode, setSelectedStateCode] = useState(''); // For API calls
+  const [isApiLoading, setIsApiLoading] = useState(false);
 
   // Nominee Details
   const [nominees, setNominees] = useState([]);
@@ -106,10 +106,10 @@ const Register = () => {
         }
     };
     fetchStates();
-  }, []);
+  }, []);
 
-  // 2. Fetch Cities when State is selected
-  useEffect(() => {
+  // 2. Fetch Cities when State is selected
+  useEffect(() => {
     if (!selectedStateCode || !CSC_API_KEY ) {
         setApiCities([]);
         setEmpDistrict('');
@@ -139,9 +139,9 @@ const Register = () => {
         }
     };
     fetchCities();
-  }, [selectedStateCode]);
+  }, [selectedStateCode]);
 
-  const handleStateChange = (e) => {
+  const handleStateChange = (e) => {
     // e.target.value is the State ISO code (e.g., 'MH')
     setSelectedStateCode(e.target.value); 
     // Set display name for validation/submission later
@@ -151,7 +151,7 @@ const Register = () => {
     // Reset city/district fields when state changes
     setEmpDistrict('');
     setApiCities([]);
-  };
+  };
 
   // Adjust step flow dynamically for Pensioners
   const finalSteps = useMemo(() => {
@@ -186,7 +186,13 @@ const Register = () => {
     const newErrors = {};
     let isValid = true;
 
-    if (currentStep === 0) { // Account Details
+    // Only validate fields that are filled - no required fields except step 0
+    if (currentStep === 0) { 
+      // Step 0 remains required
+      if (!empState.trim()) {
+        newErrors.empState = 'Employment State is required.';
+        isValid = false;
+      }
       if (userType === 'EMPLOYEE' && !ehrmsCode.trim()) {
         newErrors.ehrmsCode = 'EHRMS code is required.';
         isValid = false;
@@ -195,30 +201,28 @@ const Register = () => {
         newErrors.pensionerNumber = 'Pensioner number is required.';
         isValid = false;
       }
-    } else if (currentStep === 1) { 
-      if (!aadhaarDocument) {
-        newErrors.aadhaarDocument = 'Aadhaar document upload is required.';
-        isValid = false;
-      }
-      if (!fullName.trim()) {
-        newErrors.fullName = 'Full name is required.';
+      if (!password.trim()) {
+        newErrors.password = 'Password is required.';
         isValid = false;
       }
-      if (!dateOfBirth) {
-        newErrors.dateOfBirth = 'Date of Birth is required.';
+    } else if (currentStep === 1) { 
+      // Only validate if field is filled
+      if (fullName.trim() && fullName.trim().length < 2) {
+        newErrors.fullName = 'Full name must be at least 2 characters.';
         isValid = false;
-      } else {
+      }
+      if (dateOfBirth) {
         const age = calcAgeFromDob(dateOfBirth);
         if (age === undefined || age < 18 || age > 120) {
           newErrors.dateOfBirth = 'Invalid DOB. Must be 18-120 years old.';
           isValid = false;
         }
       }
-      if (!/^\d{12}$/.test(aadhaarNumber)) {
+      if (aadhaarNumber && !/^\d{12}$/.test(aadhaarNumber)) {
         newErrors.aadhaarNumber = 'Aadhaar must be 12 digits.';
         isValid = false;
       }
-      if (!/^[6-9]\d{9}$/.test(phone)) {
+      if (phone && !/^[6-9]\d{9}$/.test(phone)) {
         newErrors.phone = 'Phone must be 10 digits starting with 6–9.';
         isValid = false;
       }
@@ -228,105 +232,101 @@ const Register = () => {
       }
     } else if (currentStep === 2 && userType === 'EMPLOYEE') { // Employment & Bank Details (Only for Employee)
       
-      // Employment Details (required for Employee)
-      if (!empState.trim()) {
-        newErrors.empState = 'Employment State is required.';
+      // Employment details - only validate if filled
+      if (empDistrict.trim() && empDistrict.trim().length < 2) {
+        newErrors.empDistrict = 'Employment District must be valid.';
         isValid = false;
       }
-      if (!empDistrict.trim()) {
-        newErrors.empDistrict = 'Employment District is required.';
+      if (empOrganisation.trim() && empOrganisation.trim().length < 2) {
+        newErrors.empOrganisation = 'Employment Organisation must be valid.';
         isValid = false;
       }
-      if (!empOrganisation.trim()) {
-        newErrors.empOrganisation = 'Employment Organisation is required.';
+      if (empDepartment.trim() && empDepartment.trim().length < 2) {
+        newErrors.empDepartment = 'Employment Department must be valid.';
         isValid = false;
       }
-      if (!empDepartment.trim()) {
-        newErrors.empDepartment = 'Employment Department is required.';
-        isValid = false;
-      }
-      if (!empDesignation.trim()) {
-        newErrors.empDesignation = 'Employment Designation is required.';
-        isValid = false;
-      }
-      if (!empDoj) {
-        newErrors.empDoj = 'Date of Joining is required.';
+      if (empDesignation.trim() && empDesignation.trim().length < 2) {
+        newErrors.empDesignation = 'Employment Designation must be valid.';
         isValid = false;
       }
       
-      if (!accountNumber.trim()) {
-        newErrors.accountNumber = 'Account number is required.';
+      // Bank details - only validate if filled
+      if (accountNumber.trim() && accountNumber.trim().length < 8) {
+        newErrors.accountNumber = 'Account number must be at least 8 digits.';
         isValid = false;
       }
-      if (accountNumber.trim() !== confirmAccountNumber.trim()) { 
+      if (accountNumber.trim() && confirmAccountNumber.trim() && accountNumber.trim() !== confirmAccountNumber.trim()) { 
         newErrors.confirmAccountNumber = 'Account numbers do not match.';
         isValid = false;
       }
-      if (!bankName.trim()) {
-        newErrors.bankName = 'Bank name is required.';
+      if (bankName.trim() && bankName.trim().length < 2) {
+        newErrors.bankName = 'Bank name must be valid.';
         isValid = false;
       }
-      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode.toUpperCase())) {
+      if (ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode.toUpperCase())) {
         newErrors.ifscCode = 'Invalid IFSC code (e.g., ABCD0EFGHIJ).';
         isValid = false;
       }
 
     } else if (currentStep === 2 && userType === 'PENSIONER') {
-        // Step 2 for Pensioner only shows bank details
-        if (!accountNumber.trim()) {
-          newErrors.accountNumber = 'Account number is required.';
+        // Step 2 for Pensioner only shows bank details - only validate if filled
+        if (accountNumber.trim() && accountNumber.trim().length < 8) {
+          newErrors.accountNumber = 'Account number must be at least 8 digits.';
           isValid = false;
         }
-        if (accountNumber.trim() !== confirmAccountNumber.trim()) {
+        if (accountNumber.trim() && confirmAccountNumber.trim() && accountNumber.trim() !== confirmAccountNumber.trim()) {
             newErrors.confirmAccountNumber = 'Account numbers do not match.';
             isValid = false;
         }
-        if (!bankName.trim()) {
-          newErrors.bankName = 'Bank name is required.';
+        if (bankName.trim() && bankName.trim().length < 2) {
+          newErrors.bankName = 'Bank name must be valid.';
           isValid = false;
         }
-        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode.toUpperCase())) {
+        if (ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode.toUpperCase())) {
           newErrors.ifscCode = 'Invalid IFSC code (e.g., ABCD0EFGHIJ).';
           isValid = false;
         }
         
     } else if (currentStep === finalSteps.length - 1) { // Nominee Details (Final Step)
-      if (nominees.length < 1) {
-        newErrors.nominees = 'At least one nominee is required.';
-        isValid = false;
-      } else {
-        // Validate each nominee
+      // Only validate nominees if at least one exists
+      if (nominees.length > 0) {
+        // Validate each nominee that has some data
         nominees.forEach((nominee, index) => {
-          if (!nominee.name?.trim()) {
-            newErrors[`nomineeName${index}`] = 'Nominee name is required.';
-            isValid = false;
-          }
-          if (!nominee.relation?.trim()) {
-            newErrors[`nomineeRelation${index}`] = 'Nominee relation is required.';
-            isValid = false;
-          }
-          if (!nominee.dateOfBirth) {
-            newErrors[`nomineeDob${index}`] = 'Nominee Date of Birth is required.';
-            isValid = false;
-          }
-          // Aadhaar is required by nomineeSchema
-          if (!nominee.aadhaarNumber || !/^\d{12}$/.test(nominee.aadhaarNumber)) {
-            newErrors[`nomineeAadhaar${index}`] = 'Nominee Aadhaar must be 12 digits.';
-            isValid = false;
-          }
+          // Only validate if nominee has some data
+          const hasNomineeData = nominee.name?.trim() || nominee.relation?.trim() || nominee.dateOfBirth || nominee.aadhaarNumber;
           
-          // Nominee Bank Details validation (required by nomineeSchema) <--- ADDED
-          if (!nominee.accountNumber?.trim()) {
-            newErrors[`nomineeAccount${index}`] = 'Account number is required.';
-            isValid = false;
-          }
-          if (!nominee.bankName?.trim()) {
-            newErrors[`nomineeBankName${index}`] = 'Bank name is required.';
-            isValid = false;
-          }
-          if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(nominee.ifscCode?.toUpperCase())) {
-            newErrors[`nomineeIfsc${index}`] = 'Invalid IFSC code.';
-            isValid = false;
+          if (hasNomineeData) {
+            if (!nominee.name?.trim()) {
+              newErrors[`nomineeName${index}`] = 'Nominee name is required if adding nominee.';
+              isValid = false;
+            }
+            if (!nominee.relation?.trim()) {
+              newErrors[`nomineeRelation${index}`] = 'Nominee relation is required if adding nominee.';
+              isValid = false;
+            }
+            if (!nominee.dateOfBirth) {
+              newErrors[`nomineeDob${index}`] = 'Nominee Date of Birth is required if adding nominee.';
+              isValid = false;
+            }
+            // Aadhaar is required by nomineeSchema
+            if (!nominee.aadhaarNumber || !/^\d{12}$/.test(nominee.aadhaarNumber)) {
+              newErrors[`nomineeAadhaar${index}`] = 'Nominee Aadhaar must be 12 digits.';
+              isValid = false;
+            }
+            
+            // Nominee Bank Details validation (required by nomineeSchema)
+            if (!nominee.accountNumber?.trim()) {
+              newErrors[`nomineeAccount${index}`] = 'Account number is required for nominee.';
+              isValid = false;
+            }
+            if (!nominee.bankName?.trim()) {
+              newErrors[`nomineeBankName${index}`] = 'Bank name is required for nominee.';
+              isValid = false;
+            }
+            if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(nominee.ifscCode?.toUpperCase())) {
+              newErrors[`nomineeIfsc${index}`] = 'Invalid IFSC code.';
+              isValid = false;
+            }
           }
         });
       }
@@ -344,6 +344,14 @@ const Register = () => {
 
   const handleBack = () => {
     setCurrentStep(prev => prev - 1);
+  };
+
+  // New function to handle direct step navigation
+  const handleStepClick = (stepIndex) => {
+    // Allow navigation to any step
+    if (stepIndex >= 0 && stepIndex < finalSteps.length) {
+      setCurrentStep(stepIndex);
+    }
   };
 
   const handleAddNominee = () => {
@@ -381,58 +389,57 @@ const Register = () => {
   };
 
   async function onSubmit() {
-    if (!validateStep()) {
-      return;
-    }
+    if (!validateStep()) {
+      return;
+    }
 
-    setLoading(true);
-    setErrors({});
+    setLoading(true);
+    setErrors({});
 
-    try {
-      const age = calcAgeFromDob(dateOfBirth);
-      const personalDetails = { fullName, dateOfBirth, age, sex, aadhaarNumber, phone, email };
-      const bankDetails = { accountNumber, confirmAccountNumber, ifscCode, bankName }; 
-      const employmentDetails = userType === 'EMPLOYEE' ? 
-        { state: empState, district: empDistrict, organisation: empOrganisation, department: empDepartment, designation: empDesignation, dateOfJoining: empDoj } : 
-        {}; 
+    try {
+      const age = dateOfBirth ? calcAgeFromDob(dateOfBirth) : undefined;
+      const personalDetails = { fullName, dateOfBirth, age, sex, aadhaarNumber, phone, email };
+      const bankDetails = { accountNumber, confirmAccountNumber, ifscCode, bankName }; 
+      const employmentDetails = userType === 'EMPLOYEE' ? 
+        { state: empState, district: empDistrict, organisation: empOrganisation, department: empDepartment, designation: empDesignation, dateOfJoining: empDoj } : 
+        {}; 
 
-      const formattedNominees = nominees.map(n => ({
-        name: n.name,
-        relation: n.relation,
-        dateOfBirth: n.dateOfBirth,
-        aadhaarNumber: n.aadhaarNumber,
-        isPrimary: n.isPrimary,
-        bankDetails: {
-            accountNumber: n.accountNumber,
-            ifscCode: n.ifscCode,
-            bankName: n.bankName,
-            branchName: n.branchName, 
-        }
-      }));
+      const formattedNominees = nominees.map(n => ({
+        name: n.name,
+        relation: n.relation,
+        dateOfBirth: n.dateOfBirth,
+        aadhaarNumber: n.aadhaarNumber,
+        isPrimary: n.isPrimary,
+        bankDetails: {
+            accountNumber: n.accountNumber,
+            ifscCode: n.ifscCode,
+            bankName: n.bankName,
+            branchName: n.branchName, 
+        }
+      }));
 
-      const formData = new FormData();
+      const formData = new FormData();
 
-      formData.append('userType', userType);
-      formData.append('password', password);
-      if (userType === 'EMPLOYEE') formData.append('ehrmsCode', ehrmsCode);
-      else formData.append('pensionerNumber', pensionerNumber);
+      formData.append('userType', userType);
+      formData.append('password', password);
+      if (userType === 'EMPLOYEE') formData.append('ehrmsCode', ehrmsCode);
+      else formData.append('pensionerNumber', pensionerNumber);
 
-      formData.append('personalDetails', JSON.stringify(personalDetails));
-      formData.append('bankDetails', JSON.stringify(bankDetails));
-      formData.append('employmentDetails', JSON.stringify(employmentDetails));
-      formData.append('nominees', JSON.stringify(formattedNominees));
-      if (profilePhoto && profilePhoto[0]) formData.append('profilePhoto', profilePhoto[0]);
+      formData.append('personalDetails', JSON.stringify(personalDetails));
+      formData.append('bankDetails', JSON.stringify(bankDetails));
+      formData.append('employmentDetails', JSON.stringify(employmentDetails));
+      formData.append('nominees', JSON.stringify(formattedNominees));
+      if (profilePhoto && profilePhoto[0]) formData.append('profilePhoto', profilePhoto[0]);
       if (aadhaarDocument && aadhaarDocument[0]) formData.append('aadhaarDocument', aadhaarDocument[0]);
 
-
-      await register(formData); 
-      navigate('/home');
-    } catch (e) {
-      setErrors({ form: e?.response?.data?.message || e.message || 'Registration failed.' });
-    } finally {
-      setLoading(false);
-    }
-  }
+      await register(formData); 
+      navigate('/home');
+    } catch (e) {
+      setErrors({ form: e?.response?.data?.message || e.message || 'Registration failed.' });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const currentStepTitle = finalSteps[currentStep];
 
@@ -440,6 +447,28 @@ const Register = () => {
     if (currentStep === 0) { // Account Details
       return (
         <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">State</label>
+            <div className="relative">
+              <select
+                className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
+                value={selectedStateCode}
+                onChange={handleStateChange}
+                disabled={isApiLoading || apiStates.length === 0}
+              >
+                <option value="">
+                  {isApiLoading ? 'Loading States...' : apiStates.length === 0 ? 'No States Found (Check API Key)' : 'Select State'}
+                </option>
+                {apiStates.map((state) => (
+                  <option key={state.iso2} value={state.iso2}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
+              <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            </div>
+            {errors.empState && <p className="mt-1 text-xs text-red-600">{errors.empState}</p>}
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">User Type</label>
             <div className="relative">
@@ -599,70 +628,49 @@ const Register = () => {
             <>
               <h3 className="text-lg font-medium text-teal-800">Employment Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">State</label>
-                  <div className="relative">
-                        <select
-                            className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
-                            value={selectedStateCode}
-                            onChange={handleStateChange}
-                            disabled={isApiLoading || apiStates.length === 0}
-                        >
-                            <option value="">
-                                {isApiLoading ? 'Loading States...' : apiStates.length === 0 ? 'No States Found (Check API Key)' : 'Select State'}
-                            </option>
-                            {apiStates.map((state) => (
-                                <option key={state.iso2} value={state.iso2}>
-                                    {state.name}
-                                </option>
-                            ))}
-                        </select>
-                        <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                    </div>
-                  {errors.empState && <p className="mt-1 text-xs text-red-600">{errors.empState}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">District (City)</label>
-                    <div className="relative">
-                        <select
-                            className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
-                            value={empDistrict}
-                            onChange={(e) => setEmpDistrict(e.target.value)}
-                            disabled={isApiLoading || apiCities.length === 0 || !selectedStateCode}
-                        >
-                            <option value="">
-                                {isApiLoading ? 'Loading Cities...' : apiCities.length === 0 && selectedStateCode ? 'No Cities Found' : 'Select District/City'}
-                            </option>
-                            {apiCities.map((city) => (
-                                <option key={city.id} value={city.name}>
-                                    {city.name}
-                                </option>
-                            ))}
-                        </select>
-                        <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                    </div>
-                  {errors.empDistrict && <p className="mt-1 text-xs text-red-600">{errors.empDistrict}</p>}
-                </div>
+                  <label className="block text-sm font-medium text-gray-700">District (City)</label>
+                  <div className="relative">
+                    <select
+                      className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
+                      value={empDistrict}
+                      onChange={(e) => setEmpDistrict(e.target.value)}
+                      disabled={isApiLoading || apiCities.length === 0 || !selectedStateCode}
+                    >
+                      <option value="">
+                        {isApiLoading ? 'Loading Cities...' : apiCities.length === 0 && selectedStateCode ? 'No Cities Found' : 'Select District/City'}
+                      </option>
+                      {apiCities.map((city) => (
+                        <option key={city.id} value={city.name}>
+                          {city.name}
+                        </option>
+                      ))}
+                    </select>
+                    <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  </div>
+                  {errors.empDistrict && <p className="mt-1 text-xs text-red-600">{errors.empDistrict}</p>}
+                </div>
                 <div>
-        <label className="block text-sm font-medium text-gray-700">Organisation</label>
-        <Select
-          options={orgOptions}
-          value={orgOptions.find((o) => o.value === empOrganisation)}
-          onChange={(selected) => setEmpOrganisation(selected.value)}
-          placeholder="-- Select Organisation --"
-          isSearchable
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Department</label>
-        <Select
-          options={deptOptions}
-          value={deptOptions.find((d) => d.value === empDepartment)}
-          onChange={(selected) => setEmpDepartment(selected.value)}
-          placeholder="-- Select Department --"
-          isSearchable
-        />
-      </div>
+                  <label className="block text-sm font-medium text-gray-700">Organisation</label>
+                  <Select
+                    options={orgOptions}
+                    value={orgOptions.find((o) => o.value === empOrganisation)}
+                    onChange={(selected) => setEmpOrganisation(selected.value)}
+                    placeholder="-- Select Organisation --"
+                    isSearchable
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Department</label>
+                  <Select
+                    options={deptOptions}
+                    value={deptOptions.find((d) => d.value === empDepartment)}
+                    onChange={(selected) => setEmpDepartment(selected.value)}
+                    placeholder="-- Select Department --"
+                    isSearchable
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Designation</label>
                   <input
@@ -742,7 +750,7 @@ const Register = () => {
       return (
         <div className="space-y-6">
           {nominees.length === 0 && (
-            <p className="text-sm text-gray-500 italic">You must add at least one nominee.</p>
+            <p className="text-sm text-gray-500 italic">You can add nominees (optional).</p>
           )}
           {nominees.map((nominee, index) => (
             <div key={index} className="relative p-6 border border-teal-200 rounded-lg shadow-xl bg-gray-50/50">
@@ -794,7 +802,7 @@ const Register = () => {
                 </div>
 
                 {/* Bank Details - CRITICAL FIX */}
-                <h4 className="text-sm font-semibold text-teal-800 md:col-span-2 mt-4 pt-2 border-t border-teal-100">Nominee Bank Details (Required)</h4>
+                <h4 className="text-sm font-semibold text-teal-800 md:col-span-2 mt-4 pt-2 border-t border-teal-100">Nominee Bank Details</h4>
                 
                 <div className='md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
@@ -881,7 +889,6 @@ const Register = () => {
     }
   }
 
-
   const renderForm = () => (
     <div className="w-full max-w-2xl rounded-xl bg-white p-6 sm:p-8 shadow-2xl border border-teal-100">
       <h2 className="text-2xl font-bold text-center text-teal-800">
@@ -891,7 +898,7 @@ const Register = () => {
         Step {currentStep + 1} of {finalSteps.length}: {currentStepTitle}
       </p>
       
-      {/* Step Progress Bar */}
+      {/* Step Progress Bar - Now clickable */}
       <div className="mt-8 flex justify-between items-center relative">
         <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 rounded-full"></div>
         <div 
@@ -899,18 +906,23 @@ const Register = () => {
           style={{ width: `${(currentStep / (finalSteps.length - 1)) * 100}%` }}
         ></div>
         {finalSteps.map((title, index) => (
-          <div key={index} className="flex flex-col items-center">
+          <button
+            key={index}
+            type="button"
+            onClick={() => handleStepClick(index)}
+            className="flex flex-col items-center focus:outline-none"
+          >
             <div 
               className={`w-10 h-10 flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
                 currentStep >= index ? 'bg-teal-600 border-teal-600 text-white shadow-lg' : 'bg-white border-gray-300 text-gray-500'
-              }`}
+              } ${currentStep === index ? 'ring-2 ring-teal-300 ring-offset-2' : ''}`}
             >
               {currentStep > index ? <FaCheckCircle className="h-5 w-5" /> : (index === 0 ? <FaUser className="h-5 w-5" /> : index === 1 ? <FaBuilding className="h-5 w-5" /> : index === 2 ? <FaWallet className="h-5 w-5" /> : <FaUsers className="h-5 w-5" />)}
             </div>
             <span className={`text-xs mt-2 font-medium hidden sm:block text-center max-w-[80px] ${currentStep >= index ? 'text-teal-700' : 'text-gray-500'}`}>
               {title}
             </span>
-          </div>
+          </button>
         ))}
       </div>
 
