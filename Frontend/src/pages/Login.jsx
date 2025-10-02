@@ -1,8 +1,8 @@
-// Login.jsx
+// pages/Login.jsx
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaLock, FaSpinner } from 'react-icons/fa'; // Import icons
+import { FaUserCircle, FaLock, FaSpinner } from 'react-icons/fa';
 
 export default function Login() {
   const { login } = useAuth();
@@ -16,9 +16,16 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
     try {
-      await login(ehrmsCode, password);
-      navigate('/home', { replace: true });
+      const user = await login(ehrmsCode, password);
+      
+      // Handle navigation after successful login
+      if (user.isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/home', { replace: true });
+      }
     } catch (e) {
       setError(e.message || 'Login failed. Please check your credentials.');
     } finally {

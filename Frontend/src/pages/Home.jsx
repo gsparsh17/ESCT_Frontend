@@ -748,7 +748,7 @@ const memberCategoryCounts = useMemo(() => {
             {/* --- NEW CSS ADDED HERE --- */}
             <CarouselStyles />
 
-            <div className="rounded-b-3xl bg-gradient-to-br from-teal-500 to-teal-700 text-white p-6 shadow-lg">
+            <div className="rounded-b-3xl bg-gradient-to-br from-teal-500 to-teal-700 text-white lg:p-6 p-2 shadow-lg">
                 {/* Header is clickable - navigates to Profile */}
                 <Link to="/profile" onClick={handleLinkClick} className="max-w-7xl mx-auto flex items-center gap-4 no-underline">
                     <img
@@ -758,44 +758,118 @@ const memberCategoryCounts = useMemo(() => {
                     />
                     <div>
                         <p className="text-lg opacity-90 font-medium">Welcome</p>
-                        <p className="text-3xl font-extrabold">{currentUser?.personalDetails?.fullName || displayName}</p>
-                        <p className="text-xl my-1">ESCT ID: {currentUser?.userId || currentUser?.ehrmsCode || 'ESCT00000003'}</p>
+                        <p className="lg:text-3xl text-xl font-extrabold">{currentUser?.personalDetails?.fullName || displayName}</p>
+                        <p className="lg:text-xl my-1">ESCT ID: {currentUser?.userId || currentUser?.ehrmsCode || 'ESCT00000003'}</p>
                     </div>
                 </Link>
             </div>
             
             <div className="max-w-7xl mx-auto mt-6 px-4">
-                <div className="bg-white rounded-3xl p-6">
+                <div className="bg-white rounded-3xl lg:p-6 p-2">
                     
                     <section className="mb-8">
-    <h2 className="text-2xl font-extrabold text-teal-900 mb-4">
-        Our Collective Impact: ESCT Funds Disbursed
+    <h2 className="text-3xl font-bold text-teal-900 mb-8">
+        Our Collective Impact
     </h2>
-    <div className="rounded-3xl bg-teal-700 text-white p-6 shadow-xl transform hover:scale-[1.01] transition-transform duration-300 ease-out">
+    <div className="rounded-3xl bg-teal-700 text-white p-4 sm:p-6 shadow-xl transform hover:scale-[1.01] transition-transform duration-300 ease-out">
         
-        <p className="text-lg font-semibold opacity-80 uppercase tracking-wider mb-2">Total No. of Donations Till Date</p>
-        <p className="text-center text-4xl sm:text-4xl font-extrabold mt-3">
-            <span className="text-white text-opacity-90">1,78,950</span>
-        </p>
+        {/* Analog Meter Style Total Donations */}
+        <div className="text-center mb-6 sm:mb-8">
+            <p className="text-base sm:text-lg font-semibold opacity-80 uppercase tracking-wider mb-4">
+                Total No. of Donations Till Date
+            </p>
+            
+            {/* Meter Container */}
+            <div className="relative bg-teal-800/30 rounded-2xl p-4 sm:p-6 border-2 border-teal-500/50 mx-auto max-w-md">
+                {/* Meter Scale Lines */}
+                <div className="absolute top-0 left-0 right-0 h-4 flex justify-between px-4">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="w-px h-2 bg-teal-400/50"></div>
+                    ))}
+                </div>
+                
+                {/* Main Number Display */}
+                <div className="relative z-10">
+                    <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-teal-100 mb-2 tracking-tight">
+                        1,78,950
+                    </div>
+                    
+                    {/* Animated Meter Needle Effect */}
+                    <div className="flex items-center justify-center space-x-2 mb-3">
+                        <div className="w-8 h-1 bg-gradient-to-r from-green-400 to-yellow-400 rounded-full"></div>
+                        <div className="text-xs text-teal-300 font-semibold">ACTIVE METER</div>
+                        <div className="w-8 h-1 bg-gradient-to-r from-yellow-400 to-green-400 rounded-full"></div>
+                    </div>
+                    
+                    {/* Progress Bar Style */}
+                    <div className="w-full bg-teal-900/50 rounded-full h-3 mb-2 overflow-hidden">
+                        <div 
+                            className="bg-gradient-to-r from-green-400 via-yellow-400 to-green-400 h-full rounded-full animate-pulse"
+                            style={{ width: '40%' }}
+                        ></div>
+                    </div>
+                    
+                    {/* Scale Labels */}
+                    <div className="flex justify-between text-xs text-teal-300 px-2">
+                        <span>0</span>
+                        <span>100K</span>
+                        <span>200K</span>
+                        <span>500K</span>
+                        <span>1000K</span>
+                    </div>
+                </div>
+                
+                {/* Glowing Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-400/10 to-transparent pointer-events-none"></div>
+            </div>
+            
+            {/* Achievement Badge */}
+            <div className="mt-4 inline-flex items-center space-x-2 bg-teal-600/50 px-4 py-2 rounded-full border border-teal-400/30">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+                <span className="text-sm font-semibold text-teal-100">Milestone Achieved! 🎯</span>
+            </div>
+        </div>
 
-        <div className="mt-8 pt-4 border-t border-teal-500">
-            <p className="text-lg font-semibold mb-3">Breakdown by Claim Type</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-base font-medium">
-                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
-                    <span>Death After Service</span>
-                    <span className="font-bold text-lg text-teal-200">42,300</span>
+        <div className="mt-6 sm:mt-8 pt-4 border-t border-teal-500">
+            <p className="text-base sm:text-lg font-semibold mb-3 text-center sm:text-left">
+                Breakdown by Claim Type
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base font-medium">
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
+                    <span className="text-sm sm:text-base flex items-center">
+                        <div className="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                        Death After Service
+                    </span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">42,300</span>
                 </div>
-                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
-                    <span>Retirement Farewell</span>
-                    <span className="font-bold text-lg text-teal-200">35,650</span>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
+                    <span className="text-sm sm:text-base flex items-center">
+                        <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
+                        Retirement Farewell
+                    </span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">35,650</span>
                 </div>
-                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
-                    <span>Death During Service</span>
-                    <span className="font-bold text-lg text-teal-200">20,100</span>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
+                    <span className="text-sm sm:text-base flex items-center">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                        Death During Service
+                    </span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">20,100</span>
                 </div>
-                <div className="flex justify-between items-center bg-teal-800/50 p-2 rounded-lg">
-                    <span>Other Help Claims</span>
-                    <span className="font-bold text-lg text-teal-200">28,900</span>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
+                    <span className="text-sm sm:text-base flex items-center">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+                        Other Help Claims
+                    </span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">28,900</span>
+                </div>
+            </div>
+            
+            {/* Total Sum */}
+            <div className="mt-4 pt-3 border-t border-teal-500/50 text-center">
+                <div className="inline-flex items-center space-x-2 bg-teal-800/70 px-4 py-2 rounded-lg">
+                    <span className="text-sm font-semibold text-teal-200">Total Impact:</span>
+                    <span className="text-lg font-bold text-white">1,26,950 Donations</span>
                 </div>
             </div>
         </div>
@@ -803,7 +877,43 @@ const memberCategoryCounts = useMemo(() => {
     </div>
 </section>
 <hr className="my-8" />
-                    
+<section className="mb-8">
+    <div className="rounded-3xl bg-teal-700 text-white p-4 sm:p-6 shadow-xl transform hover:scale-[1.01] transition-transform duration-300 ease-out">
+        
+        <p className="text-base sm:text-lg font-semibold opacity-80 uppercase tracking-wider mb-2 text-center sm:text-left">
+             ESCT Funds Disbursed Till Date
+        </p>
+        <p className="text-center text-3xl sm:text-4xl lg:text-5xl font-extrabold mt-3">
+            <span className="text-white text-opacity-90">₹12,78,950</span>
+        </p>
+
+        <div className="mt-6 sm:mt-8 pt-4 border-t border-teal-500">
+            <p className="text-base sm:text-lg font-semibold mb-3 text-center sm:text-left">
+                Breakdown by Claim Type
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base font-medium">
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Death After Service</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹5,42,300</span>
+                </div>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Retirement Farewell</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹3,35,650</span>
+                </div>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Death During Service</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹9,20,100</span>
+                </div>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Other Help Claims</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹1,28,900</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</section>
+                  <hr className="my-8" />  
                     
 
                     <section className="mt-8">
@@ -879,87 +989,87 @@ const memberCategoryCounts = useMemo(() => {
                     </section>
                     
                     <hr className="my-8" />
-                    <section className="mt-8">
+<section className="mt-8">
     <h2 className="text-2xl font-bold text-teal-900 mb-6">Claim Amount Disbursed in each Category</h2>
     
-    <div className="grid grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Retirement Farewell">
-                Retirement Farewell
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Retirement Farewell">
+                <span className="line-clamp-2">Retirement Farewell</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">₹{claimCounts.retirement}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">₹{claimCounts.retirement}</p>
                 </div>
             </div>
         </div>
 
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Death During Service">
-                Death During Service
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Death During Service">
+                <span className="line-clamp-2">Death During Service</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.876c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">₹{claimCounts.deathDuring}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">₹{claimCounts.deathDuring}</p>
                 </div>
             </div>
         </div>
 
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Death After Service">
-                Death After Service
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Death After Service">
+                <span className="line-clamp-2">Death After Service</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">₹{claimCounts.deathAfter}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">₹{claimCounts.deathAfter}</p>
                 </div>
             </div>
         </div>
 
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Daughter's Marriage">
-                Daughter's Marriage
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Daughter's Marriage">
+                <span className="line-clamp-2">Daughter's Marriage</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1014.625 7.5H9.375A2.625 2.625 0 1012 4.875zM21 11.25H3v-3.75a.75.75 0 01.75-.75h16.5a.75.75 0 01.75.75v3.75z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">₹{claimCounts.marriage}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">₹{claimCounts.marriage}</p>
                 </div>
             </div>
         </div>
 
-        <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Medical Claim">
-                Medical Claim
+        <div className="text-center col-span-2 sm:col-span-3 lg:col-span-1">
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Medical Claim">
+                <span className="line-clamp-2">Medical Claim</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">₹{claimCounts.medical}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">₹{claimCounts.medical}</p>
                 </div>
             </div>
         </div>
@@ -970,84 +1080,84 @@ const memberCategoryCounts = useMemo(() => {
 <section className="mt-8">
     <h2 className="text-2xl font-bold text-teal-900 mb-6">Claims at each Category</h2>
     
-    <div className="grid grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Retirement Farewell">
-                Retirement Farewell
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Retirement Farewell">
+                <span className="line-clamp-2">Retirement Farewell</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{memberCategoryCounts.retirement}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">{memberCategoryCounts.retirement}</p>
                 </div>
             </div>
         </div>
 
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Death During Service">
-                Death During Service
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Death During Service">
+                <span className="line-clamp-2">Death During Service</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.876c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{memberCategoryCounts.deathDuring}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">{memberCategoryCounts.deathDuring}</p>
                 </div>
             </div>
         </div>
 
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Death After Service">
-                Death After Service
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Death After Service">
+                <span className="line-clamp-2">Death After Service</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{memberCategoryCounts.deathAfter}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">{memberCategoryCounts.deathAfter}</p>
                 </div>
             </div>
         </div>
 
         <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Daughter's Marriage">
-                Daughter's Marriage
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Daughter's Marriage">
+                <span className="line-clamp-2">Daughter's Marriage</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1014.625 7.5H9.375A2.625 2.625 0 1012 4.875zM21 11.25H3v-3.75a.75.75 0 01.75-.75h16.5a.75.75 0 01.75.75v3.75z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{memberCategoryCounts.marriage}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">{memberCategoryCounts.marriage}</p>
                 </div>
             </div>
         </div>
 
-        <div className="text-center">
-            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8" title="Medical Claim">
-                Medical Claim
+        <div className="text-center col-span-2 sm:col-span-3 lg:col-span-1">
+            <h3 className="text-xs font-semibold text-teal-800 mb-1 h-8 flex items-center justify-center" title="Medical Claim">
+                <span className="line-clamp-2">Medical Claim</span>
             </h3>
-            <div className="p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
-                <div className="flex items-center justify-center space-x-2">
+            <div className="p-2 sm:p-3 rounded-2xl shadow-lg border bg-teal-100 text-teal-800 border-teal-300 transform transition-transform duration-300 hover:scale-105">
+                <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <div className="flex-shrink-0 opacity-70">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
-                    <p className="text-2xl font-bold">{memberCategoryCounts.medical}</p>
+                    <p className="text-lg sm:text-xl lg:text-2xl font-bold">{memberCategoryCounts.medical}</p>
                 </div>
             </div>
         </div>
@@ -1229,8 +1339,8 @@ const memberCategoryCounts = useMemo(() => {
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Amount of Monthly Donations Raised</h2>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="rounded-2xl bg-teal-600 text-white p-6 shadow-xl text-center mb-6 md:col-span-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
+                            <div className="rounded-2xl bg-teal-600 text-white lg:p-6 p-2 shadow-xl text-center mb-6 md:col-span-1">
                                 <p className="text-base font-medium opacity-90">Previous Month</p>
                                 <p className="mt-2 text-4xl sm:text-5xl font-extrabold">
                                     {loading ? (

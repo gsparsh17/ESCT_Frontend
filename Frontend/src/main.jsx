@@ -1,8 +1,10 @@
+// main.jsx
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import AdminRoute from './components/AdminRoute.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Claims from './pages/Claims.jsx'
@@ -11,35 +13,65 @@ import Home from './pages/Home.jsx'
 import DonationDetails from './pages/DonationDetails.jsx'
 import CategoryList from './pages/CategoryList.jsx'
 import Landing from './pages/Landing.jsx'
-import LegalPages from './pages/Static.jsx' // Correctly import the new component
+import LegalPages from './pages/Static.jsx'
 import './index.css'
 import App from './App.jsx'
 import MyDonationQueue from './pages/MyDonationQueue.jsx'
 import MyDonations from './pages/MyDonations.jsx'
 
+// Admin Pages
+import AdminLayout from './components/AdminLayout.jsx'
+import AdminDashboard from './pages/admin/AdminDashboard.jsx'
+import AdminUsers from './pages/admin/AdminUsers.jsx'
+import AdminClaims from './pages/admin/AdminClaims.jsx'
+import AdminReceipts from './pages/admin/AdminReceipts.jsx'
+import AdminSubscriptions from './pages/admin/AdminSubscriptions.jsx'
+import AdminDonationCaps from './pages/admin/AdminDonationCaps.jsx'
+import AdminConfig from './pages/admin/AdminConfig.jsx'
+import AdminLogs from './pages/admin/AdminLogs.jsx'
+
 const router = createBrowserRouter([
- {
- path: '/',
- element: <App />,
- children: [
- { index: true, element: <Landing /> },
- { path: 'legal/:tab', element: <LegalPages /> }, // Use a single route for all legal pages
- { path: 'home', element: <Home /> },
- { path: 'claims/:id', element: <DonationDetails /> },
- { path: 'claims-list', element: <CategoryList /> },
- { path: 'login', element: <Login /> },
- { path: 'register', element: <Register /> },
- {
- element: <ProtectedRoute />,
- children: [
-  { path: 'claims', element: <Claims /> },
-  { path: 'profile', element: <Profile /> },
-  { path: 'donation-queue', element: <MyDonationQueue/>},
-  { path: 'my-donations', element: <MyDonations /> }
- ],
- },
- ],
- },
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      { index: true, element: <Landing /> },
+      { path: 'legal/:tab', element: <LegalPages /> },
+      { path: 'home', element: <Home /> },
+      { path: 'claims/:id', element: <DonationDetails /> },
+      { path: 'claims-list', element: <CategoryList /> },
+      { path: 'login', element: <Login /> },
+      { path: 'register', element: <Register /> },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          { path: 'claims', element: <Claims /> },
+          { path: 'profile', element: <Profile /> },
+          { path: 'donation-queue', element: <MyDonationQueue/> },
+          { path: 'my-donations', element: <MyDonations /> }
+        ],
+      },
+      // Admin Routes
+      {
+        path: 'admin',
+        element: (
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        ),
+        children: [
+          { index: true, element: <AdminDashboard /> },
+          { path: 'users', element: <AdminUsers /> },
+          { path: 'claims', element: <AdminClaims /> },
+          { path: 'receipts', element: <AdminReceipts /> },
+          { path: 'subscriptions', element: <AdminSubscriptions /> },
+          { path: 'donation-caps', element: <AdminDonationCaps /> },
+          { path: 'config', element: <AdminConfig /> },
+          { path: 'logs', element: <AdminLogs /> },
+        ],
+      },
+    ],
+  },
 ])
 
 createRoot(document.getElementById('root')).render(

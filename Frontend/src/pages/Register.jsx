@@ -432,10 +432,16 @@ const Register = () => {
       if (profilePhoto && profilePhoto[0]) formData.append('profilePhoto', profilePhoto[0]);
       if (aadhaarDocument && aadhaarDocument[0]) formData.append('aadhaarDocument', aadhaarDocument[0]);
 
-      await register(formData); 
-      navigate('/home');
+      const user = await register(formData);
+      
+      // Handle navigation after successful registration
+      if (user.isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/home', { replace: true });
+      }
     } catch (e) {
-      setErrors({ form: e?.response?.data?.message || e.message || 'Registration failed.' });
+      setError(e.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

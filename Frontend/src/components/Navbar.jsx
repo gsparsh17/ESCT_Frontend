@@ -2,15 +2,19 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FaBars, FaTimes, FaBell } from 'react-icons/fa'; // Import Bell icon
+import { FaBars, FaTimes, FaBell, FaUserShield } from 'react-icons/fa';
 import { getAllUsers } from '../lib/api/users';
 
 export default function Navbar() {
-  const { token, logout } = useAuth();
+  const { token, logout, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true); // Set this based on your logic
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/', { replace: true });
+  };
 
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -18,7 +22,7 @@ export default function Navbar() {
 
   const handleLinkClick = () => setOpen(false);
 
-  // Mock notifications data - replace with actual data from your API
+  // Mock notifications data
   const notifications = [
     { id: 1, message: 'Your donation for Retirement Farewell has been processed', time: '2 hours ago', read: false },
     { id: 2, message: 'New claim submitted for Death During Service', time: '1 day ago', read: true },
@@ -36,7 +40,20 @@ export default function Navbar() {
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/claims" onClick={handleLinkClick}>Claims</Link>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/profile" onClick={handleLinkClick}>Profile</Link>
           <Link className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors" to="/donation-queue" onClick={handleLinkClick}>Donation Queue</Link>
-          <button onClick={() => { logout(); handleLinkClick(); navigate('/') }} className="rounded-full bg-teal-600 px-4 py-2 text-white text-sm font-semibold shadow-md hover:bg-teal-700 transition-colors">Logout</button>
+          
+          {/* Admin Link - Only show for admins */}
+          {user?.isAdmin && (
+            <Link 
+              className="text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors flex items-center" 
+              to="/admin" 
+              onClick={handleLinkClick}
+            >
+              <FaUserShield className="mr-1" />
+              Admin
+            </Link>
+          )}
+          
+          <button onClick={handleLogout} className="rounded-full bg-teal-600 px-4 py-2 text-white text-sm font-semibold shadow-md hover:bg-teal-700 transition-colors">Logout</button>
         </>
       ) : (
         <>
@@ -64,7 +81,6 @@ export default function Navbar() {
       }
     };
 
-    // Attempt to fetch users if token is present or public endpoint is allowed
     fetchUsers();
 
     return () => { mounted = false };
@@ -76,8 +92,8 @@ export default function Navbar() {
         <Link to={token ? '/home' : '/'} className="flex items-center gap-3">
           <img src="/icon2.png" alt="ESCT" className="h-9 w-16" />
           <span className="font-extrabold text-xl text-teal-800 tracking-wider">ESCT</span>
-          <span className="text-lg text-teal-800 tracking-wider">
-            Total Users: {usersLoading ? '...' : usersError ? '—' : users}
+          <span className="lg:text-lg sm:text-sm text-xs text-teal-800 tracking-wider">
+            Total Members: {usersLoading ? '...' : usersError ? '—' : users}
           </span>
         </Link>
 
@@ -92,7 +108,7 @@ export default function Navbar() {
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-teal-700 hover:text-teal-900 transition-colors focus:outline-none"
               >
-                <FaBell className="text-xl" />
+                <FaBell className="lg:text-xl sm:text-sm text-xs" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
                     {unreadCount}
@@ -101,7 +117,7 @@ export default function Navbar() {
               </button>
 
               {/* Notification Dropdown */}
-              {token && showNotifications && (
+              {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-800">Notifications</h3>
@@ -129,10 +145,7 @@ export default function Navbar() {
                   
                   <div className="px-4 py-2 border-t border-gray-100">
                     <button 
-                      onClick={() => {
-                        // Mark all as read logic here
-                        setShowNotifications(false);
-                      }}
+                      onClick={() => setShowNotifications(false)}
                       className="text-sm text-teal-600 hover:text-teal-800 font-medium w-full text-center py-1"
                     >
                       Mark all as read
@@ -153,7 +166,7 @@ export default function Navbar() {
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-teal-700 hover:text-teal-900 transition-colors focus:outline-none"
               >
-                <FaBell className="text-xl" />
+                <FaBell className="lg:text-xl sm:text-sm text-sm" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
                     {unreadCount}
@@ -190,10 +203,7 @@ export default function Navbar() {
                   
                   <div className="px-4 py-2 border-t border-gray-100">
                     <button 
-                      onClick={() => {
-                        // Mark all as read logic here
-                        setShowNotifications(false);
-                      }}
+                      onClick={() => setShowNotifications(false)}
                       className="text-sm text-teal-600 hover:text-teal-800 font-medium w-full text-center py-1"
                     >
                       Mark all as read
