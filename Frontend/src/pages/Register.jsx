@@ -29,8 +29,9 @@ const Register = () => {
   const [userType, setUserType] = useState('EMPLOYEE');
   const [ehrmsCode, setEhrmsCode] = useState('');
   const [pensionerNumber, setPensionerNumber] = useState('');
-  const [password, setPassword] = useState('');
-  
+  // Add this with other password state declarations
+const [password, setPassword] = useState('');
+const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [sex, setSex] = useState('MALE');
@@ -202,9 +203,17 @@ const Register = () => {
         isValid = false;
       }
       if (!password.trim()) {
-        newErrors.password = 'Password is required.';
-        isValid = false;
-      }
+    newErrors.password = 'Password is required.';
+    isValid = false;
+  }
+  if (!confirmPassword.trim()) {
+    newErrors.confirmPassword = 'Please confirm your password.';
+    isValid = false;
+  }
+  if (password !== confirmPassword) {
+    newErrors.confirmPassword = 'Passwords do not match.';
+    isValid = false;
+  }
     } else if (currentStep === 1) { 
       // Only validate if field is filled
       if (fullName.trim() && fullName.trim().length < 2) {
@@ -511,6 +520,17 @@ const Register = () => {
             />
             {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
           </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+  <input
+    type="password"
+    className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
+    value={confirmPassword}
+    onChange={(e) => setConfirmPassword(e.target.value)}
+    placeholder="Confirm your password"
+  />
+  {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
+</div>
         </div>
       );
     }
