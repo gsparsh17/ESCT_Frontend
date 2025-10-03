@@ -837,19 +837,19 @@ const memberCategoryCounts = useMemo(() => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base font-medium">
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Death After Service</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹5,42,300</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">42,300</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Retirement Farewell</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹3,35,650</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">35,650</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Death During Service</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹9,20,100</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">92,100</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Other Help Claims</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹1,28,900</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">28,900</span>
                 </div>
             </div>
         </div>
@@ -860,12 +860,62 @@ const memberCategoryCounts = useMemo(() => {
 <section className="mb-8">
     <div className="rounded-3xl bg-teal-700 text-white p-4 sm:p-6 shadow-xl transform hover:scale-[1.01] transition-transform duration-300 ease-out">
         
-        <p className="text-base sm:text-lg font-semibold opacity-80 uppercase tracking-wider mb-2 text-center sm:text-left">
-             ESCT Funds Disbursed Till Date
-        </p>
-        <p className="text-center text-3xl sm:text-4xl lg:text-5xl font-extrabold mt-3">
-            <span className="text-white text-opacity-90">₹12,78,950</span>
-        </p>
+        {/* Analog Meter Style Total Donations */}
+        <div className="text-center mb-6 sm:mb-8">
+            <p className="text-base sm:text-lg font-semibold opacity-80 uppercase tracking-wider mb-4">
+                Total No. of Donations Till Date
+            </p>
+            
+            {/* Meter Container */}
+            <div className="relative bg-teal-800/30 rounded-2xl p-4 sm:p-6 border-2 border-teal-500/50 mx-auto max-w-md">
+                {/* Meter Scale Lines */}
+                <div className="absolute top-0 left-0 right-0 h-4 flex justify-between px-4">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="w-px h-2 bg-teal-400/50"></div>
+                    ))}
+                </div>
+                
+                {/* Main Number Display */}
+                <div className="relative z-10">
+                    <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-teal-100 mb-2 tracking-tight">
+                        ₹12,78,950
+                    </div>
+                    
+                    {/* Animated Meter Needle Effect */}
+                    <div className="flex items-center justify-center space-x-2 mb-3">
+                        <div className="w-8 h-1 bg-gradient-to-r from-green-400 to-yellow-400 rounded-full"></div>
+                        <div className="text-xs text-teal-300 font-semibold">ACTIVE METER</div>
+                        <div className="w-8 h-1 bg-gradient-to-r from-yellow-400 to-green-400 rounded-full"></div>
+                    </div>
+                    
+                    {/* Progress Bar Style */}
+                    <div className="w-full bg-teal-900/50 rounded-full h-3 mb-2 overflow-hidden">
+                        <div 
+                            className="bg-gradient-to-r from-green-400 via-yellow-400 to-green-400 h-full rounded-full animate-pulse"
+                            style={{ width: '55%' }}
+                        ></div>
+                    </div>
+                    
+                    {/* Scale Labels */}
+                    <div className="flex justify-between text-xs text-teal-300 px-2">
+                        <span>₹0</span>
+                        <span>₹500K</span>
+                        <span>₹1000K</span>
+                        <span>₹2000K</span>
+                        <span>₹5000K</span>
+                    </div>
+                </div>
+                
+                {/* Glowing Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-400/10 to-transparent pointer-events-none"></div>
+            </div>
+            
+            {/* Achievement Badge */}
+            {/* <div className="mt-4 inline-flex items-center space-x-2 bg-teal-600/50 px-4 py-2 rounded-full border border-teal-400/30">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+                <span className="text-sm font-semibold text-teal-100">Milestone Achieved! 🎯</span>
+            </div> */}
+        </div>
 
         <div className="mt-6 sm:mt-8 pt-4 border-t border-teal-500">
             <p className="text-base sm:text-lg font-semibold mb-3 text-center sm:text-left">
