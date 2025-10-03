@@ -29,6 +29,7 @@ import AdminSubscriptions from './pages/admin/AdminSubscriptions.jsx'
 import AdminDonationCaps from './pages/admin/AdminDonationCaps.jsx'
 import AdminConfig from './pages/admin/AdminConfig.jsx'
 import AdminLogs from './pages/admin/AdminLogs.jsx'
+import ResetPassword from './components/ResetPassword.jsx'
 
 const router = createBrowserRouter([
   {
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
       { path: 'claims/:id', element: <DonationDetails /> },
       { path: 'claims-list', element: <CategoryList /> },
       { path: 'login', element: <Login /> },
+      { path: 'reset-password', element: <ResetPassword/>},
       { path: 'register', element: <Register /> },
       {
         element: <ProtectedRoute />,

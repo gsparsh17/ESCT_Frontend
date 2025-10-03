@@ -25,3 +25,13 @@ export async function registerUser(payload) {
 	if (!token) throw new Error('Token missing after registration')
 	return token
 }
+
+export async function forgotPassword(ehrmsCode) {
+    const res = await api.post('/auth/forgot-password', { ehrmsCode });
+    return res.data;
+}
+
+export async function resetPassword(token, newPassword) {
+    const res = await api.put('/auth/reset-password', { token, newPassword });
+    return res.data;
+}

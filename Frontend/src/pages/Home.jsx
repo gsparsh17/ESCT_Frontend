@@ -824,10 +824,10 @@ const memberCategoryCounts = useMemo(() => {
             </div>
             
             {/* Achievement Badge */}
-            <div className="mt-4 inline-flex items-center space-x-2 bg-teal-600/50 px-4 py-2 rounded-full border border-teal-400/30">
+            {/* <div className="mt-4 inline-flex items-center space-x-2 bg-teal-600/50 px-4 py-2 rounded-full border border-teal-400/30">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
                 <span className="text-sm font-semibold text-teal-100">Milestone Achieved! 🎯</span>
-            </div>
+            </div> */}
         </div>
 
         <div className="mt-6 sm:mt-8 pt-4 border-t border-teal-500">
@@ -835,41 +835,21 @@ const memberCategoryCounts = useMemo(() => {
                 Breakdown by Claim Type
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base font-medium">
-                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
-                    <span className="text-sm sm:text-base flex items-center">
-                        <div className="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
-                        Death After Service
-                    </span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">42,300</span>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Death After Service</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹5,42,300</span>
                 </div>
-                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
-                    <span className="text-sm sm:text-base flex items-center">
-                        <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
-                        Retirement Farewell
-                    </span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">35,650</span>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Retirement Farewell</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹3,35,650</span>
                 </div>
-                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
-                    <span className="text-sm sm:text-base flex items-center">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                        Death During Service
-                    </span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">20,100</span>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Death During Service</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹9,20,100</span>
                 </div>
-                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-4 rounded-lg hover:bg-teal-800/70 transition-colors">
-                    <span className="text-sm sm:text-base flex items-center">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
-                        Other Help Claims
-                    </span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200 bg-teal-900/50 px-2 py-1 rounded">28,900</span>
-                </div>
-            </div>
-            
-            {/* Total Sum */}
-            <div className="mt-4 pt-3 border-t border-teal-500/50 text-center">
-                <div className="inline-flex items-center space-x-2 bg-teal-800/70 px-4 py-2 rounded-lg">
-                    <span className="text-sm font-semibold text-teal-200">Total Impact:</span>
-                    <span className="text-lg font-bold text-white">1,26,950 Donations</span>
+                <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
+                    <span className="text-sm sm:text-base">Other Help Claims</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹1,28,900</span>
                 </div>
             </div>
         </div>
