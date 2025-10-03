@@ -863,7 +863,7 @@ const memberCategoryCounts = useMemo(() => {
         {/* Analog Meter Style Total Donations */}
         <div className="text-center mb-6 sm:mb-8">
             <p className="text-base sm:text-lg font-semibold opacity-80 uppercase tracking-wider mb-4">
-                Total No. of Donations Till Date
+                Total Amount Disbursed By ESCT
             </p>
             
             {/* Meter Container */}
