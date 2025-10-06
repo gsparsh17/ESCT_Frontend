@@ -19,7 +19,7 @@ const processCalendarData = (events) => {
     const calendar = {};
     let totalDonations = 0;
 
-    events.forEach(event => {
+    events?.forEach(event => {
         // Handle YYYY-MM format
         const [year, monthIndex] = event.monthYear.split('-').map(v => parseInt(v)); 
         
@@ -208,7 +208,7 @@ const ClaimCard = ({ claim, type }) => {
     };
 
     return (
-        <div className="flex p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex-row items-center justify-between space-x-3">
+        <div className="flex lg:p-4 p-2 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex-row items-center justify-between space-x-3">
            <div className='w-1/3'>
            {displayClaim.beneficiary.photoUrl && (
                                 <img
@@ -227,7 +227,7 @@ const ClaimCard = ({ claim, type }) => {
                 </h4>
 
                 {!isOutgoing && displayClaim.beneficiary && (
-                    <div className="mt-4 border-t pt-3">
+                    <div className="lg:mt-4 mt-2 border-t lg:pt-3 pt-1">
                         <h5 className="text-sm font-semibold text-gray-700 mb-2">Beneficiary Details</h5>
                         <div className="flex items-center space-x-3">
                             <div className="text-sm text-gray-600">
@@ -290,7 +290,7 @@ const ClaimCard2 = ({ claim, type }) => {
         <div className="flex p-4 w-full h-full rounded-2xl bg-white border border-gray-100 shadow-md flex-row items-center justify-between space-x-4">
             
             {/* Beneficiary Photo Section */}
-            <div className="w-1/2 flex-shrink-0 relative aspect-square flex-col items-center justify-center"> {/* Added aspect-square for consistent photo sizing */}
+            <div className="lg:w-1/2 w-1/3 flex-shrink-0 relative aspect-square flex-col items-center justify-center"> {/* Added aspect-square for consistent photo sizing */}
                 {!isOutgoing && displayClaim.beneficiary && displayClaim.beneficiary.photoUrl && (
                     <>
                         {/* Base Photo */}
@@ -304,7 +304,7 @@ const ClaimCard2 = ({ claim, type }) => {
                                 <img
                                     src="/images/garland.png" // Adjust path as needed
                                     alt="Garland"
-                                    className="absolute inset-0 -top-5 w-full h-full object-contain z-10"
+                                    className="absolute inset-0 lg:-top-5 -top-8 w-full h-full object-contain z-10"
                                 />
                             </>
                         )}
@@ -314,7 +314,7 @@ const ClaimCard2 = ({ claim, type }) => {
                                 <img
                                     src="/images/party-popper.png" // Adjust path as needed
                                     alt="Party Popper"
-                                    className="absolute top-28 left-0 w-1/2 h-auto object-contain z-10 transform translate-x-1 -translate-y-1" // Position bottom-left
+                                    className="absolute lg:top-28 top-12 left-0 w-1/2 h-auto object-contain z-10 transform translate-x-1 -translate-y-1" // Position bottom-left
                                 />
                             </>
                         )}
@@ -322,7 +322,7 @@ const ClaimCard2 = ({ claim, type }) => {
                 )}
                         {isDeathClaim && (
                                 <div className="flex flex-col items-center mt-2 justify-center z-20 rounded-xl">
-                                    <p className="text-red text-sm font-bold px-4 py-1 rounded-lg tracking-wider">
+                                    <p className="text-red text-sm font-bold py-1 rounded-lg tracking-wider">
                                         ॐ शांति
                                     </p>
                                     <p className="text-gray-600 bg-teal-100/70 text-xs rounded-md px-2 py-0.5">May their soul rest in peace.</p>
@@ -338,7 +338,7 @@ const ClaimCard2 = ({ claim, type }) => {
                         )}
             </div>
 
-            <div className="w-1/2 flex flex-col justify-between h-full">
+            <div className="lg:w-1/2 w-2/3 flex flex-col justify-between h-full">
                 <div>
                     {/* Category Tag */}
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${categoryClass(claimType)}`}>
@@ -354,8 +354,8 @@ const ClaimCard2 = ({ claim, type }) => {
                         <div className="mt-2">
                             <p className="text-sm text-gray-700 font-medium">
                                 Beneficiary: 
-                                <span className="ml-1 text-base text-gray-800 font-bold">{displayClaim.beneficiary.personalDetails?.fullName}</span>
                             </p>
+                                <span className="ml-1 text-base text-gray-800 font-bold">{displayClaim.beneficiary.personalDetails?.fullName}</span>
                         </div>
                     )}
                 </div>
@@ -377,8 +377,6 @@ const ClaimCard2 = ({ claim, type }) => {
     );
 };
 
-// --- THIS IS THE NEW CSS FOR THE CAROUSELS ---
-// You should move this to your global CSS file (like index.css)
 const CarouselStyles = () => (
     <style>{`
         /* This is the keyframe animation. 
@@ -436,9 +434,7 @@ const CarouselStyles = () => (
     `}</style>
 );
 
-// Simple vertical scroller wrapper: duplicates children and applies vertical animation.
 const VerticalScroller = ({ children, speed = 'normal' }) => {
-    // speed: 'fast' | 'normal' | 'slow' or a number (seconds)
     const className = typeof speed === 'number'
         ? ''
         : speed === 'fast' ? 'animate-scroll-vertical-fast' : speed === 'slow' ? 'animate-scroll-vertical-slow' : 'animate-scroll-vertical';
@@ -457,20 +453,17 @@ const VerticalScroller = ({ children, speed = 'normal' }) => {
 
 const Home = () => {
     const navigate = useNavigate();
-    // Click handler used by header Link to navigate to profile. We keep it here so Link can be used on <a> or other elements.
     const handleLinkClick = (e) => {
-        // allow Link to work normally for accessibility; preventDefault only if anchor used elsewhere
         if (e && e.preventDefault) e.preventDefault();
         navigate('/profile');
     };
     const [allClaims, setAllClaims] = useState([]);
     const [myDonationsQueue, setMyDonationsQueue] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
-        const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState(null);
-    // --- NEW STATE ADDED ---
     const [calendarData, setCalendarData] = useState({}); // { year: [month events] }
-     const [myDonations, setMyDonations] = useState([]);
+    const [myDonations, setMyDonations] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -498,18 +491,20 @@ const Home = () => {
         };
     }, [currentUser]);
 
-    const totalUserContribution = useMemo(() => {
-        if (!myDonations || myDonations.length === 0) {
+   const totalUserContribution = useMemo(() => {
+        if (!myDonations || !Array.isArray(myDonations) || myDonations.length === 0) {
             return 0;
         }
-        // Use reduce to sum the 'amount' of all 'COMPLETED' donations
+        // Safely use reduce now that myDonations is guaranteed to be an array
         return myDonations.reduce((total, donation) => {
             if (donation.status === 'COMPLETED') {
-                return total + donation.amount;
+                // Ensure donation.amount is a number before summing
+                return total + (typeof donation.amount === 'number' ? donation.amount : 0);
             }
             return total;
         }, 0);
-    }, [myDonations]); 
+    }, [myDonations]);
+
 const sumClaimsRequestedAmount = (claims) => {
     return claims.reduce((sum, claim) => sum + (claim.amountRequested || 0), 0);
 };
@@ -534,7 +529,6 @@ const claimCounts = useMemo(() => {
         deathDuring: sumClaimsRequestedAmount(deathDuringClaims),
         medical: sumClaimsRequestedAmount(medicalClaims),
         marriage: sumClaimsRequestedAmount(marriageClaims),
-        // Calculate the total sum of all claims requested amounts
         total: sumClaimsRequestedAmount(allClaims)
     };
 }, [allClaims]);
@@ -547,7 +541,7 @@ const memberCategoryCounts = useMemo(() => {
 
     const categoryMap = new Map();
 
-    allClaims.forEach(claim => {
+    (allClaims||[]).forEach(claim => {
         const type = claim.type;
         const beneficiaryId = claim.beneficiary?._id || claim.beneficiary?.ehrmsCode;
 
@@ -575,36 +569,63 @@ const memberCategoryCounts = useMemo(() => {
         return `/claims-list?category=${encodedCategory}`;
     }, []);
 
-    const fetchData = useCallback(async () => {
+const fetchData = useCallback(async () => {
         try {
             setError(null);
             setLoading(true);
             
-            // Fetch multiple data sources concurrently
-            const [user, claimsData, donationQueueData, calendarEvents, userDonations] = await Promise.all([
+            // 1. Use Promise.allSettled to fetch all data concurrently
+            const results = await Promise.allSettled([
                 getMe(),
                 fetchAllClaims(), 
                 getDonationQueue(),
-                getDonationCalendar(), // Fetch the calendar data
-                getMyDonations() // Add the new API call here
+                getDonationCalendar(),
+                getMyDonations() // This API is suspected of returning a non-array object on success
             ]);
 
-            setCurrentUser(user);
+            // 2. Extract values safely using status check
+            const user = results[0].status === 'fulfilled' ? results[0].value : null;
+            const claimsData = results[1].status === 'fulfilled' ? results[1].value : [];
+            const donationQueueData = results[2].status === 'fulfilled' ? results[2].value : [];
+            const calendarEvents = results[3].status === 'fulfilled' ? results[3].value : null;
             
-            if (user) {
-                setAllClaims(claimsData);
-                setMyDonationsQueue(donationQueueData);
-                setMyDonations(userDonations); 
-                console.log(claimsData)
+            // --- TARGET FIX: Safely handling myDonations (userDonations) ---
+            let userDonations = [];
+            if (results[4].status === 'fulfilled') {
+                const apiValue = results[4].value;
                 
-                // Process and set calendar data
-                const { calendar } = processCalendarData(calendarEvents);
-                setCalendarData(calendar);
-
+                // Assuming the API returns an object like { data: [...] } or just the array [...]
+                // We check if it's an array, or if it's an object containing a 'data' array.
+                if (Array.isArray(apiValue)) {
+                    userDonations = apiValue;
+                } else if (apiValue && typeof apiValue === 'object' && Array.isArray(apiValue.data)) {
+                    userDonations = apiValue.data;
+                } else if (apiValue && typeof apiValue === 'object' && !Array.isArray(apiValue)) {
+                    // If it's an object but not the array we expect, default to an empty array.
+                    userDonations = []; 
+                }
             }
+            // -------------------------------------------------------------
+
+            setCurrentUser(user || null);
+            
+            // 3. Set state with the safely extracted values
+            setAllClaims(claimsData);
+            setMyDonationsQueue(donationQueueData);
+            setMyDonations(userDonations); // Use the safely checked array
+            console.log(claimsData);
+            
+            // Process and set calendar data
+            if (calendarEvents) {
+                const { calendar } = processCalendarData(calendarEvents);
+                setCalendarData(calendar || {});
+            }
+
         } catch (e) {
+            // Note: Since Promise.allSettled is used, this catch block is unlikely to run 
+            // unless Promise.allSettled itself throws (e.g., if arguments aren't promises).
             console.error("Home Data Fetch Error:", e);
-            setError('Failed to load dashboard data. Please check your login status.');
+            setError('An unknown error occurred while loading dashboard data.');
         } finally {
             setLoading(false);
         }
@@ -657,7 +678,7 @@ const memberCategoryCounts = useMemo(() => {
                 {claims.length > 1 ? (
                     <VerticalScroller>
                         {claims.map((claim) => (
-                            <div key={claim._id || claim.claimId} className="w-full p-1">
+                            <div key={claim._id || claim.claimId} className="w-full p-2">
                                 <div className="bg-white rounded-lg p-2 border border-gray-100 shadow-sm">
                                     <ClaimCard claim={claim} type="incoming" />
                                 </div>
@@ -665,7 +686,7 @@ const memberCategoryCounts = useMemo(() => {
                         ))}
                     </VerticalScroller>
                 ) : (
-                    <div className="h-64 overflow-y-auto custom-scrollbar space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
+                    <div className="h-64 overflow-y-auto custom-scrollbar space-y-3 p-2 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
                         {claims.length > 0 ? (
                             claims.slice(0, 3).map((claim) => (
                                 <div key={claim._id || claim.claimId} className="w-full">
@@ -693,7 +714,7 @@ const memberCategoryCounts = useMemo(() => {
                     <VerticalScroller>
                         {claims.map((claim) => (
                             <div key={claim._id || claim.claimId} className="w-full p-1">
-                                <div className="bg-white rounded-lg p-2 border border-gray-100 shadow-sm">
+                                <div className="bg-white rounded-lg p-1 border border-gray-100 shadow-sm">
                                     <ClaimCard2 claim={claim} type="incoming" />
                                 </div>
                             </div>
@@ -725,7 +746,7 @@ const memberCategoryCounts = useMemo(() => {
         return (
             <CategoryWindowLinkWrapper categoryName={categoryName}>
                 <h3 className="text-lg font-semibold text-teal-800 mb-2">{title}</h3>
-                <div className="h-64 overflow-y-auto custom-scrollbar space-y-3 p-1 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
+                <div className="h-64 overflow-y-auto custom-scrollbar space-y-3 p-2 rounded-lg bg-white border border-gray-200 snap-y scroll-py-2">
                     {filteredDonations.length > 0 ? (
                         filteredDonations.slice(0, 3).map((donation) => (
                             <div key={donation._id || donation.claimId._id} className="w-full">
@@ -745,11 +766,9 @@ const memberCategoryCounts = useMemo(() => {
 
     return (
         <div className="min-h-screen pb-12 lg:-m-6 -m-2">
-            {/* --- NEW CSS ADDED HERE --- */}
             <CarouselStyles />
 
             <div className="rounded-b-3xl bg-gradient-to-br from-teal-500 to-teal-700 text-white lg:p-6 p-2 shadow-lg">
-                {/* Header is clickable - navigates to Profile */}
                 <Link to="/profile" onClick={handleLinkClick} className="max-w-7xl mx-auto flex items-center gap-4 no-underline">
                     <img
                         src={currentUser?.photoUrl || 'https://placehold.co/100x100/5eead4/115e59?text=JD'}
@@ -773,35 +792,29 @@ const memberCategoryCounts = useMemo(() => {
     </h2>
     <div className="rounded-3xl bg-teal-700 text-white p-4 sm:p-6 shadow-xl transform hover:scale-[1.01] transition-transform duration-300 ease-out">
         
-        {/* Analog Meter Style Total Donations */}
         <div className="text-center mb-6 sm:mb-8">
             <p className="text-base sm:text-lg font-semibold opacity-80 uppercase tracking-wider mb-4">
                 Total No. of Donations Till Date
             </p>
             
-            {/* Meter Container */}
             <div className="relative bg-teal-800/30 rounded-2xl p-4 sm:p-6 border-2 border-teal-500/50 mx-auto max-w-md">
-                {/* Meter Scale Lines */}
                 <div className="absolute top-0 left-0 right-0 h-4 flex justify-between px-4">
                     {[...Array(6)].map((_, i) => (
                         <div key={i} className="w-px h-2 bg-teal-400/50"></div>
                     ))}
                 </div>
                 
-                {/* Main Number Display */}
                 <div className="relative z-10">
                     <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-teal-100 mb-2 tracking-tight">
                         1,78,950
                     </div>
                     
-                    {/* Animated Meter Needle Effect */}
                     <div className="flex items-center justify-center space-x-2 mb-3">
                         <div className="w-8 h-1 bg-gradient-to-r from-green-400 to-yellow-400 rounded-full"></div>
                         <div className="text-xs text-teal-300 font-semibold">ACTIVE METER</div>
                         <div className="w-8 h-1 bg-gradient-to-r from-yellow-400 to-green-400 rounded-full"></div>
                     </div>
                     
-                    {/* Progress Bar Style */}
                     <div className="w-full bg-teal-900/50 rounded-full h-3 mb-2 overflow-hidden">
                         <div 
                             className="bg-gradient-to-r from-green-400 via-yellow-400 to-green-400 h-full rounded-full animate-pulse"
@@ -809,7 +822,6 @@ const memberCategoryCounts = useMemo(() => {
                         ></div>
                     </div>
                     
-                    {/* Scale Labels */}
                     <div className="flex justify-between text-xs text-teal-300 px-2">
                         <span>0</span>
                         <span>100K</span>
@@ -819,15 +831,9 @@ const memberCategoryCounts = useMemo(() => {
                     </div>
                 </div>
                 
-                {/* Glowing Effect */}
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-400/10 to-transparent pointer-events-none"></div>
             </div>
             
-            {/* Achievement Badge */}
-            {/* <div className="mt-4 inline-flex items-center space-x-2 bg-teal-600/50 px-4 py-2 rounded-full border border-teal-400/30">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-                <span className="text-sm font-semibold text-teal-100">Milestone Achieved! 🎯</span>
-            </div> */}
         </div>
 
         <div className="mt-6 sm:mt-8 pt-4 border-t border-teal-500">
@@ -971,7 +977,7 @@ const memberCategoryCounts = useMemo(() => {
 
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Current Claims (Benefeciaries)</h2>
-                        <div className="flex flex-col sm:flex-row -m-2">
+                        <div className="flex flex-col sm:flex-row">
                             <CategorySliderWindow2
                                 title="Retirement Farewell"
                                 claims={filterClaimsByType(ongoingClaims, 'Retirement Farewell')}
@@ -996,7 +1002,7 @@ const memberCategoryCounts = useMemo(() => {
                     <hr className="my-8" />
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Upcoming Claims (Pending Verification)</h2>
-                        <div className="flex flex-col sm:flex-row -m-2">
+                        <div className="flex flex-col sm:flex-row">
                             <CategorySliderWindow
                                 title="Retirement Farewell"
                                 claims={filterClaimsByType(upcomingClaims, 'Retirement Farewell')}

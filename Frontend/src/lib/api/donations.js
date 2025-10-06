@@ -9,7 +9,7 @@ export async function getDonationQueue() {
 
 export async function getMe() {
     const res = await api.get('/auth/me');
-    return res.data?.data;
+    return res.data?.data ?? null;
 }
 
 export async function createDonationOrder(donationId) {
@@ -28,11 +28,6 @@ export async function removeDonationFromQueue(donationId) {
 }
 
 export const getMyDonations = async () => {
-    try {
         const { data } = await api.get('/donations');
-        return data.data; 
-    } catch (error) {
-        console.error("Failed to fetch user's donations:", error);
-        throw error;
-    }
+        return data.data ?? [];
 };
