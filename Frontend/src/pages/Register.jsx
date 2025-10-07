@@ -185,6 +185,9 @@ const Register = () => {
         setPensionerNumber('');
     }
   };
+          const commonClasses = "mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4";
+        const labelClasses = "block text-sm font-medium text-gray-700";
+        const inputClasses = "mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed";
 
   const validateStep = () => {
     const newErrors = {};
@@ -919,7 +922,7 @@ const Register = () => {
                         />
                         {errors[`nomineeAccount${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeAccount${index}`]}</p>}
                     </div>
-                    <div><label className={labelClasses}>Confirm A/C Number</label><input type="text" value={nominee.bankDetails.confirmAccountNumber || ''} onChange={e => handleNomineeChange('confirmAccountNumber', e.target.value, true)} className={inputClasses} /></div>
+                    <div><label className={labelClasses}>Confirm A/C Number</label><input type="text" value={nominee.confirmAccountNumber || ''} onChange={e => handleNomineeChange('confirmAccountNumber', e.target.value, true)} className={inputClasses} /></div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">IFSC Code</label>
                         <input
