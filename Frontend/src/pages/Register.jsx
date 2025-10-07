@@ -29,9 +29,8 @@ const Register = () => {
   const [userType, setUserType] = useState('EMPLOYEE');
   const [ehrmsCode, setEhrmsCode] = useState('');
   const [pensionerNumber, setPensionerNumber] = useState('');
-  // Add this with other password state declarations
-const [password, setPassword] = useState('');
-const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [sex, setSex] = useState('MALE');
@@ -39,10 +38,13 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [profilePhoto, setProfilePhoto] = useState(null);
-  const [aadhaarDocument, setAadhaarDocument] = useState(null);
+  // Updated: Separate files for front and back Aadhaar
+  const [aadhaarFront, setAadhaarFront] = useState(null);
+  const [aadhaarBack, setAadhaarBack] = useState(null);
+  
   // Main User Bank Details
   const [accountNumber, setAccountNumber] = useState('');
-  const [confirmAccountNumber, setConfirmAccountNumber] = useState(''); // <--- ADDED
+  const [confirmAccountNumber, setConfirmAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
   const [bankName, setBankName] = useState('');
 
@@ -52,11 +54,11 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
   const [empOrganisation, setEmpOrganisation] = useState('');
   const [empDepartment, setEmpDepartment] = useState('');
   const [empDesignation, setEmpDesignation] = useState('');
-  const [empDoj, setEmpDoj] = useState('');
+  const [empDoj, setEmpDoj] = useState(null);
 
   const [apiStates, setApiStates] = useState([]);
   const [apiCities, setApiCities] = useState([]);
-  const [selectedStateCode, setSelectedStateCode] = useState(''); // For API calls
+  const [selectedStateCode, setSelectedStateCode] = useState('');
   const [isApiLoading, setIsApiLoading] = useState(false);
 
   // Nominee Details
@@ -68,6 +70,17 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
 
   const orgOptions = organisations.map((org) => ({ label: org, value: org }));
   const deptOptions = departments.map((dept) => ({ label: dept, value: dept }));
+
+  const RELATION_OPTIONS = [
+    'Spouse',
+    'Son',
+    'Daughter',
+    'Father',
+    'Mother',
+    'Brother',
+    'Sister',
+    'Other'
+  ];
 
   const calcAgeFromDob = (isoDate) => {
     const dob = new Date(isoDate);
@@ -88,7 +101,6 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
     const fetchStates = async () => {
         setIsApiLoading(true);
         try {
-          // console.log(CSC_API_KEY)
             const response = await fetch(`${BASE_URL}/countries/${COUNTRY_CODE}/states`, {
                 headers: { 'X-CSCAPI-KEY': CSC_API_KEY }
             });
@@ -109,7 +121,6 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
     fetchStates();
   }, []);
 
-  // 2. Fetch Cities when State is selected
   useEffect(() => {
     if (!selectedStateCode || !CSC_API_KEY ) {
         setApiCities([]);
@@ -129,7 +140,6 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
             }
 
             const cities = await response.json();
-            // Sort cities alphabetically for better UX
             cities.sort((a, b) => a.name.localeCompare(b.name));
             setApiCities(cities);
         } catch (error) {
@@ -143,20 +153,15 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
   }, [selectedStateCode]);
 
   const handleStateChange = (e) => {
-    // e.target.value is the State ISO code (e.g., 'MH')
     setSelectedStateCode(e.target.value); 
-    // Set display name for validation/submission later
     const selectedState = apiStates.find(s => s.iso2 === e.target.value);
     setEmpState(selectedState ? selectedState.name : '');
-
-    // Reset city/district fields when state changes
     setEmpDistrict('');
     setApiCities([]);
   };
 
   // Adjust step flow dynamically for Pensioners
   const finalSteps = useMemo(() => {
-    // If pensioner, skip Step 2 which contains most employment details
     if (userType === 'PENSIONER') {
         return STEP_TITLES.filter((_, index) => index !== 2); 
     }
@@ -165,11 +170,9 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
 
   const handleUserTypeChange = (newType) => {
     setUserType(newType);
-    // Reset step to 0 if changing user type after starting
     if (currentStep > 0) {
       setCurrentStep(0);
     }
-    // Clear employment specific fields if switching to PENSIONER
     if (newType === 'PENSIONER') {
         setEhrmsCode('');
         setEmpState('');
@@ -177,7 +180,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
         setEmpOrganisation('');
         setEmpDepartment('');
         setEmpDesignation('');
-        setEmpDoj('');
+        setEmpDoj(null);
     } else {
         setPensionerNumber('');
     }
@@ -187,9 +190,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
     const newErrors = {};
     let isValid = true;
 
-    // Only validate fields that are filled - no required fields except step 0
     if (currentStep === 0) { 
-      // Step 0 remains required
       if (!empState.trim()) {
         newErrors.empState = 'Employment State is required.';
         isValid = false;
@@ -203,19 +204,18 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
         isValid = false;
       }
       if (!password.trim()) {
-    newErrors.password = 'Password is required.';
-    isValid = false;
-  }
-  if (!confirmPassword.trim()) {
-    newErrors.confirmPassword = 'Please confirm your password.';
-    isValid = false;
-  }
-  if (password !== confirmPassword) {
-    newErrors.confirmPassword = 'Passwords do not match.';
-    isValid = false;
-  }
+        newErrors.password = 'Password is required.';
+        isValid = false;
+      }
+      if (!confirmPassword.trim()) {
+        newErrors.confirmPassword = 'Please confirm your password.';
+        isValid = false;
+      }
+      if (password !== confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match.';
+        isValid = false;
+      }
     } else if (currentStep === 1) { 
-      // Only validate if field is filled
       if (fullName.trim() && fullName.trim().length < 2) {
         newErrors.fullName = 'Full name must be at least 2 characters.';
         isValid = false;
@@ -239,9 +239,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
         newErrors.email = 'Invalid email format.';
         isValid = false;
       }
-    } else if (currentStep === 2 && userType === 'EMPLOYEE') { // Employment & Bank Details (Only for Employee)
-      
-      // Employment details - only validate if filled
+    } else if (currentStep === 2 && userType === 'EMPLOYEE') {
       if (empDistrict.trim() && empDistrict.trim().length < 2) {
         newErrors.empDistrict = 'Employment District must be valid.';
         isValid = false;
@@ -259,7 +257,6 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
         isValid = false;
       }
       
-      // Bank details - only validate if filled
       if (accountNumber.trim() && accountNumber.trim().length < 8) {
         newErrors.accountNumber = 'Account number must be at least 8 digits.';
         isValid = false;
@@ -278,7 +275,6 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
       }
 
     } else if (currentStep === 2 && userType === 'PENSIONER') {
-        // Step 2 for Pensioner only shows bank details - only validate if filled
         if (accountNumber.trim() && accountNumber.trim().length < 8) {
           newErrors.accountNumber = 'Account number must be at least 8 digits.';
           isValid = false;
@@ -296,12 +292,9 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
           isValid = false;
         }
         
-    } else if (currentStep === finalSteps.length - 1) { // Nominee Details (Final Step)
-      // Only validate nominees if at least one exists
+    } else if (currentStep === finalSteps.length - 1) {
       if (nominees.length > 0) {
-        // Validate each nominee that has some data
         nominees.forEach((nominee, index) => {
-          // Only validate if nominee has some data
           const hasNomineeData = nominee.name?.trim() || nominee.relation?.trim() || nominee.dateOfBirth || nominee.aadhaarNumber;
           
           if (hasNomineeData) {
@@ -317,15 +310,17 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
               newErrors[`nomineeDob${index}`] = 'Nominee Date of Birth is required if adding nominee.';
               isValid = false;
             }
-            // Aadhaar is required by nomineeSchema
             if (!nominee.aadhaarNumber || !/^\d{12}$/.test(nominee.aadhaarNumber)) {
               newErrors[`nomineeAadhaar${index}`] = 'Nominee Aadhaar must be 12 digits.';
               isValid = false;
             }
             
-            // Nominee Bank Details validation (required by nomineeSchema)
             if (!nominee.accountNumber?.trim()) {
               newErrors[`nomineeAccount${index}`] = 'Account number is required for nominee.';
+              isValid = false;
+            }
+            if (nominee.accountNumber.trim() && nominee.confirmAccountNumber.trim() && nominee.accountNumber.trim() !== nominee.confirmAccountNumber.trim()) {
+              newErrors[`nomineeConfirmAccount${index}`] = 'Account numbers do not match.';
               isValid = false;
             }
             if (!nominee.bankName?.trim()) {
@@ -355,9 +350,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
     setCurrentStep(prev => prev - 1);
   };
 
-  // New function to handle direct step navigation
   const handleStepClick = (stepIndex) => {
-    // Allow navigation to any step
     if (stepIndex >= 0 && stepIndex < finalSteps.length) {
       setCurrentStep(stepIndex);
     }
@@ -370,11 +363,15 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
         relation: '', 
         dateOfBirth: '', 
         aadhaarNumber: '',
-        accountNumber: '', 
+        accountNumber: '',
+        confirmAccountNumber: '',
         ifscCode: '',      
         bankName: '',      
         branchName: '',    
-        isPrimary: nominees.length === 0 
+        isPrimary: nominees.length === 0,
+        // Add file states for nominee Aadhaar documents
+        aadhaarFront: null,
+        aadhaarBack: null
       }]);
     }
   };
@@ -397,6 +394,13 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
     setNominees(newNominees);
   };
 
+  // Handle nominee file uploads
+  const handleNomineeFileChange = (index, fileType, files) => {
+    const newNominees = [...nominees];
+    newNominees[index][fileType] = files;
+    setNominees(newNominees);
+  };
+
   async function onSubmit() {
     if (!validateStep()) {
       return;
@@ -413,20 +417,6 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
         { state: empState, district: empDistrict, organisation: empOrganisation, department: empDepartment, designation: empDesignation, dateOfJoining: empDoj } : 
         {}; 
 
-      const formattedNominees = nominees.map(n => ({
-        name: n.name,
-        relation: n.relation,
-        dateOfBirth: n.dateOfBirth,
-        aadhaarNumber: n.aadhaarNumber,
-        isPrimary: n.isPrimary,
-        bankDetails: {
-            accountNumber: n.accountNumber,
-            ifscCode: n.ifscCode,
-            bankName: n.bankName,
-            branchName: n.branchName, 
-        }
-      }));
-
       const formData = new FormData();
 
       formData.append('userType', userType);
@@ -437,20 +427,48 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
       formData.append('personalDetails', JSON.stringify(personalDetails));
       formData.append('bankDetails', JSON.stringify(bankDetails));
       formData.append('employmentDetails', JSON.stringify(employmentDetails));
-      formData.append('nominees', JSON.stringify(formattedNominees));
+      
+      // User files
       if (profilePhoto && profilePhoto[0]) formData.append('profilePhoto', profilePhoto[0]);
-      if (aadhaarDocument && aadhaarDocument[0]) formData.append('aadhaarDocument', aadhaarDocument[0]);
+      if (aadhaarFront && aadhaarFront[0]) formData.append('aadhaarFront', aadhaarFront[0]);
+      if (aadhaarBack && aadhaarBack[0]) formData.append('aadhaarBack', aadhaarBack[0]);
+
+      // Handle nominees with their Aadhaar documents
+      const formattedNominees = nominees.map((nominee, index) => ({
+        name: nominee.name,
+        relation: nominee.relation,
+        dateOfBirth: nominee.dateOfBirth,
+        aadhaarNumber: nominee.aadhaarNumber,
+        isPrimary: nominee.isPrimary,
+        bankDetails: {
+            accountNumber: nominee.accountNumber,
+            ifscCode: nominee.ifscCode,
+            bankName: nominee.bankName,
+            branchName: nominee.branchName, 
+        }
+      }));
+
+      formData.append('nominees', JSON.stringify(formattedNominees));
+
+      // Append nominee Aadhaar files with indexed names
+      nominees.forEach((nominee, index) => {
+        if (nominee.aadhaarFront && nominee.aadhaarFront[0]) {
+          formData.append(`nomineeAadhaarFront_${index}`, nominee.aadhaarFront[0]);
+        }
+        if (nominee.aadhaarBack && nominee.aadhaarBack[0]) {
+          formData.append(`nomineeAadhaarBack_${index}`, nominee.aadhaarBack[0]);
+        }
+      });
 
       const user = await register(formData);
       
-      // Handle navigation after successful registration
       if (user.isAdmin) {
         navigate('/admin', { replace: true });
       } else {
         navigate('/home', { replace: true });
       }
     } catch (e) {
-      setError(e.message || 'Registration failed. Please try again.');
+      setErrors({ form: e.message || 'Registration failed. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -459,7 +477,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
   const currentStepTitle = finalSteps[currentStep];
 
   const renderCurrentStep = () => {
-    if (currentStep === 0) { // Account Details
+    if (currentStep === 0) {
       return (
         <div className="space-y-6">
           <div>
@@ -520,22 +538,22 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
             />
             {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
           </div>
-<div>
-  <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-  <input
-    type="password"
-    className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
-    value={confirmPassword}
-    onChange={(e) => setConfirmPassword(e.target.value)}
-    placeholder="Confirm your password"
-  />
-  {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
-</div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <input
+              type="password"
+              className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+            />
+            {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
+          </div>
         </div>
       );
     }
     
-    if (currentStep === 1) { // Personal Details
+    if (currentStep === 1) {
       return (
         <div className="space-y-6">
           <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
@@ -544,7 +562,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
               id="profilePhoto"
               className="hidden"
               accept="image/jpeg,image/png"
-              onChange={(e) =>setProfilePhoto(e.target.files)}
+              onChange={(e) => setProfilePhoto(e.target.files)}
             />
             <label htmlFor="profilePhoto" className="cursor-pointer">
               <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
@@ -554,22 +572,44 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
               <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
             </label>
           </div>
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
-            <input
-              type="file"
-              id="adhaarPhoto"
-              className="hidden"
-              accept="image/jpeg,image/png"
-              onChange={(e) =>setAadhaarDocument(e.target.files)}
-            />
-            <label htmlFor="adhaarPhoto" className="cursor-pointer">
-              <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-700">
-                {aadhaarDocument ? aadhaarDocument[0].name : 'Upload Adhaar Card Photo'}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
-            </label>
+
+          {/* Updated: Separate Aadhaar Front and Back Uploads */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
+              <input
+                type="file"
+                id="aadhaarFront"
+                className="hidden"
+                accept="image/jpeg,image/png"
+                onChange={(e) => setAadhaarFront(e.target.files)}
+              />
+              <label htmlFor="aadhaarFront" className="cursor-pointer">
+                <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-700">
+                  {aadhaarFront ? aadhaarFront[0].name : 'Upload Aadhaar Front'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
+              </label>
+            </div>
+
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
+              <input
+                type="file"
+                id="aadhaarBack"
+                className="hidden"
+                accept="image/jpeg,image/png"
+                onChange={(e) => setAadhaarBack(e.target.files)}
+              />
+              <label htmlFor="aadhaarBack" className="cursor-pointer">
+                <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-700">
+                  {aadhaarBack ? aadhaarBack[0].name : 'Upload Aadhaar Back'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
+              </label>
+            </div>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Full Name</label>
             <input
@@ -647,14 +687,13 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
       );
     }
 
-    if (currentStep === 2) { // Employment & Bank Details (Conditional Content)
+    if (currentStep === 2) {
       return (
         <div className="space-y-6">
           {userType === 'EMPLOYEE' && (
             <>
               <h3 className="text-lg font-medium text-teal-800">Employment Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700">District (City)</label>
                   <div className="relative">
@@ -735,7 +774,6 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
               {errors.accountNumber && <p className="mt-1 text-xs text-red-600">{errors.accountNumber}</p>}
             </div>
             <div>
-              {/* ADDED CONFIRM ACCOUNT NUMBER FIELD */}
               <label className="block text-sm font-medium text-gray-700">Confirm Account Number</label>
               <input
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
@@ -772,7 +810,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
       );
     }
 
-    if (currentStep === finalSteps.length - 1) { // Nominee Details
+    if (currentStep === finalSteps.length - 1) {
       return (
         <div className="space-y-6">
           {nominees.length === 0 && (
@@ -781,6 +819,44 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
           {nominees.map((nominee, index) => (
             <div key={index} className="relative p-6 border border-teal-200 rounded-lg shadow-xl bg-gray-50/50">
               <h4 className="text-base font-bold text-teal-800 border-b border-teal-100 pb-2 mb-4">Nominee {index + 1}</h4>
+              
+              {/* Nominee Aadhaar Document Uploads */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-teal-400 transition-colors">
+                  <input
+                    type="file"
+                    id={`nomineeAadhaarFront_${index}`}
+                    className="hidden"
+                    accept="image/jpeg,image/png"
+                    onChange={(e) => handleNomineeFileChange(index, 'aadhaarFront', e.target.files)}
+                  />
+                  <label htmlFor={`nomineeAadhaarFront_${index}`} className="cursor-pointer">
+                    <FaUpload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-700">
+                      {nominee.aadhaarFront ? nominee.aadhaarFront[0].name : 'Nominee Aadhaar Front'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                  </label>
+                </div>
+
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-teal-400 transition-colors">
+                  <input
+                    type="file"
+                    id={`nomineeAadhaarBack_${index}`}
+                    className="hidden"
+                    accept="image/jpeg,image/png"
+                    onChange={(e) => handleNomineeFileChange(index, 'aadhaarBack', e.target.files)}
+                  />
+                  <label htmlFor={`nomineeAadhaarBack_${index}`} className="cursor-pointer">
+                    <FaUpload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-700">
+                      {nominee.aadhaarBack ? nominee.aadhaarBack[0].name : 'Nominee Aadhaar Back'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                  </label>
+                </div>
+              </div>
+
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Personal Details */}
                 <div className='md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -796,11 +872,12 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Relation</label>
-                        <input
-                            className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
-                            value={nominee.relation}
-                            onChange={(e) => handleNomineeChange(index, 'relation', e.target.value)}
-                            placeholder="e.g., Son, Wife, Father"
+                        <Select
+                            className="mt-1"
+                            options={RELATION_OPTIONS.map(opt => ({ value: opt, label: opt }))}
+                            value={{ value: nominee.relation, label: nominee.relation }}
+                            onChange={(selected) => handleNomineeChange(index, 'relation', selected.value)}
+                            placeholder="Select relation"
                         />
                         {errors[`nomineeRelation${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeRelation${index}`]}</p>}
                     </div>
@@ -827,7 +904,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
                     </div>
                 </div>
 
-                {/* Bank Details - CRITICAL FIX */}
+                {/* Bank Details */}
                 <h4 className="text-sm font-semibold text-teal-800 md:col-span-2 mt-4 pt-2 border-t border-teal-100">Nominee Bank Details</h4>
                 
                 <div className='md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -842,6 +919,7 @@ const [confirmPassword, setConfirmPassword] = useState(''); // Add this line
                         />
                         {errors[`nomineeAccount${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeAccount${index}`]}</p>}
                     </div>
+                    <div><label className={labelClasses}>Confirm A/C Number</label><input type="text" value={nominee.bankDetails.confirmAccountNumber || ''} onChange={e => handleNomineeChange('confirmAccountNumber', e.target.value, true)} className={inputClasses} /></div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">IFSC Code</label>
                         <input

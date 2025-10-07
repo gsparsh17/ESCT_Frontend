@@ -479,7 +479,7 @@ const Home = () => {
         setIsModalOpen(false);
         setModalContent(null);
     }, []);
-    
+
     const { userId, displayName } = useMemo(() => {
         const user = currentUser;
         const id = user?._id || user?.id || user?.userId || user?.ehrmsCode || null;

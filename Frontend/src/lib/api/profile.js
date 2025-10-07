@@ -25,11 +25,15 @@ export async function fetchUserData() {
  * @param {object} data - The updated data for that section.
  * @returns {Promise<object>} The server response (e.g., success message).
  */
-export async function updateProfile(section, data) {
-    // Endpoint adjusted to match the pattern /users/<section>
-    const res = await api.put(`/users/${section}`, data) 
-    console.log(res)
-    return res.data
+// In your lib/api/profile.js
+export async function updateProfile(data) {
+    const res = await api.put(`/auth/update-profile`, data, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+    console.log(res);
+    return res.data;
 }
 
 /**
