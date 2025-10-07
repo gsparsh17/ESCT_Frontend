@@ -1203,14 +1203,13 @@ const fetchData = useCallback(async () => {
 <hr className="my-8" />
  <ImageModal isOpen={isModalOpen} content={modalContent} onClose={closeModal} />
 
-            <section className="mt-8">
+            {/* <section className="mt-8">
                 <h2 className="text-2xl font-bold text-teal-900 mb-4">Gallery</h2>
                 <div
                     className="overflow-x-hidden carousel-container py-2"
                     aria-label="Gallery carousel"
                 >
                     <div className="flex w-max space-x-4 animate-scroll-gallery pause-on-hover">
-                        {/* 3. Original Items */}
                         {galleryImages.map((img) => (
                             <div key={img.id} className="flex-shrink-0 w-72">
                                 <a 
@@ -1234,7 +1233,6 @@ const fetchData = useCallback(async () => {
                                 </a>
                             </div>
                         ))}
-                        {/* 4. DUPLICATE Items (for seamless loop) */}
                         {galleryImages.map((img) => (
                             <div key={`${img.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-72">
                                 <a 
@@ -1261,14 +1259,13 @@ const fetchData = useCallback(async () => {
                         ))}
                     </div>
                 </div>
-            </section>
+            </section> */}
             
             {/* --- LATEST NEWS CAROUSEL (Updated Section) --- */}
-            <section className="mt-8">
+            {/* <section className="mt-8">
                 <h2 className="text-2xl font-bold text-teal-900 mb-4">Latest News & Blog</h2>
                 <div className="overflow-x-hidden carousel-container py-2">
                     <div className="flex w-max space-x-4 animate-scroll-news pause-on-hover">
-                        {/* 3. Original Items */}
                         {staticNews.map((item, index) => (
                             <a 
                             key={index} 
@@ -1297,7 +1294,6 @@ const fetchData = useCallback(async () => {
                             </div>
                             </a>
                         ))}
-                        {/* 4. DUPLICATE Items */}
                         {staticNews.map(item => (
                             <div key={`${item.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                                 <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
@@ -1326,17 +1322,13 @@ const fetchData = useCallback(async () => {
                         ))}
                     </div>
                 </div>
-            </section>
+            </section> */}
                     
-<hr className="my-8" />
-{/* --- TESTIMONIALS CAROUSEL (NEW CSS METHOD) --- */}
+{/* <hr className="my-8" />
 <section className="mt-8">
     <h2 className="text-2xl font-bold text-teal-900 mb-6">Testimonials</h2>
-    {/* 1. Wrapper */}
     <div className="overflow-x-hidden carousel-container py-2">
-        {/* 2. Track */}
         <div className="flex w-max space-x-4 animate-scroll-testimonials pause-on-hover">
-            {/* 3. Original Items */}
             {staticTestimonials.map(item => (
                 <div key={item.id} className="flex-shrink-0 w-80 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col transition-transform duration-300">
                     <svg className="w-10 h-10 text-teal-400 mb-4 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -1352,7 +1344,6 @@ const fetchData = useCallback(async () => {
                     </div>
                 </div>
             ))}
-            {/* 4. DUPLICATE Items */}
             {staticTestimonials.map(item => (
                 <div key={`${item.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col transition-transform duration-300">
                     <svg className="w-10 h-10 text-teal-400 mb-4 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -1370,7 +1361,7 @@ const fetchData = useCallback(async () => {
             ))}
         </div>
     </div>
-</section>
+</section> */}
                     <hr className="my-8" />
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Amount of Monthly Donations Raised</h2>

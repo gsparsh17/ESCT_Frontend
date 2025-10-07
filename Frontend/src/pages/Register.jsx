@@ -720,16 +720,6 @@ const Register = () => {
                   {errors.empDistrict && <p className="mt-1 text-xs text-red-600">{errors.empDistrict}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Organisation</label>
-                  <Select
-                    options={orgOptions}
-                    value={orgOptions.find((o) => o.value === empOrganisation)}
-                    onChange={(selected) => setEmpOrganisation(selected.value)}
-                    placeholder="-- Select Organisation --"
-                    isSearchable
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700">Department</label>
                   <Select
                     options={deptOptions}
@@ -739,6 +729,17 @@ const Register = () => {
                     isSearchable
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Organisation</label>
+                  <Select
+                    options={orgOptions}
+                    value={orgOptions.find((o) => o.value === empOrganisation)}
+                    onChange={(selected) => setEmpOrganisation(selected.value)}
+                    placeholder="-- Select Organisation --"
+                    isSearchable
+                  />
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Designation</label>
                   <input
