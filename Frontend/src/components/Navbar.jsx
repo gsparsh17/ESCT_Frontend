@@ -72,6 +72,9 @@ export default function Navbar() {
       try {
         const all = await getAllUsers();
         if (!mounted) return;
+        if(all.total===0)
+        setUsers(all.total);
+        else
         setUsers(all.total - 1);
       } catch (err) {
         if (!mounted) return;

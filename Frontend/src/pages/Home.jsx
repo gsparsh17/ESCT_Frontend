@@ -483,7 +483,7 @@ const Home = () => {
     const { userId, displayName } = useMemo(() => {
         const user = currentUser;
         const id = user?._id || user?.id || user?.userId || user?.ehrmsCode || null;
-        const name = user?.personalDetails?.fullName || user?.name || user?.ehrmsCode || 'Member';
+        const name = user?.personalDetails?.fullName || user?.name || user?.ehrmsCode || 'Guest';
         
         return { 
             userId: id, 
@@ -771,14 +771,14 @@ const fetchData = useCallback(async () => {
             <div className="rounded-b-3xl bg-gradient-to-br from-teal-500 to-teal-700 text-white lg:p-6 p-2 shadow-lg">
                 <Link to="/profile" onClick={handleLinkClick} className="max-w-7xl mx-auto flex items-center gap-4 no-underline">
                     <img
-                        src={currentUser?.photoUrl || 'https://placehold.co/100x100/5eead4/115e59?text=JD'}
+                        src={currentUser?.photoUrl || 'https://placehold.co/100x100/5eead4/115e59?text=G'}
                         alt={currentUser?.personalDetails?.fullName || displayName || 'avatar'}
                         className="h-16 w-16 rounded-full border-4 border-white/40 shadow-lg object-cover"
                     />
                     <div>
                         <p className="text-lg opacity-90 font-medium">Welcome</p>
                         <p className="lg:text-3xl text-xl font-extrabold">{currentUser?.personalDetails?.fullName || displayName}</p>
-                        <p className="lg:text-xl my-1">ESCT ID: {currentUser?.userId || currentUser?.ehrmsCode || 'ESCT00000003'}</p>
+                        <p className="lg:text-xl my-1">ESCT ID: {currentUser?.userId || currentUser?.ehrmsCode || 'ESCT00000000'}</p>
                     </div>
                 </Link>
             </div>
@@ -806,7 +806,7 @@ const fetchData = useCallback(async () => {
                 
                 <div className="relative z-10">
                     <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-teal-100 mb-2 tracking-tight">
-                        1,78,950
+                        0
                     </div>
                     
                     <div className="flex items-center justify-center space-x-2 mb-3">
@@ -818,7 +818,7 @@ const fetchData = useCallback(async () => {
                     <div className="w-full bg-teal-900/50 rounded-full h-3 mb-2 overflow-hidden">
                         <div 
                             className="bg-gradient-to-r from-green-400 via-yellow-400 to-green-400 h-full rounded-full animate-pulse"
-                            style={{ width: '40%' }}
+                            style={{ width: '0%' }}
                         ></div>
                     </div>
                     
@@ -843,19 +843,19 @@ const fetchData = useCallback(async () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base font-medium">
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Death After Service</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">42,300</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">0</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Retirement Farewell</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">35,650</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">0</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Death During Service</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">92,100</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">0</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Other Help Claims</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">28,900</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">0</span>
                 </div>
             </div>
         </div>
@@ -884,7 +884,7 @@ const fetchData = useCallback(async () => {
                 {/* Main Number Display */}
                 <div className="relative z-10">
                     <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-teal-100 mb-2 tracking-tight">
-                        ₹12,78,950
+                        ₹0
                     </div>
                     
                     {/* Animated Meter Needle Effect */}
@@ -898,7 +898,7 @@ const fetchData = useCallback(async () => {
                     <div className="w-full bg-teal-900/50 rounded-full h-3 mb-2 overflow-hidden">
                         <div 
                             className="bg-gradient-to-r from-green-400 via-yellow-400 to-green-400 h-full rounded-full animate-pulse"
-                            style={{ width: '55%' }}
+                            style={{ width: '0%' }}
                         ></div>
                     </div>
                     
@@ -930,19 +930,19 @@ const fetchData = useCallback(async () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base font-medium">
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Death After Service</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹5,42,300</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹0</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Retirement Farewell</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹3,35,650</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹0</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Death During Service</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹9,20,100</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹0</span>
                 </div>
                 <div className="flex justify-between items-center bg-teal-800/50 p-3 sm:p-2 rounded-lg">
                     <span className="text-sm sm:text-base">Other Help Claims</span>
-                    <span className="font-bold text-base sm:text-lg text-teal-200">₹1,28,900</span>
+                    <span className="font-bold text-base sm:text-lg text-teal-200">₹0</span>
                 </div>
             </div>
         </div>
