@@ -833,7 +833,7 @@ const handleAddNominee = async (e) => {
                     </div>
 
                     {/* Aadhaar display */}
-                    <div className="flex items-center gap-3">
+                    <div className="items-center gap-3 lg:flex hidden">
                         {aadhaarFrontUrl || aadhaarBackUrl ? (
                             <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border">
                                 <div className="flex gap-2">

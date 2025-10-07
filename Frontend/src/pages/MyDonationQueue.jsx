@@ -133,7 +133,7 @@ export default function MyDonationQueue() {
                     <div className="p-10 text-center bg-white rounded-xl shadow-lg border">
                         <p className="text-xl text-gray-500">Your donation queue is empty! 😭</p>
                         <p className="mt-2 text-gray-600">Browse approved claims to add items here.</p>
-                        <a href="/" className="mt-4 inline-block text-teal-600 font-semibold hover:text-teal-800 transition-colors">
+                        <a href="/home" className="mt-4 inline-block text-teal-600 font-semibold hover:text-teal-800 transition-colors">
                             Go to Claims Dashboard →
                         </a>
                     </div>
