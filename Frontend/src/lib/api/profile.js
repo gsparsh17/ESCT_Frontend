@@ -42,7 +42,11 @@ export async function updateProfile(data) {
  * @returns {Promise<object>} The newly added nominee object from the server.
  */
 export async function addNominee(nominee) {
-    const res = await api.post('/nominees', nominee)
+    const res = await api.post('/nominees', nominee, {
+    headers: {
+        'Content-Type': 'multipart/form-data'
+    }
+	})
     console.log(res)
     return res.data?.data
 }
@@ -81,7 +85,11 @@ export async function updateNominee(id, nominee) {
         allowedData.dob = new Date(allowedData.dob).toISOString();
     }
 
-    const res = await api.put(`/nominees/${id}`, allowedData);
+    const res = await api.put(`/nominees/${id}`, allowedData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
     console.log(res);
     return res.data?.data;
 }

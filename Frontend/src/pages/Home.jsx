@@ -119,74 +119,74 @@ const MonthBox = ({ month, status }) => {
 
 
 const staticNews = [
-    { id: 1, title: 'ESCT Reaches New Milestone in Donations', summary: 'The Employee Self Care Team has surpassed a major milestone in total donations collected for members in need.', image: 'https://picsum.photos/seed/news1/600/400' },
-    { id: 2, title: 'Annual General Meeting Announced', summary: 'The Annual General Meeting will be held on December 10, 2025. All members are encouraged to attend.', image: 'https://picsum.photos/seed/news2/600/400' },
-    { id: 3, title: 'New Membership Benefits Roll Out', summary: 'Exciting new benefits for all ESCT members are now live. Check out the new details in your dashboard.', image: 'https://picsum.photos/seed/news3/600/400' },
-    { id: 4, title: 'Volunteer Drive This Weekend', summary: 'Join fellow members this weekend for a community volunteer drive. All skill levels welcome.', image: 'https://picsum.photos/seed/news4/600/400' },
-    { id: 5, title: 'Health Camp Success', summary: 'Our free health camp provided checkups to over 300 members. See the full report and photos.', image: 'https://picsum.photos/seed/news5/600/400' },
-    { id: 6, title: 'Policy Update: Claim Window', summary: 'A small update to claim submission timelines has been published. Please review the guidelines.', image: 'https://picsum.photos/seed/news6/600/400' },
+    // { id: 1, title: 'ESCT Reaches New Milestone in Donations', summary: 'The Employee Self Care Team has surpassed a major milestone in total donations collected for members in need.', image: 'https://picsum.photos/seed/news1/600/400' },
+    // { id: 2, title: 'Annual General Meeting Announced', summary: 'The Annual General Meeting will be held on December 10, 2025. All members are encouraged to attend.', image: 'https://picsum.photos/seed/news2/600/400' },
+    // { id: 3, title: 'New Membership Benefits Roll Out', summary: 'Exciting new benefits for all ESCT members are now live. Check out the new details in your dashboard.', image: 'https://picsum.photos/seed/news3/600/400' },
+    // { id: 4, title: 'Volunteer Drive This Weekend', summary: 'Join fellow members this weekend for a community volunteer drive. All skill levels welcome.', image: 'https://picsum.photos/seed/news4/600/400' },
+    // { id: 5, title: 'Health Camp Success', summary: 'Our free health camp provided checkups to over 300 members. See the full report and photos.', image: 'https://picsum.photos/seed/news5/600/400' },
+    // { id: 6, title: 'Policy Update: Claim Window', summary: 'A small update to claim submission timelines has been published. Please review the guidelines.', image: 'https://picsum.photos/seed/news6/600/400' },
 ];
 
 const staticTestimonials = [
-    {
-        id: 1,
-        name: 'R. K. Sharma',
-        role: 'Retired Member (Batch 1985)',
-        comment: "The ESCT team made my retirement farewell so special. The support from my colleagues was overwhelming. Thank you for everything!",
-        image: 'https://picsum.photos/seed/person1/100/100'
-    },
-    {
-        id: 2,
-        name: 'Anjali P.',
-        role: 'Member',
-        comment: "When my family faced a medical emergency, ESCT was our first line of support. The financial aid was processed quickly and saved us a lot of stress.",
-        image: 'https://picsum.photos/seed/person2/100/100'
-    },
-    {
-        id: 3,
-        name: 'Sunita Devi',
-        role: 'Beneficiary',
-        comment: "After my husband passed away, I was lost. The ESCT community helped me navigate the claims and provided incredible support for my family.",
-        image: 'https://picsum.photos/seed/person3/100/100'
-    }
+    // {
+    //     id: 1,
+    //     name: 'R. K. Sharma',
+    //     role: 'Retired Member (Batch 1985)',
+    //     comment: "The ESCT team made my retirement farewell so special. The support from my colleagues was overwhelming. Thank you for everything!",
+    //     image: 'https://picsum.photos/seed/person1/100/100'
+    // },
+    // {
+    //     id: 2,
+    //     name: 'Anjali P.',
+    //     role: 'Member',
+    //     comment: "When my family faced a medical emergency, ESCT was our first line of support. The financial aid was processed quickly and saved us a lot of stress.",
+    //     image: 'https://picsum.photos/seed/person2/100/100'
+    // },
+    // {
+    //     id: 3,
+    //     name: 'Sunita Devi',
+    //     role: 'Beneficiary',
+    //     comment: "After my husband passed away, I was lost. The ESCT community helped me navigate the claims and provided incredible support for my family.",
+    //     image: 'https://picsum.photos/seed/person3/100/100'
+    // }
 ];
 
 staticTestimonials.push(
-    {
-        id: 4,
-        name: 'Arjun S.',
-        role: 'Member',
-        comment: 'A very helpful organisation. The donation process was transparent and quick.',
-        image: 'https://picsum.photos/seed/person4/100/100'
-    },
-    {
-        id: 5,
-        name: 'Lata M.',
-        role: 'Volunteer',
-        comment: 'Volunteering with ESCT has been a meaningful experience for me and my family.',
-        image: 'https://picsum.photos/seed/person5/100/100'
-    },
-    {
-        id: 6,
-        name: 'Vikram R.',
-        role: 'Beneficiary',
-        comment: 'Support received was timely and helped us during a tough time.',
-        image: 'https://picsum.photos/seed/person6/100/100'
-    }
+    // {
+    //     id: 4,
+    //     name: 'Arjun S.',
+    //     role: 'Member',
+    //     comment: 'A very helpful organisation. The donation process was transparent and quick.',
+    //     image: 'https://picsum.photos/seed/person4/100/100'
+    // },
+    // {
+    //     id: 5,
+    //     name: 'Lata M.',
+    //     role: 'Volunteer',
+    //     comment: 'Volunteering with ESCT has been a meaningful experience for me and my family.',
+    //     image: 'https://picsum.photos/seed/person5/100/100'
+    // },
+    // {
+    //     id: 6,
+    //     name: 'Vikram R.',
+    //     role: 'Beneficiary',
+    //     comment: 'Support received was timely and helped us during a tough time.',
+    //     image: 'https://picsum.photos/seed/person6/100/100'
+    // }
 );
 
 // This is the data for the gallery
 const galleryImages = [
-    { id: 1, seed: 'gallery1' },
-    { id: 2, seed: 'gallery2' },
-    { id: 3, seed: 'gallery3' },
-    { id: 4, seed: 'gallery4' },
-    { id: 5, seed: 'gallery5' },
-    { id: 6, seed: 'gallery6' },
-    { id: 7, seed: 'gallery7' },
-    { id: 8, seed: 'gallery8' },
-    { id: 9, seed: 'gallery9' },
-    { id: 10, seed: 'gallery10' },
+    // { id: 1, seed: 'gallery1' },
+    // { id: 2, seed: 'gallery2' },
+    // { id: 3, seed: 'gallery3' },
+    // { id: 4, seed: 'gallery4' },
+    // { id: 5, seed: 'gallery5' },
+    // { id: 6, seed: 'gallery6' },
+    // { id: 7, seed: 'gallery7' },
+    // { id: 8, seed: 'gallery8' },
+    // { id: 9, seed: 'gallery9' },
+    // { id: 10, seed: 'gallery10' },
 ];
 
 

@@ -40,13 +40,18 @@ const Profile = () => {
             ifscCode: '',
             bankName: '',
             branchName: '',
-        }
+        },
+        // Add file states for new nominee
+        aadhaarFront: null,
+        aadhaarBack: null
     });
 
     const [uploadingFiles, setUploadingFiles] = useState({
         profilePhoto: false,
         aadhaarFront: false,
-        aadhaarBack: false
+        aadhaarBack: false,
+        newNominee: false,
+        editingNominee: false
     });
 
     const clearMessages = useCallback(() => {
@@ -99,35 +104,35 @@ const Profile = () => {
             setLocalBankDetails(prev => ({ ...prev, [field]: value }));
         }
     };
-    // In your frontend Profile component
-const handleFileUpload = async (file, fileType) => {
-    if (!file || !canEditPersonal) return null;
-    
-    setUploadingFiles(prev => ({ ...prev, [fileType]: true }));
-    try {
-        const formData = new FormData();
-        formData.append(fileType, file);
+
+    const handleFileUpload = async (file, fileType) => {
+        if (!file || !canEditPersonal) return null;
         
-        const response = await updateProfile(formData);
-        
-        // Handle response based on file type with new field names
-        if (fileType === 'profilePhoto' && response.data.photoUrl) {
-            return response.data.photoUrl;
-        } else if (fileType === 'aadhaarFront' && response.data.personalDetails?.aadhaarFrontUrl) {
-            return response.data.personalDetails.aadhaarFrontUrl;
-        } else if (fileType === 'aadhaarBack' && response.data.personalDetails?.aadhaarBackUrl) {
-            return response.data.personalDetails.aadhaarBackUrl;
+        setUploadingFiles(prev => ({ ...prev, [fileType]: true }));
+        try {
+            const formData = new FormData();
+            formData.append(fileType, file);
+            
+            const response = await updateProfile(formData);
+            
+            // Handle response based on file type with new field names
+            if (fileType === 'profilePhoto' && response.data.photoUrl) {
+                return response.data.photoUrl;
+            } else if (fileType === 'aadhaarFront' && response.data.personalDetails?.aadhaarFrontUrl) {
+                return response.data.personalDetails.aadhaarFrontUrl;
+            } else if (fileType === 'aadhaarBack' && response.data.personalDetails?.aadhaarBackUrl) {
+                return response.data.personalDetails.aadhaarBackUrl;
+            }
+            
+            return null;
+        } catch (err) {
+            console.error(`File upload error for ${fileType}:`, err);
+            setError(`Failed to upload ${fileType}`);
+            return null;
+        } finally {
+            setUploadingFiles(prev => ({ ...prev, [fileType]: false }));
         }
-        
-        return null;
-    } catch (err) {
-        console.error(`File upload error for ${fileType}:`, err);
-        setError(`Failed to upload ${fileType}`);
-        return null;
-    } finally {
-        setUploadingFiles(prev => ({ ...prev, [fileType]: false }));
-    }
-};
+    };
 
     const handleProfilePhotoChange = async (e) => {
         const file = e.target.files[0];
@@ -143,11 +148,11 @@ const handleFileUpload = async (file, fileType) => {
     const handleAadhaarFrontChange = async (e) => {
         const file = e.target.files[0];
         if (file && canEditPersonal) {
-            const aadhaarUrl = await handleFileUpload(file, 'aadhaarFront');
-            if (aadhaarUrl) {
+            const aadhaarFrontUrl = await handleFileUpload(file, 'aadhaarFront');
+            if (aadhaarFrontUrl) {
                 setUserData(prev => ({ 
                     ...prev, 
-                    personalDetails: { ...prev.personalDetails, aadhaarUrl } 
+                    personalDetails: { ...prev.personalDetails, aadhaarFrontUrl } 
                 }));
                 setSuccessMessage('Aadhaar front updated successfully.');
             }
@@ -179,49 +184,105 @@ const handleFileUpload = async (file, fileType) => {
         }
     };
 
-    // FIXED: Remove file upload for nominees in profile (handle in addNominee/updateNominee separately)
-    const handleAddNominee = async (e) => {
-        e.preventDefault();
-        clearMessages();
-        
-        // Frontend validation for required fields
-        const requiredFields = [
-            newNominee.name, 
-            newNominee.relation,
-        ];
-
-        if (requiredFields.some(field => !field || field.length === 0)) {
-            setError('Please fill all required nominee fields (Name, Relation).');
-            return;
-        }
-        
-        try {
-            const addedNominee = await addNominee(newNominee); 
-            setNominees([...nominees, addedNominee]);
-            
-            // Reset new nominee form
-            setNewNominee({ 
-                name: '', 
-                relation: '', 
-                dateOfBirth: '', 
-                aadhaarNumber: '', 
-                isPrimary: false,
-                bankDetails: { accountNumber: '', ifscCode: '', bankName: '', branchName: '' }
-            });
-
-            setSuccessMessage('Nominee added successfully.');
-        } catch (err) {
-            console.error("Add Nominee Error:", err);
-            const errorMessage = err.message || 'An unknown error occurred while adding the nominee.';
-            setError(`Failed to add nominee: ${errorMessage}`);
-        }
+    // Handle file upload for new nominee
+    const handleNewNomineeFileChange = (fileType, files) => {
+        setNewNominee(prev => ({ ...prev, [fileType]: files }));
     };
+
+    // Handle file upload for editing nominee
+    const handleEditingNomineeFileChange = (fileType, files) => {
+        if (!editingNomineeLocal) return;
+        setEditingNomineeLocal(prev => ({ ...prev, [fileType]: files }));
+    };
+
+const handleAddNominee = async (e) => {
+    e.preventDefault();
+    clearMessages();
+    
+    // Frontend validation for required fields
+    const requiredFields = [
+        newNominee.name, 
+        newNominee.relation,
+    ];
+
+    if (requiredFields.some(field => !field || field.length === 0)) {
+        setError('Please fill all required nominee fields (Name, Relation).');
+        return;
+    }
+    
+    setUploadingFiles(prev => ({ ...prev, newNominee: true }));
+    
+    try {
+        const formData = new FormData();
+        
+        // Append basic nominee data
+        formData.append('name', newNominee.name);
+        formData.append('relation', newNominee.relation);
+        if (newNominee.dateOfBirth) formData.append('dateOfBirth', newNominee.dateOfBirth);
+        if (newNominee.aadhaarNumber) formData.append('aadhaarNumber', newNominee.aadhaarNumber);
+        formData.append('isPrimary', newNominee.isPrimary);
+        
+        // Append bank details as a JSON string (like registration does)
+        const bankDetails = {
+            accountNumber: newNominee.bankDetails.accountNumber,
+            ifscCode: newNominee.bankDetails.ifscCode,
+            bankName: newNominee.bankDetails.bankName,
+            branchName: newNominee.bankDetails.branchName,
+        };
+        formData.append('bankDetails', JSON.stringify(bankDetails));
+        
+        if (newNominee.aadhaarFront && newNominee.aadhaarFront[0]) {
+            formData.append('nomineeAadhaarFront_0', newNominee.aadhaarFront[0]);
+        }
+        if (newNominee.aadhaarBack && newNominee.aadhaarBack[0]) {
+            formData.append('nomineeAadhaarBack_0', newNominee.aadhaarBack[0]);
+        }
+        
+        // Debug: Check FormData contents
+        console.log('FormData entries:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
+        
+        const addedNominee = await addNominee(formData); 
+        setNominees([...nominees, addedNominee]);
+        
+        // Reset new nominee form
+        setNewNominee({ 
+            name: '', 
+            relation: '', 
+            dateOfBirth: '', 
+            aadhaarNumber: '', 
+            isPrimary: false,
+            bankDetails: { 
+                accountNumber: '', 
+                confirmAccountNumber: '', 
+                ifscCode: '', 
+                bankName: '', 
+                branchName: '' 
+            },
+            aadhaarFront: null,
+            aadhaarBack: null
+        });
+
+        setSuccessMessage('Nominee added successfully.');
+    } catch (err) {
+        console.error("Add Nominee Error:", err);
+        const errorMessage = err.message || 'An unknown error occurred while adding the nominee.';
+        setError(`Failed to add nominee: ${errorMessage}`);
+    } finally {
+        setUploadingFiles(prev => ({ ...prev, newNominee: false }));
+    }
+};
 
     const startEditNominee = (nominee) => {
         setEditingNomineeId(nominee._id);
         const localCopy = JSON.parse(JSON.stringify(nominee));
         if (!localCopy.bankDetails) localCopy.bankDetails = {};
         localCopy.bankDetails.confirmAccountNumber = localCopy.bankDetails.accountNumber || '';
+        // Initialize file states for editing
+        localCopy.aadhaarFront = null;
+        localCopy.aadhaarBack = null;
         setEditingNomineeLocal(localCopy);
         clearMessages();
     };
@@ -254,8 +315,33 @@ const handleFileUpload = async (file, fileType) => {
             }
         }
         
+        setUploadingFiles(prev => ({ ...prev, editingNominee: true }));
+        
         try {
-            const updated = await updateNominee(editingNomineeId, editingNomineeLocal);
+            const formData = new FormData();
+            
+            // Append basic nominee data as individual fields
+            formData.append('name', editingNomineeLocal.name);
+            formData.append('relation', editingNomineeLocal.relation);
+            if (editingNomineeLocal.dateOfBirth) formData.append('dateOfBirth', editingNomineeLocal.dateOfBirth);
+            if (editingNomineeLocal.aadhaarNumber) formData.append('aadhaarNumber', editingNomineeLocal.aadhaarNumber);
+            formData.append('isPrimary', editingNomineeLocal.isPrimary);
+            
+            // Append bank details as individual fields
+            if (editingNomineeLocal.bankDetails?.bankName) formData.append('bankDetails[bankName]', editingNomineeLocal.bankDetails.bankName);
+            if (editingNomineeLocal.bankDetails?.accountNumber) formData.append('bankDetails[accountNumber]', editingNomineeLocal.bankDetails.accountNumber);
+            if (editingNomineeLocal.bankDetails?.ifscCode) formData.append('bankDetails[ifscCode]', editingNomineeLocal.bankDetails.ifscCode);
+            if (editingNomineeLocal.bankDetails?.branchName) formData.append('bankDetails[branchName]', editingNomineeLocal.bankDetails.branchName);
+            
+            // Append files if they exist
+            if (editingNomineeLocal.aadhaarFront && editingNomineeLocal.aadhaarFront[0]) {
+            formData.append('aadhaarFront', editingNomineeLocal.aadhaarFront[0]);
+        }
+        if (editingNomineeLocal.aadhaarBack && editingNomineeLocal.aadhaarBack[0]) {
+            formData.append('aadhaarBack', editingNomineeLocal.aadhaarBack[0]);
+        }
+
+            const updated = await updateNominee(editingNomineeId, formData);
             setNominees(prev => prev.map(n => (n._id === editingNomineeId ? updated : n)));
             setSuccessMessage('Nominee updated successfully.');
             setEditingNomineeId(null);
@@ -280,6 +366,8 @@ const handleFileUpload = async (file, fileType) => {
             }
 
             setError(`Failed to update nominee: ${errorMessage}${validationSummary ? ' — ' + validationSummary : ''}`);
+        } finally {
+            setUploadingFiles(prev => ({ ...prev, editingNominee: false }));
         }
     };
 
@@ -468,7 +556,7 @@ const handleFileUpload = async (file, fileType) => {
                         </div>
                     </div>
                 );
-            // ... rest of the renderContent remains the same
+
             case 'Employment':
                 return (
                     <div>
@@ -496,6 +584,7 @@ const handleFileUpload = async (file, fileType) => {
                         </div>
                     </div>
                 );
+
             case 'Bank':
                 return (
                     <div>
@@ -514,6 +603,7 @@ const handleFileUpload = async (file, fileType) => {
                         </div>
                     </div>
                 );
+
             case 'Nominees':
                 return (
                     <div>
@@ -523,6 +613,45 @@ const handleFileUpload = async (file, fileType) => {
                                 <div key={n._id} className="bg-gray-50 p-4 rounded-lg border">
                                     {editingNomineeId === n._id ? (
                                         <div>
+                                            {/* Nominee Aadhaar Document Uploads for Editing */}
+                                            <div className="mb-4">
+                                                <label className={labelClasses}>Aadhaar Documents (Optional)</label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
+                                                        <input
+                                                            type="file"
+                                                            id={`editNomineeAadhaarFront_${n._id}`}
+                                                            className="hidden"
+                                                            accept="image/jpeg,image/png"
+                                                            onChange={(e) => handleEditingNomineeFileChange('aadhaarFront', e.target.files)}
+                                                        />
+                                                        <label htmlFor={`editNomineeAadhaarFront_${n._id}`} className="cursor-pointer">
+                                                            <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                            <p className="text-sm font-medium text-gray-700">
+                                                                {editingNomineeLocal.aadhaarFront ? editingNomineeLocal.aadhaarFront[0].name : 'Update Aadhaar Front'}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                        </label>
+                                                    </div>
+                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
+                                                        <input
+                                                            type="file"
+                                                            id={`editNomineeAadhaarBack_${n._id}`}
+                                                            className="hidden"
+                                                            accept="image/jpeg,image/png"
+                                                            onChange={(e) => handleEditingNomineeFileChange('aadhaarBack', e.target.files)}
+                                                        />
+                                                        <label htmlFor={`editNomineeAadhaarBack_${n._id}`} className="cursor-pointer">
+                                                            <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                            <p className="text-sm font-medium text-gray-700">
+                                                                {editingNomineeLocal.aadhaarBack ? editingNomineeLocal.aadhaarBack[0].name : 'Update Aadhaar Back'}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div><label className={labelClasses}>Name</label><input className={inputClasses} value={editingNomineeLocal.name || ''} onChange={e => handleEditingNomineeChange('name', e.target.value)} /></div>
                                                 <div><label className={labelClasses}>Relation</label><select className={inputClasses} value={editingNomineeLocal.relation || ''} onChange={e => handleEditingNomineeChange('relation', e.target.value)}><option value="">Select relation</option>{RELATION_OPTIONS.map(opt => (<option key={opt} value={opt}>{opt}</option>))}</select></div>
@@ -542,7 +671,13 @@ const handleFileUpload = async (file, fileType) => {
                                             </div>
 
                                             <div className="mt-4 flex gap-3">
-                                                <button onClick={saveEditedNominee} className="px-4 py-2 bg-green-600 text-white rounded-lg">Save</button>
+                                                <button 
+                                                    onClick={saveEditedNominee} 
+                                                    disabled={uploadingFiles.editingNominee}
+                                                    className={`px-4 py-2 text-white rounded-lg ${uploadingFiles.editingNominee ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'}`}
+                                                >
+                                                    {uploadingFiles.editingNominee ? 'Saving...' : 'Save'}
+                                                </button>
                                                 <button onClick={cancelEditNominee} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
                                             </div>
                                         </div>
@@ -559,6 +694,28 @@ const handleFileUpload = async (file, fileType) => {
                                                     <button onClick={() => handleDeleteNominee(n._id)} className="text-red-500 hover:text-red-700 text-sm">Delete</button>
                                                 </div>
                                             </div>
+                                            
+                                            {/* Display existing nominee Aadhaar documents */}
+                                            {(n.aadhaarFrontUrl || n.aadhaarBackUrl) && (
+                                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                                    <p className="text-xs font-medium text-gray-700 mb-2">Aadhaar Documents:</p>
+                                                    <div className="flex gap-3">
+                                                        {n.aadhaarFrontUrl && (
+                                                            <div className="text-center">
+                                                                <img src={n.aadhaarFrontUrl} alt="Aadhaar Front" className="h-16 w-24 object-cover rounded border mx-auto" />
+                                                                <p className="text-xs text-gray-500 mt-1">Front</p>
+                                                            </div>
+                                                        )}
+                                                        {n.aadhaarBackUrl && (
+                                                            <div className="text-center">
+                                                                <img src={n.aadhaarBackUrl} alt="Aadhaar Back" className="h-16 w-24 object-cover rounded border mx-auto" />
+                                                                <p className="text-xs text-gray-500 mt-1">Back</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
                                             {n.bankDetails && (
                                                 <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
                                                     <p className="font-medium">Bank: {n.bankDetails.bankName} {n.bankDetails.branchName ? `(${n.bankDetails.branchName})` : ''}</p>
@@ -574,6 +731,45 @@ const handleFileUpload = async (file, fileType) => {
                             <div className="mt-6 p-6 border rounded-lg">
                                 <h4 className="font-semibold text-lg mb-4">Add a New Nominee</h4>
                                 <form onSubmit={handleAddNominee}>
+                                    {/* New Nominee Aadhaar Document Uploads */}
+                                    <div className="mb-6">
+                                        <h5 className="font-medium mb-2 text-gray-700">Aadhaar Documents (Optional)</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
+                                                <input
+                                                    type="file"
+                                                    id="newNomineeAadhaarFront"
+                                                    className="hidden"
+                                                    accept="image/jpeg,image/png"
+                                                    onChange={(e) => handleNewNomineeFileChange('aadhaarFront', e.target.files)}
+                                                />
+                                                <label htmlFor="newNomineeAadhaarFront" className="cursor-pointer">
+                                                    <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                    <p className="text-sm font-medium text-gray-700">
+                                                        {newNominee.aadhaarFront ? newNominee.aadhaarFront[0].name : 'Upload Aadhaar Front'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                </label>
+                                            </div>
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
+                                                <input
+                                                    type="file"
+                                                    id="newNomineeAadhaarBack"
+                                                    className="hidden"
+                                                    accept="image/jpeg,image/png"
+                                                    onChange={(e) => handleNewNomineeFileChange('aadhaarBack', e.target.files)}
+                                                />
+                                                <label htmlFor="newNomineeAadhaarBack" className="cursor-pointer">
+                                                    <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                    <p className="text-sm font-medium text-gray-700">
+                                                        {newNominee.aadhaarBack ? newNominee.aadhaarBack[0].name : 'Upload Aadhaar Back'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <h5 className="font-medium mb-2 text-gray-700">Nominee Details</h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         <div><label className={labelClasses}>Name*</label><input type="text" value={newNominee.name} onChange={e => handleNewNomineeChange('name', e.target.value)} required className={inputClasses} /></div>
@@ -596,7 +792,13 @@ const handleFileUpload = async (file, fileType) => {
                                         <span className="ml-2 text-sm text-gray-700">Set as Primary</span>
                                     </div>
 
-                                    <button type="submit" className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">Add Nominee</button>
+                                    <button 
+                                        type="submit" 
+                                        disabled={uploadingFiles.newNominee}
+                                        className={`w-full px-4 py-2 text-white rounded-lg ${uploadingFiles.newNominee ? 'bg-gray-400' : 'bg-teal-600 hover:bg-teal-700'}`}
+                                    >
+                                        {uploadingFiles.newNominee ? 'Adding Nominee...' : 'Add Nominee'}
+                                    </button>
                                 </form>
                             </div>
                         )}
