@@ -922,7 +922,7 @@ const Register = () => {
                         />
                         {errors[`nomineeAccount${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeAccount${index}`]}</p>}
                     </div>
-                    <div><label className={labelClasses}>Confirm A/C Number</label><input type="text" value={nominee.confirmAccountNumber || ''} onChange={e => handleNomineeChange('confirmAccountNumber', e.target.value, true)} className={inputClasses} /></div>
+                    <div><label className={labelClasses}>Confirm A/C Number</label><input type="text" value={nominee.confirmAccountNumber || ''} onChange={e => handleNomineeChange(index, 'confirmAccountNumber', e.target.value)} className={inputClasses} /></div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">IFSC Code</label>
                         <input
