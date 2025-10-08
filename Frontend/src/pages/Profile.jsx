@@ -15,7 +15,8 @@ const Profile = () => {
         personalDetails: {},
         employmentDetails: {},
         bankDetails: {},
-        isVerified: false
+        isVerified: false,
+        userType: 'EMPLOYEE' // Add userType to state
     });
     const [nominees, setNominees] = useState([]);
     const [editingNomineeId, setEditingNomineeId] = useState(null);
@@ -51,6 +52,7 @@ const Profile = () => {
         profilePhoto: false,
         aadhaarFront: false,
         aadhaarBack: false,
+        retirementDocument: false,
         newNominee: false,
         editingNominee: false
     });
@@ -126,6 +128,9 @@ const Profile = () => {
     const canEditBank = true;
     const canEditNominees = true;
 
+    // Check user type
+    const isPensioner = userData.userType === 'PENSIONER';
+
     const handleLocalChange = (tab, field, value) => {
         if (tab === 'Personal') {
             setLocalPersonalDetails(prev => ({ ...prev, [field]: value }));
@@ -154,6 +159,8 @@ const Profile = () => {
                 return response.data.personalDetails.aadhaarFrontUrl;
             } else if (fileType === 'aadhaarBack' && response.data.personalDetails?.aadhaarBackUrl) {
                 return response.data.personalDetails.aadhaarBackUrl;
+            } else if (fileType === 'retirementDocument' && response.data.employmentDetails?.retirementDocumentUrl) {
+                return response.data.employmentDetails.retirementDocumentUrl;
             }
             
             return null;
@@ -201,6 +208,20 @@ const Profile = () => {
                     personalDetails: { ...prev.personalDetails, aadhaarBackUrl } 
                 }));
                 setSuccessMessage('Aadhaar back updated successfully.');
+            }
+        }
+    };
+
+    const handleRetirementDocumentChange = async (e) => {
+        const file = e.target.files[0];
+        if (file && canEditEmployment) {
+            const retirementDocumentUrl = await handleFileUpload(file, 'retirementDocument');
+            if (retirementDocumentUrl) {
+                setUserData(prev => ({ 
+                    ...prev, 
+                    employmentDetails: { ...prev.employmentDetails, retirementDocumentUrl } 
+                }));
+                setSuccessMessage('Retirement document updated successfully.');
             }
         }
     };
@@ -467,6 +488,7 @@ const Profile = () => {
     const aadhaarMasked = aadhaarNumber ? `xxxx-xxxx-${String(aadhaarNumber).slice(-4)}` : null;
     const aadhaarFrontUrl = userData?.personalDetails?.aadhaarFrontUrl;
     const aadhaarBackUrl = userData?.personalDetails?.aadhaarBackUrl;
+    const retirementDocumentUrl = userData?.employmentDetails?.retirementDocumentUrl;
 
     const getDetails = (tab) => {
         if (tab === 'Personal') return editMode.Personal ? localPersonalDetails : userData.personalDetails;
@@ -625,58 +647,132 @@ const Profile = () => {
             case 'Employment':
                 return (
                     <div>
-                        <div className={commonClasses}>
-                            <div>
-                                <label className={labelClasses}>State</label>
-                                <input 
-                                    type="text" 
-                                    value={employmentDetails.state || ''} 
-                                    disabled={!canEditEmployment || !editMode.Employment}
-                                    onChange={e => handleLocalChange('Employment', 'state', e.target.value)} 
-                                    className={inputClasses} 
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClasses}>District</label>
-                                <input 
-                                    type="text" 
-                                    value={employmentDetails.district || ''} 
-                                    disabled={!canEditEmployment || !editMode.Employment} 
-                                    onChange={e => handleLocalChange('Employment', 'district', e.target.value)} 
-                                    className={inputClasses} 
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClasses}>Department</label>
-                                <input 
-                                    type="text" 
-                                    value={employmentDetails.department || ''} 
-                                    disabled={!canEditEmployment || !editMode.Employment} 
-                                    onChange={e => handleLocalChange('Employment', 'department', e.target.value)} 
-                                    className={inputClasses} 
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClasses}>Designation</label>
-                                <input 
-                                    type="text" 
-                                    value={employmentDetails.designation || ''} 
-                                    disabled={!canEditEmployment || !editMode.Employment} 
-                                    onChange={e => handleLocalChange('Employment', 'designation', e.target.value)} 
-                                    className={inputClasses} 
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClasses}>Date of Joining</label>
-                                <input 
-                                    type="date" 
-                                    value={formatDateForInput(employmentDetails.dateOfJoining) || ''}
-                                    disabled={!canEditEmployment || !editMode.Employment} 
-                                    onChange={e => handleLocalChange('Employment', 'dateOfJoining', e.target.value)} 
-                                    className={inputClasses} 
-                                />
-                            </div>
-                        </div>
+                        {isPensioner ? (
+                            // Pensioner Employment Details
+                            <>
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                    <h4 className="text-lg font-semibold text-blue-800 mb-2">Pensioner Information</h4>
+                                    <p className="text-sm text-blue-700">You are registered as a pensioner.</p>
+                                </div>
+                                
+                                <div className={commonClasses}>
+                                    <div>
+                                        <label className={labelClasses}>State</label>
+                                        <input 
+                                            type="text" 
+                                            value={employmentDetails.state || ''} 
+                                            disabled={!canEditEmployment || !editMode.Employment}
+                                            onChange={e => handleLocalChange('Employment', 'state', e.target.value)} 
+                                            className={inputClasses} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelClasses}>Date of Retirement</label>
+                                        <input 
+                                            type="date" 
+                                            value={formatDateForInput(employmentDetails.dateOfRetirement) || ''}
+                                            disabled={!canEditEmployment || !editMode.Employment} 
+                                            onChange={e => handleLocalChange('Employment', 'dateOfRetirement', e.target.value)} 
+                                            className={inputClasses} 
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Retirement Document Upload */}
+                                <div className="mt-6">
+                                    <label className={labelClasses}>Retirement Document</label>
+                                    <div className="mt-2">
+                                        {retirementDocumentUrl ? (
+                                            isPdfFile(retirementDocumentUrl) ? (
+                                                <div className="h-32 w-48 bg-red-50 border-2 border-red-200 rounded flex flex-col items-center justify-center">
+                                                    <span className="text-2xl mb-2">📄</span>
+                                                    <p className="text-sm font-medium text-red-700">PDF Document</p>
+                                                    <a 
+                                                        href={retirementDocumentUrl} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                                                    >
+                                                        View PDF
+                                                    </a>
+                                                </div>
+                                            ) : (
+                                                <img src={retirementDocumentUrl} alt="Retirement Document" className="h-32 w-48 object-cover rounded border" />
+                                            )
+                                        ) : (
+                                            <div className="h-32 w-48 bg-gray-200 rounded flex items-center justify-center text-gray-500">No Retirement Document</div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={handleRetirementDocumentChange}
+                                            disabled={!canEditEmployment || uploadingFiles.retirementDocument}
+                                            className="mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+                                        />
+                                        {uploadingFiles.retirementDocument && (
+                                            <p className="text-xs text-blue-500 mt-1">Uploading...</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            // Employee Employment Details
+                            <>
+                                <div className={commonClasses}>
+                                    <div>
+                                        <label className={labelClasses}>State</label>
+                                        <input 
+                                            type="text" 
+                                            value={employmentDetails.state || ''} 
+                                            disabled={!canEditEmployment || !editMode.Employment}
+                                            onChange={e => handleLocalChange('Employment', 'state', e.target.value)} 
+                                            className={inputClasses} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelClasses}>District</label>
+                                        <input 
+                                            type="text" 
+                                            value={employmentDetails.district || ''} 
+                                            disabled={!canEditEmployment || !editMode.Employment} 
+                                            onChange={e => handleLocalChange('Employment', 'district', e.target.value)} 
+                                            className={inputClasses} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelClasses}>Department</label>
+                                        <input 
+                                            type="text" 
+                                            value={employmentDetails.department || ''} 
+                                            disabled={!canEditEmployment || !editMode.Employment} 
+                                            onChange={e => handleLocalChange('Employment', 'department', e.target.value)} 
+                                            className={inputClasses} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelClasses}>Designation</label>
+                                        <input 
+                                            type="text" 
+                                            value={employmentDetails.designation || ''} 
+                                            disabled={!canEditEmployment || !editMode.Employment} 
+                                            onChange={e => handleLocalChange('Employment', 'designation', e.target.value)} 
+                                            className={inputClasses} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={labelClasses}>Date of Joining</label>
+                                        <input 
+                                            type="date" 
+                                            value={formatDateForInput(employmentDetails.dateOfJoining) || ''}
+                                            disabled={!canEditEmployment || !editMode.Employment} 
+                                            onChange={e => handleLocalChange('Employment', 'dateOfJoining', e.target.value)} 
+                                            className={inputClasses} 
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        
                         <div className="mt-6">
                             <button 
                                 disabled={!canEditEmployment}
@@ -970,12 +1066,21 @@ const Profile = () => {
                         <div className="text-left">
                             <h1 className="text-3xl font-extrabold text-teal-700">My Profile</h1>
                             <p className="text-sm text-gray-600 mt-1">{userData?.personalDetails?.fullName}</p>
-                            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                                userData.isVerified 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                                {userData.isVerified ? 'Verified' : 'Pending Verification'}
+                            <div className="flex items-center gap-2 mt-1">
+                                <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    userData.isVerified 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                    {userData.isVerified ? 'Verified' : 'Pending Verification'}
+                                </div>
+                                <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    isPensioner 
+                                        ? 'bg-blue-100 text-blue-800' 
+                                        : 'bg-purple-100 text-purple-800'
+                                }`}>
+                                    {isPensioner ? 'Pensioner' : 'Employee'}
+                                </div>
                             </div>
                         </div>
                     </div>

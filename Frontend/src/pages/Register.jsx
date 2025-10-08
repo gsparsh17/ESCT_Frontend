@@ -56,6 +56,10 @@ const Register = () => {
   const [empDesignation, setEmpDesignation] = useState('');
   const [empDoj, setEmpDoj] = useState(null);
 
+  // Pensioner Details
+  const [dateOfRetirement, setDateOfRetirement] = useState(null);
+  const [retirementDocument, setRetirementDocument] = useState(null);
+
   const [apiStates, setApiStates] = useState([]);
   const [apiCities, setApiCities] = useState([]);
   const [selectedStateCode, setSelectedStateCode] = useState('');
@@ -185,10 +189,7 @@ const Register = () => {
 
   // Adjust step flow dynamically for Pensioners
   const finalSteps = useMemo(() => {
-    if (userType === 'PENSIONER') {
-        return STEP_TITLES.filter((_, index) => index !== 2); 
-    }
-    return STEP_TITLES;
+    return STEP_TITLES; // Keep all steps for both user types
   }, [userType]);
 
   const handleUserTypeChange = (newType) => {
@@ -198,19 +199,20 @@ const Register = () => {
     }
     if (newType === 'PENSIONER') {
         setEhrmsCode('');
-        setEmpState('');
-        setEmpDistrict('');
         setEmpOrganisation('');
         setEmpDepartment('');
         setEmpDesignation('');
         setEmpDoj(null);
     } else {
         setPensionerNumber('');
+        setDateOfRetirement(null);
+        setRetirementDocument(null);
     }
   };
-          const commonClasses = "mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4";
-        const labelClasses = "block text-sm font-medium text-gray-700";
-        const inputClasses = "mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed";
+
+  const commonClasses = "mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4";
+  const labelClasses = "block text-sm font-medium text-gray-700";
+  const inputClasses = "mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed";
 
   const validateStep = () => {
     const newErrors = {};
@@ -265,24 +267,36 @@ const Register = () => {
         newErrors.email = 'Invalid email format.';
         isValid = false;
       }
-    } else if (currentStep === 2 && userType === 'EMPLOYEE') {
-      if (empDistrict.trim() && empDistrict.trim().length < 2) {
-        newErrors.empDistrict = 'Employment District must be valid.';
-        isValid = false;
-      }
-      if (empOrganisation.trim() && empOrganisation.trim().length < 2) {
-        newErrors.empOrganisation = 'Employment Organisation must be valid.';
-        isValid = false;
-      }
-      if (empDepartment.trim() && empDepartment.trim().length < 2) {
-        newErrors.empDepartment = 'Employment Department must be valid.';
-        isValid = false;
-      }
-      if (empDesignation.trim() && empDesignation.trim().length < 2) {
-        newErrors.empDesignation = 'Employment Designation must be valid.';
-        isValid = false;
+    } else if (currentStep === 2) {
+      // Employment details validation for employees
+      if (userType === 'EMPLOYEE') {
+        if (empDistrict.trim() && empDistrict.trim().length < 2) {
+          newErrors.empDistrict = 'Employment District must be valid.';
+          isValid = false;
+        }
+        if (empOrganisation.trim() && empOrganisation.trim().length < 2) {
+          newErrors.empOrganisation = 'Employment Organisation must be valid.';
+          isValid = false;
+        }
+        if (empDepartment.trim() && empDepartment.trim().length < 2) {
+          newErrors.empDepartment = 'Employment Department must be valid.';
+          isValid = false;
+        }
+        if (empDesignation.trim() && empDesignation.trim().length < 2) {
+          newErrors.empDesignation = 'Employment Designation must be valid.';
+          isValid = false;
+        }
       }
       
+      // Pensioner details validation
+      if (userType === 'PENSIONER') {
+        if (!dateOfRetirement) {
+          newErrors.dateOfRetirement = 'Date of retirement is required.';
+          isValid = false;
+        }
+      }
+      
+      // Bank details validation for both user types
       if (accountNumber.trim() && accountNumber.trim().length < 8) {
         newErrors.accountNumber = 'Account number must be at least 8 digits.';
         isValid = false;
@@ -299,25 +313,6 @@ const Register = () => {
         newErrors.ifscCode = 'Invalid IFSC code (e.g., ABCD0EFGHIJ).';
         isValid = false;
       }
-
-    } else if (currentStep === 2 && userType === 'PENSIONER') {
-        if (accountNumber.trim() && accountNumber.trim().length < 8) {
-          newErrors.accountNumber = 'Account number must be at least 8 digits.';
-          isValid = false;
-        }
-        if (accountNumber.trim() && confirmAccountNumber.trim() && accountNumber.trim() !== confirmAccountNumber.trim()) {
-            newErrors.confirmAccountNumber = 'Account numbers do not match.';
-            isValid = false;
-        }
-        if (bankName.trim() && bankName.trim().length < 2) {
-          newErrors.bankName = 'Bank name must be valid.';
-          isValid = false;
-        }
-        if (ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode.toUpperCase())) {
-          newErrors.ifscCode = 'Invalid IFSC code (e.g., ABCD0EFGHIJ).';
-          isValid = false;
-        }
-        
     } else if (currentStep === finalSteps.length - 1) {
       if (nominees.length > 0) {
         nominees.forEach((nominee, index) => {
@@ -439,9 +434,21 @@ const Register = () => {
       const age = dateOfBirth ? calcAgeFromDob(dateOfBirth) : undefined;
       const personalDetails = { fullName, dateOfBirth, age, sex, aadhaarNumber, phone, email };
       const bankDetails = { accountNumber, confirmAccountNumber, ifscCode, bankName }; 
+      
+      // Employment details for employees, retirement details for pensioners
       const employmentDetails = userType === 'EMPLOYEE' ? 
-        { state: empState, district: empDistrict, organisation: empOrganisation, department: empDepartment, designation: empDesignation, dateOfJoining: empDoj } : 
-        {}; 
+        { 
+          state: empState, 
+          district: empDistrict, 
+          organisation: empOrganisation, 
+          department: empDepartment, 
+          designation: empDesignation, 
+          dateOfJoining: empDoj 
+        } : 
+        { 
+          state: empState,
+          dateOfRetirement: dateOfRetirement
+        }; 
 
       const formData = new FormData();
 
@@ -458,6 +465,11 @@ const Register = () => {
       if (profilePhoto && profilePhoto[0]) formData.append('profilePhoto', profilePhoto[0]);
       if (aadhaarFront && aadhaarFront[0]) formData.append('aadhaarFront', aadhaarFront[0]);
       if (aadhaarBack && aadhaarBack[0]) formData.append('aadhaarBack', aadhaarBack[0]);
+      
+      // Retirement document for pensioners
+      if (userType === 'PENSIONER' && retirementDocument && retirementDocument[0]) {
+        formData.append('retirementDocument', retirementDocument[0]);
+      }
 
       // Handle nominees with their Aadhaar documents
       const formattedNominees = nominees.map((nominee, index) => ({
@@ -717,7 +729,7 @@ const Register = () => {
     if (currentStep === 2) {
       return (
         <div className="space-y-6">
-          {userType === 'EMPLOYEE' && (
+          {userType === 'EMPLOYEE' ? (
             <>
               <h3 className="text-lg font-medium text-teal-800">Employment Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -784,6 +796,42 @@ const Register = () => {
                   onChange={(e) => setEmpDoj(e.target.value)}
                 />
                 {errors.empDoj && <p className="mt-1 text-xs text-red-600">{errors.empDoj}</p>}
+              </div>
+              <hr className="border-gray-200 mt-6" />
+            </>
+          ) : (
+            <>
+              <h3 className="text-lg font-medium text-teal-800">Retirement Details</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Date of Retirement</label>
+                  <input
+                    type="date"
+                    className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
+                    value={dateOfRetirement}
+                    onChange={(e) => setDateOfRetirement(e.target.value)}
+                  />
+                  {errors.dateOfRetirement && <p className="mt-1 text-xs text-red-600">{errors.dateOfRetirement}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Retirement Document</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
+                    <input
+                      type="file"
+                      id="retirementDocument"
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={(e) => setRetirementDocument(e.target.files)}
+                    />
+                    <label htmlFor="retirementDocument" className="cursor-pointer">
+                      {getFileIcon(retirementDocument ? retirementDocument[0] : null)}
+                      <p className="text-sm font-medium text-gray-700">
+                        {retirementDocument ? retirementDocument[0].name : 'Upload Retirement Document'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF, max 5MB (Required)</p>
+                    </label>
+                  </div>
+                </div>
               </div>
               <hr className="border-gray-200 mt-6" />
             </>
