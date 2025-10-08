@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Select from "react-select";
-import { FaUser, FaBuilding, FaWallet, FaUsers, FaArrowRight, FaArrowLeft, FaPlus, FaTrash, FaCheckCircle, FaSpinner, FaUpload, FaChevronDown } from 'react-icons/fa';
+import { FaUser, FaBuilding, FaWallet, FaUsers, FaArrowRight, FaArrowLeft, FaPlus, FaTrash, FaCheckCircle, FaSpinner, FaUpload, FaChevronDown, FaFilePdf } from 'react-icons/fa';
 import organisations from '../constants/organisations';
 import departments from '../constants/departments';
 
@@ -81,6 +81,28 @@ const Register = () => {
     'Sister',
     'Other'
   ];
+
+  // Helper function to check if file is PDF
+  const isPdfFile = (file) => {
+    if (!file) return false;
+    return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  };
+
+  // Helper function to get file icon
+  const getFileIcon = (file) => {
+    if (file && isPdfFile(file)) {
+      return <FaFilePdf className="h-6 w-6 text-red-500 mx-auto mb-2" />;
+    }
+    return <FaUpload className="h-6 w-6 text-gray-400 mx-auto mb-2" />;
+  };
+
+  // Helper function to get file type text
+  const getFileTypeText = (file) => {
+    if (file && isPdfFile(file)) {
+      return 'PDF';
+    }
+    return 'JPEG or PNG';
+  };
 
   const calcAgeFromDob = (isoDate) => {
     const dob = new Date(isoDate);
@@ -565,7 +587,7 @@ const Register = () => {
               type="file"
               id="profilePhoto"
               className="hidden"
-              accept="image/jpeg,image/png"
+              accept="image/*"
               onChange={(e) => setProfilePhoto(e.target.files)}
             />
             <label htmlFor="profilePhoto" className="cursor-pointer">
@@ -573,26 +595,26 @@ const Register = () => {
               <p className="text-sm font-medium text-gray-700">
                 {profilePhoto ? profilePhoto[0].name : 'Upload Profile Photo'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
+              <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 5MB (Optional)</p>
             </label>
           </div>
 
-          {/* Updated: Separate Aadhaar Front and Back Uploads */}
+          {/* Updated: Separate Aadhaar Front and Back Uploads with PDF Support */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
               <input
                 type="file"
                 id="aadhaarFront"
                 className="hidden"
-                accept="image/jpeg,image/png"
+                accept="image/*,.pdf"
                 onChange={(e) => setAadhaarFront(e.target.files)}
               />
               <label htmlFor="aadhaarFront" className="cursor-pointer">
-                <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                {getFileIcon(aadhaarFront ? aadhaarFront[0] : null)}
                 <p className="text-sm font-medium text-gray-700">
                   {aadhaarFront ? aadhaarFront[0].name : 'Upload Aadhaar Front'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
+                <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF, max 5MB (Optional)</p>
               </label>
             </div>
 
@@ -601,15 +623,15 @@ const Register = () => {
                 type="file"
                 id="aadhaarBack"
                 className="hidden"
-                accept="image/jpeg,image/png"
+                accept="image/*,.pdf"
                 onChange={(e) => setAadhaarBack(e.target.files)}
               />
               <label htmlFor="aadhaarBack" className="cursor-pointer">
-                <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                {getFileIcon(aadhaarBack ? aadhaarBack[0] : null)}
                 <p className="text-sm font-medium text-gray-700">
                   {aadhaarBack ? aadhaarBack[0].name : 'Upload Aadhaar Back'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 2MB (Optional)</p>
+                <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF, max 5MB (Optional)</p>
               </label>
             </div>
           </div>
@@ -825,22 +847,22 @@ const Register = () => {
             <div key={index} className="relative p-6 border border-teal-200 rounded-lg shadow-xl bg-gray-50/50">
               <h4 className="text-base font-bold text-teal-800 border-b border-teal-100 pb-2 mb-4">Nominee {index + 1}</h4>
               
-              {/* Nominee Aadhaar Document Uploads */}
+              {/* Nominee Aadhaar Document Uploads with PDF Support */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-teal-400 transition-colors">
                   <input
                     type="file"
                     id={`nomineeAadhaarFront_${index}`}
                     className="hidden"
-                    accept="image/jpeg,image/png"
+                    accept="image/*,.pdf"
                     onChange={(e) => handleNomineeFileChange(index, 'aadhaarFront', e.target.files)}
                   />
                   <label htmlFor={`nomineeAadhaarFront_${index}`} className="cursor-pointer">
-                    <FaUpload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                    {getFileIcon(nominee.aadhaarFront ? nominee.aadhaarFront[0] : null)}
                     <p className="text-sm font-medium text-gray-700">
                       {nominee.aadhaarFront ? nominee.aadhaarFront[0].name : 'Nominee Aadhaar Front'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                    <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
                   </label>
                 </div>
 
@@ -849,15 +871,15 @@ const Register = () => {
                     type="file"
                     id={`nomineeAadhaarBack_${index}`}
                     className="hidden"
-                    accept="image/jpeg,image/png"
+                    accept="image/*,.pdf"
                     onChange={(e) => handleNomineeFileChange(index, 'aadhaarBack', e.target.files)}
                   />
                   <label htmlFor={`nomineeAadhaarBack_${index}`} className="cursor-pointer">
-                    <FaUpload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                    {getFileIcon(nominee.aadhaarBack ? nominee.aadhaarBack[0] : null)}
                     <p className="text-sm font-medium text-gray-700">
                       {nominee.aadhaarBack ? nominee.aadhaarBack[0].name : 'Nominee Aadhaar Back'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                    <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
                   </label>
                 </div>
               </div>

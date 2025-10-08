@@ -71,6 +71,33 @@ const Profile = () => {
         'Other'
     ];
 
+    // Helper function to check if URL is a PDF
+    const isPdfFile = (url) => {
+        if (!url) return false;
+        return url.toLowerCase().endsWith('.pdf') || url.includes('/pdf/') || url.includes('application/pdf');
+    };
+
+    // Helper function to format dates for input
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        
+        try {
+            const date = new Date(dateString);
+            // Check if date is valid
+            if (isNaN(date.getTime())) return '';
+            
+            // Convert to local date in YYYY-MM-DD format
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return '';
+        }
+    };
+
     useEffect(() => {
         clearMessages();
         const fetchData = async () => {
@@ -200,85 +227,85 @@ const Profile = () => {
         setEditingNomineeLocal(prev => ({ ...prev, [fileType]: files }));
     };
 
-const handleAddNominee = async (e) => {
-    e.preventDefault();
-    clearMessages();
-    
-    // Frontend validation for required fields
-    const requiredFields = [
-        newNominee.name, 
-        newNominee.relation,
-    ];
+    const handleAddNominee = async (e) => {
+        e.preventDefault();
+        clearMessages();
+        
+        // Frontend validation for required fields
+        const requiredFields = [
+            newNominee.name, 
+            newNominee.relation,
+        ];
 
-    if (requiredFields.some(field => !field || field.length === 0)) {
-        setError('Please fill all required nominee fields (Name, Relation).');
-        return;
-    }
-    
-    setUploadingFiles(prev => ({ ...prev, newNominee: true }));
-    
-    try {
-        const formData = new FormData();
-        
-        // Append basic nominee data
-        formData.append('name', newNominee.name);
-        formData.append('relation', newNominee.relation);
-        if (newNominee.dateOfBirth) formData.append('dateOfBirth', newNominee.dateOfBirth);
-        if (newNominee.aadhaarNumber) formData.append('aadhaarNumber', newNominee.aadhaarNumber);
-        formData.append('isPrimary', newNominee.isPrimary);
-        
-        // Append bank details as a JSON string (like registration does)
-        const bankDetails = {
-            accountNumber: newNominee.bankDetails.accountNumber,
-            ifscCode: newNominee.bankDetails.ifscCode,
-            bankName: newNominee.bankDetails.bankName,
-            branchName: newNominee.bankDetails.branchName,
-        };
-        formData.append('bankDetails', JSON.stringify(bankDetails));
-        
-        if (newNominee.aadhaarFront && newNominee.aadhaarFront[0]) {
-            formData.append('nomineeAadhaarFront_0', newNominee.aadhaarFront[0]);
-        }
-        if (newNominee.aadhaarBack && newNominee.aadhaarBack[0]) {
-            formData.append('nomineeAadhaarBack_0', newNominee.aadhaarBack[0]);
+        if (requiredFields.some(field => !field || field.length === 0)) {
+            setError('Please fill all required nominee fields (Name, Relation).');
+            return;
         }
         
-        // Debug: Check FormData contents
-        console.log('FormData entries:');
-        for (let [key, value] of formData.entries()) {
-            console.log(key, value);
-        }
+        setUploadingFiles(prev => ({ ...prev, newNominee: true }));
         
-        const addedNominee = await addNominee(formData); 
-        setNominees([...nominees, addedNominee]);
-        
-        // Reset new nominee form
-        setNewNominee({ 
-            name: '', 
-            relation: '', 
-            dateOfBirth: '', 
-            aadhaarNumber: '', 
-            isPrimary: false,
-            bankDetails: { 
-                accountNumber: '', 
-                confirmAccountNumber: '', 
-                ifscCode: '', 
-                bankName: '', 
-                branchName: '' 
-            },
-            aadhaarFront: null,
-            aadhaarBack: null
-        });
+        try {
+            const formData = new FormData();
+            
+            // Append basic nominee data
+            formData.append('name', newNominee.name);
+            formData.append('relation', newNominee.relation);
+            if (newNominee.dateOfBirth) formData.append('dateOfBirth', newNominee.dateOfBirth);
+            if (newNominee.aadhaarNumber) formData.append('aadhaarNumber', newNominee.aadhaarNumber);
+            formData.append('isPrimary', newNominee.isPrimary);
+            
+            // Append bank details as a JSON string (like registration does)
+            const bankDetails = {
+                accountNumber: newNominee.bankDetails.accountNumber,
+                ifscCode: newNominee.bankDetails.ifscCode,
+                bankName: newNominee.bankDetails.bankName,
+                branchName: newNominee.bankDetails.branchName,
+            };
+            formData.append('bankDetails', JSON.stringify(bankDetails));
+            
+            if (newNominee.aadhaarFront && newNominee.aadhaarFront[0]) {
+                formData.append('nomineeAadhaarFront_0', newNominee.aadhaarFront[0]);
+            }
+            if (newNominee.aadhaarBack && newNominee.aadhaarBack[0]) {
+                formData.append('nomineeAadhaarBack_0', newNominee.aadhaarBack[0]);
+            }
+            
+            // Debug: Check FormData contents
+            console.log('FormData entries:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+            
+            const addedNominee = await addNominee(formData); 
+            setNominees([...nominees, addedNominee]);
+            
+            // Reset new nominee form
+            setNewNominee({ 
+                name: '', 
+                relation: '', 
+                dateOfBirth: '', 
+                aadhaarNumber: '', 
+                isPrimary: false,
+                bankDetails: { 
+                    accountNumber: '', 
+                    confirmAccountNumber: '', 
+                    ifscCode: '', 
+                    bankName: '', 
+                    branchName: '' 
+                },
+                aadhaarFront: null,
+                aadhaarBack: null
+            });
 
-        setSuccessMessage('Nominee added successfully.');
-    } catch (err) {
-        console.error("Add Nominee Error:", err);
-        const errorMessage = err.message || 'An unknown error occurred while adding the nominee.';
-        setError(`Failed to add nominee: ${errorMessage}`);
-    } finally {
-        setUploadingFiles(prev => ({ ...prev, newNominee: false }));
-    }
-};
+            setSuccessMessage('Nominee added successfully.');
+        } catch (err) {
+            console.error("Add Nominee Error:", err);
+            const errorMessage = err.message || 'An unknown error occurred while adding the nominee.';
+            setError(`Failed to add nominee: ${errorMessage}`);
+        } finally {
+            setUploadingFiles(prev => ({ ...prev, newNominee: false }));
+        }
+    };
 
     const startEditNominee = (nominee) => {
         setEditingNomineeId(nominee._id);
@@ -340,11 +367,11 @@ const handleAddNominee = async (e) => {
             
             // Append files if they exist
             if (editingNomineeLocal.aadhaarFront && editingNomineeLocal.aadhaarFront[0]) {
-            formData.append('aadhaarFront', editingNomineeLocal.aadhaarFront[0]);
-        }
-        if (editingNomineeLocal.aadhaarBack && editingNomineeLocal.aadhaarBack[0]) {
-            formData.append('aadhaarBack', editingNomineeLocal.aadhaarBack[0]);
-        }
+                formData.append('aadhaarFront', editingNomineeLocal.aadhaarFront[0]);
+            }
+            if (editingNomineeLocal.aadhaarBack && editingNomineeLocal.aadhaarBack[0]) {
+                formData.append('aadhaarBack', editingNomineeLocal.aadhaarBack[0]);
+            }
 
             const updated = await updateNominee(editingNomineeId, formData);
             setNominees(prev => prev.map(n => (n._id === editingNomineeId ? updated : n)));
@@ -442,11 +469,11 @@ const handleAddNominee = async (e) => {
     const aadhaarBackUrl = userData?.personalDetails?.aadhaarBackUrl;
 
     const getDetails = (tab) => {
-    if (tab === 'Personal') return editMode.Personal ? localPersonalDetails : userData.personalDetails;
-    if (tab === 'Bank') return editMode.Bank ? localBankDetails : userData.bankDetails;
-    if (tab === 'Employment') return editMode.Employment ? localEmploymentDetails : userData.employmentDetails; // ✅ Fixed
-    return {};
-};
+        if (tab === 'Personal') return editMode.Personal ? localPersonalDetails : userData.personalDetails;
+        if (tab === 'Bank') return editMode.Bank ? localBankDetails : userData.bankDetails;
+        if (tab === 'Employment') return editMode.Employment ? localEmploymentDetails : userData.employmentDetails;
+        return {};
+    };
 
     const renderContent = () => {
         const commonClasses = "mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4";
@@ -490,7 +517,7 @@ const handleAddNominee = async (e) => {
 
                         <div className={commonClasses}>
                             <div><label className={labelClasses}>Full Name</label><input type="text" value={userData.personalDetails?.fullName || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'fullName', e.target.value)} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Date of Birth</label><input type="date" value={userData.personalDetails?.dateOfBirth ? userData.personalDetails.dateOfBirth.split('T')[0] : ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'dateOfBirth', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Date of Birth</label><input type="date" value={formatDateForInput(userData.personalDetails?.dateOfBirth) || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'dateOfBirth', e.target.value)} className={inputClasses} /></div>
                             <div><label className={labelClasses}>Sex</label><input type="text" value={userData.personalDetails?.sex || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'sex', e.target.value)} className={inputClasses} /></div>
                             <div><label className={labelClasses}>Aadhaar Number</label><input type="text" value={userData.personalDetails?.aadhaarNumber || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'aadhaarNumber', e.target.value)} className={inputClasses} /></div>
 
@@ -505,13 +532,28 @@ const handleAddNominee = async (e) => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Front Side</label>
                                     {aadhaarFrontUrl ? (
-                                        <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="h-32 w-48 object-cover rounded border" />
+                                        isPdfFile(aadhaarFrontUrl) ? (
+                                            <div className="h-32 w-48 bg-red-50 border-2 border-red-200 rounded flex flex-col items-center justify-center">
+                                                <span className="text-2xl mb-2">📄</span>
+                                                <p className="text-sm font-medium text-red-700">PDF Document</p>
+                                                <a 
+                                                    href={aadhaarFrontUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                                                >
+                                                    View PDF
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="h-32 w-48 object-cover rounded border" />
+                                        )
                                     ) : (
                                         <div className="h-32 w-48 bg-gray-200 rounded flex items-center justify-center text-gray-500">No Aadhaar Front</div>
                                     )}
                                     <input
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/*,.pdf"
                                         onChange={handleAadhaarFrontChange}
                                         disabled={!canEditPersonal || uploadingFiles.aadhaarFront}
                                         className="mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
@@ -523,13 +565,28 @@ const handleAddNominee = async (e) => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Back Side</label>
                                     {aadhaarBackUrl ? (
-                                        <img src={aadhaarBackUrl} alt="Aadhaar Back" className="h-32 w-48 object-cover rounded border" />
+                                        isPdfFile(aadhaarBackUrl) ? (
+                                            <div className="h-32 w-48 bg-red-50 border-2 border-red-200 rounded flex flex-col items-center justify-center">
+                                                <span className="text-2xl mb-2">📄</span>
+                                                <p className="text-sm font-medium text-red-700">PDF Document</p>
+                                                <a 
+                                                    href={aadhaarBackUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                                                >
+                                                    View PDF
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <img src={aadhaarBackUrl} alt="Aadhaar Back" className="h-32 w-48 object-cover rounded border" />
+                                        )
                                     ) : (
                                         <div className="h-32 w-48 bg-gray-200 rounded flex items-center justify-center text-gray-500">No Aadhaar Back</div>
                                     )}
                                     <input
                                         type="file"
-                                        accept="image/*"
+                                        accept="image/*,.pdf"
                                         onChange={handleAadhaarBackChange}
                                         disabled={!canEditPersonal || uploadingFiles.aadhaarBack}
                                         className="mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
@@ -566,85 +623,85 @@ const handleAddNominee = async (e) => {
                 );
 
             case 'Employment':
-    return (
-        <div>
-            <div className={commonClasses}>
-                <div>
-                    <label className={labelClasses}>State</label>
-                    <input 
-                        type="text" 
-                        value={employmentDetails.state || ''} 
-                        disabled={!canEditEmployment || !editMode.Employment} // ✅ This is correct
-                        onChange={e => handleLocalChange('Employment', 'state', e.target.value)} 
-                        className={inputClasses} 
-                    />
-                </div>
-                <div>
-                    <label className={labelClasses}>District</label>
-                    <input 
-                        type="text" 
-                        value={employmentDetails.district || ''} 
-                        disabled={!canEditEmployment || !editMode.Employment} 
-                        onChange={e => handleLocalChange('Employment', 'district', e.target.value)} 
-                        className={inputClasses} 
-                    />
-                </div>
-                <div>
-                    <label className={labelClasses}>Department</label>
-                    <input 
-                        type="text" 
-                        value={employmentDetails.department || ''} 
-                        disabled={!canEditEmployment || !editMode.Employment} 
-                        onChange={e => handleLocalChange('Employment', 'department', e.target.value)} 
-                        className={inputClasses} 
-                    />
-                </div>
-                <div>
-                    <label className={labelClasses}>Designation</label>
-                    <input 
-                        type="text" 
-                        value={employmentDetails.designation || ''} 
-                        disabled={!canEditEmployment || !editMode.Employment} 
-                        onChange={e => handleLocalChange('Employment', 'designation', e.target.value)} 
-                        className={inputClasses} 
-                    />
-                </div>
-                <div>
-                    <label className={labelClasses}>Date of Joining</label>
-                    <input 
-                        type="date" 
-                        value={employmentDetails.dateOfJoining ? employmentDetails.dateOfJoining.split('T')[0] : ''}
-                        disabled={!canEditEmployment || !editMode.Employment} 
-                        onChange={e => handleLocalChange('Employment', 'dateOfJoining', e.target.value)} 
-                        className={inputClasses} 
-                    />
-                </div>
-            </div>
-            <div className="mt-6">
-                <button 
-                    disabled={!canEditEmployment}
-                    onClick={() => editMode.Employment ? handleUpdate('Employment') : setEditMode({ ...editMode, Employment: true })}
-                    className={`px-4 py-2 text-white rounded-lg ${
-                        !canEditEmployment 
-                            ? 'bg-gray-400 cursor-not-allowed' 
-                            : editMode.Employment 
-                                ? 'bg-green-600 hover:bg-green-700' 
-                                : 'bg-teal-600 hover:bg-teal-700'
-                    }`}
-                >
-                    {!canEditEmployment 
-                        ? 'Edit Disabled (Verified)' 
-                        : editMode.Employment 
-                            ? 'Save Changes' 
-                            : 'Edit Employment Info'
-                    }
-                </button>
-                {!canEditEmployment && (
-                    <p className="text-xs text-red-500 mt-2">Employment details cannot be edited after verification</p>
-                )}
-            </div>
-        </div>
-    );
+                return (
+                    <div>
+                        <div className={commonClasses}>
+                            <div>
+                                <label className={labelClasses}>State</label>
+                                <input 
+                                    type="text" 
+                                    value={employmentDetails.state || ''} 
+                                    disabled={!canEditEmployment || !editMode.Employment}
+                                    onChange={e => handleLocalChange('Employment', 'state', e.target.value)} 
+                                    className={inputClasses} 
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClasses}>District</label>
+                                <input 
+                                    type="text" 
+                                    value={employmentDetails.district || ''} 
+                                    disabled={!canEditEmployment || !editMode.Employment} 
+                                    onChange={e => handleLocalChange('Employment', 'district', e.target.value)} 
+                                    className={inputClasses} 
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClasses}>Department</label>
+                                <input 
+                                    type="text" 
+                                    value={employmentDetails.department || ''} 
+                                    disabled={!canEditEmployment || !editMode.Employment} 
+                                    onChange={e => handleLocalChange('Employment', 'department', e.target.value)} 
+                                    className={inputClasses} 
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClasses}>Designation</label>
+                                <input 
+                                    type="text" 
+                                    value={employmentDetails.designation || ''} 
+                                    disabled={!canEditEmployment || !editMode.Employment} 
+                                    onChange={e => handleLocalChange('Employment', 'designation', e.target.value)} 
+                                    className={inputClasses} 
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClasses}>Date of Joining</label>
+                                <input 
+                                    type="date" 
+                                    value={formatDateForInput(employmentDetails.dateOfJoining) || ''}
+                                    disabled={!canEditEmployment || !editMode.Employment} 
+                                    onChange={e => handleLocalChange('Employment', 'dateOfJoining', e.target.value)} 
+                                    className={inputClasses} 
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-6">
+                            <button 
+                                disabled={!canEditEmployment}
+                                onClick={() => editMode.Employment ? handleUpdate('Employment') : setEditMode({ ...editMode, Employment: true })}
+                                className={`px-4 py-2 text-white rounded-lg ${
+                                    !canEditEmployment 
+                                        ? 'bg-gray-400 cursor-not-allowed' 
+                                        : editMode.Employment 
+                                            ? 'bg-green-600 hover:bg-green-700' 
+                                            : 'bg-teal-600 hover:bg-teal-700'
+                                }`}
+                            >
+                                {!canEditEmployment 
+                                    ? 'Edit Disabled (Verified)' 
+                                    : editMode.Employment 
+                                        ? 'Save Changes' 
+                                        : 'Edit Employment Info'
+                                }
+                            </button>
+                            {!canEditEmployment && (
+                                <p className="text-xs text-red-500 mt-2">Employment details cannot be edited after verification</p>
+                            )}
+                        </div>
+                    </div>
+                );
 
             case 'Bank':
                 return (
@@ -683,15 +740,15 @@ const handleAddNominee = async (e) => {
                                                             type="file"
                                                             id={`editNomineeAadhaarFront_${n._id}`}
                                                             className="hidden"
-                                                            accept="image/jpeg,image/png"
+                                                            accept="image/*,.pdf"
                                                             onChange={(e) => handleEditingNomineeFileChange('aadhaarFront', e.target.files)}
                                                         />
                                                         <label htmlFor={`editNomineeAadhaarFront_${n._id}`} className="cursor-pointer">
-                                                            <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                            <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📁</div>
                                                             <p className="text-sm font-medium text-gray-700">
                                                                 {editingNomineeLocal.aadhaarFront ? editingNomineeLocal.aadhaarFront[0].name : 'Update Aadhaar Front'}
                                                             </p>
-                                                            <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                            <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
                                                         </label>
                                                     </div>
                                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
@@ -699,15 +756,15 @@ const handleAddNominee = async (e) => {
                                                             type="file"
                                                             id={`editNomineeAadhaarBack_${n._id}`}
                                                             className="hidden"
-                                                            accept="image/jpeg,image/png"
+                                                            accept="image/*,.pdf"
                                                             onChange={(e) => handleEditingNomineeFileChange('aadhaarBack', e.target.files)}
                                                         />
                                                         <label htmlFor={`editNomineeAadhaarBack_${n._id}`} className="cursor-pointer">
-                                                            <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                            <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📁</div>
                                                             <p className="text-sm font-medium text-gray-700">
                                                                 {editingNomineeLocal.aadhaarBack ? editingNomineeLocal.aadhaarBack[0].name : 'Update Aadhaar Back'}
                                                             </p>
-                                                            <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                            <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
                                                         </label>
                                                     </div>
                                                 </div>
@@ -716,7 +773,7 @@ const handleAddNominee = async (e) => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div><label className={labelClasses}>Name</label><input className={inputClasses} value={editingNomineeLocal.name || ''} onChange={e => handleEditingNomineeChange('name', e.target.value)} /></div>
                                                 <div><label className={labelClasses}>Relation</label><select className={inputClasses} value={editingNomineeLocal.relation || ''} onChange={e => handleEditingNomineeChange('relation', e.target.value)}><option value="">Select relation</option>{RELATION_OPTIONS.map(opt => (<option key={opt} value={opt}>{opt}</option>))}</select></div>
-                                                <div><label className={labelClasses}>Date of Birth</label><input type="date" className={inputClasses} value={editingNomineeLocal.dateOfBirth ? editingNomineeLocal.dateOfBirth.split('T')[0] : ''} onChange={e => handleEditingNomineeChange('dateOfBirth', e.target.value)} /></div>
+                                                <div><label className={labelClasses}>Date of Birth</label><input type="date" className={inputClasses} value={formatDateForInput(editingNomineeLocal.dateOfBirth) || ''} onChange={e => handleEditingNomineeChange('dateOfBirth', e.target.value)} /></div>
                                                 <div><label className={labelClasses}>Aadhaar</label><input className={inputClasses} value={editingNomineeLocal.aadhaarNumber || ''} onChange={e => handleEditingNomineeChange('aadhaarNumber', e.target.value)} /></div>
                                             </div>
 
@@ -763,13 +820,43 @@ const handleAddNominee = async (e) => {
                                                     <div className="flex gap-3">
                                                         {n.aadhaarFrontUrl && (
                                                             <div className="text-center">
-                                                                <img src={n.aadhaarFrontUrl} alt="Aadhaar Front" className="h-16 w-24 object-cover rounded border mx-auto" />
+                                                                {isPdfFile(n.aadhaarFrontUrl) ? (
+                                                                    <div className="h-16 w-24 bg-red-50 border border-red-200 rounded flex flex-col items-center justify-center">
+                                                                        <span className="text-lg">📄</span>
+                                                                        <p className="text-xs text-red-700 mt-1">PDF</p>
+                                                                        <a 
+                                                                            href={n.aadhaarFrontUrl} 
+                                                                            target="_blank" 
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-xs text-blue-600 hover:text-blue-800"
+                                                                        >
+                                                                            View
+                                                                        </a>
+                                                                    </div>
+                                                                ) : (
+                                                                    <img src={n.aadhaarFrontUrl} alt="Aadhaar Front" className="h-16 w-24 object-cover rounded border mx-auto" />
+                                                                )}
                                                                 <p className="text-xs text-gray-500 mt-1">Front</p>
                                                             </div>
                                                         )}
                                                         {n.aadhaarBackUrl && (
                                                             <div className="text-center">
-                                                                <img src={n.aadhaarBackUrl} alt="Aadhaar Back" className="h-16 w-24 object-cover rounded border mx-auto" />
+                                                                {isPdfFile(n.aadhaarBackUrl) ? (
+                                                                    <div className="h-16 w-24 bg-red-50 border border-red-200 rounded flex flex-col items-center justify-center">
+                                                                        <span className="text-lg">📄</span>
+                                                                        <p className="text-xs text-red-700 mt-1">PDF</p>
+                                                                        <a 
+                                                                            href={n.aadhaarBackUrl} 
+                                                                            target="_blank" 
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-xs text-blue-600 hover:text-blue-800"
+                                                                        >
+                                                                            View
+                                                                        </a>
+                                                                    </div>
+                                                                ) : (
+                                                                    <img src={n.aadhaarBackUrl} alt="Aadhaar Back" className="h-16 w-24 object-cover rounded border mx-auto" />
+                                                                )}
                                                                 <p className="text-xs text-gray-500 mt-1">Back</p>
                                                             </div>
                                                         )}
@@ -801,15 +888,15 @@ const handleAddNominee = async (e) => {
                                                     type="file"
                                                     id="newNomineeAadhaarFront"
                                                     className="hidden"
-                                                    accept="image/jpeg,image/png"
+                                                    accept="image/*,.pdf"
                                                     onChange={(e) => handleNewNomineeFileChange('aadhaarFront', e.target.files)}
                                                 />
                                                 <label htmlFor="newNomineeAadhaarFront" className="cursor-pointer">
-                                                    <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                    <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📁</div>
                                                     <p className="text-sm font-medium text-gray-700">
                                                         {newNominee.aadhaarFront ? newNominee.aadhaarFront[0].name : 'Upload Aadhaar Front'}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                    <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
                                                 </label>
                                             </div>
                                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-400 transition-colors">
@@ -817,15 +904,15 @@ const handleAddNominee = async (e) => {
                                                     type="file"
                                                     id="newNomineeAadhaarBack"
                                                     className="hidden"
-                                                    accept="image/jpeg,image/png"
+                                                    accept="image/*,.pdf"
                                                     onChange={(e) => handleNewNomineeFileChange('aadhaarBack', e.target.files)}
                                                 />
                                                 <label htmlFor="newNomineeAadhaarBack" className="cursor-pointer">
-                                                    <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📷</div>
+                                                    <div className="h-8 w-8 text-gray-400 mx-auto mb-2">📁</div>
                                                     <p className="text-sm font-medium text-gray-700">
                                                         {newNominee.aadhaarBack ? newNominee.aadhaarBack[0].name : 'Upload Aadhaar Back'}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 mt-1">JPEG or PNG (Optional)</p>
+                                                    <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
                                                 </label>
                                             </div>
                                         </div>
@@ -898,8 +985,22 @@ const handleAddNominee = async (e) => {
                         {aadhaarFrontUrl || aadhaarBackUrl ? (
                             <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border">
                                 <div className="flex gap-2">
-                                    {aadhaarFrontUrl && <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="h-24 w-36 object-cover rounded-md border" />}
-                                    {aadhaarBackUrl && <img src={aadhaarBackUrl} alt="Aadhaar Back" className="h-24 w-36 object-cover rounded-md border" />}
+                                    {aadhaarFrontUrl && (isPdfFile(aadhaarFrontUrl) ? (
+                                        <div className="h-24 w-36 bg-red-50 border border-red-200 rounded flex flex-col items-center justify-center">
+                                            <span className="text-xl">📄</span>
+                                            <p className="text-xs text-red-700 mt-1">PDF Front</p>
+                                        </div>
+                                    ) : (
+                                        <img src={aadhaarFrontUrl} alt="Aadhaar Front" className="h-24 w-36 object-cover rounded-md border" />
+                                    ))}
+                                    {aadhaarBackUrl && (isPdfFile(aadhaarBackUrl) ? (
+                                        <div className="h-24 w-36 bg-red-50 border border-red-200 rounded flex flex-col items-center justify-center">
+                                            <span className="text-xl">📄</span>
+                                            <p className="text-xs text-red-700 mt-1">PDF Back</p>
+                                        </div>
+                                    ) : (
+                                        <img src={aadhaarBackUrl} alt="Aadhaar Back" className="h-24 w-36 object-cover rounded-md border" />
+                                    ))}
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Aadhaar</p>
