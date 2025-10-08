@@ -399,7 +399,8 @@ const handleAddNominee = async (e) => {
                 return;
             }
             dataToSave = {
-                personalDetails: { 
+                personalDetails: {
+                    ...localPersonalDetails, 
                     phone: localPersonalDetails.phone, 
                     email: localPersonalDetails.email 
                 }
@@ -408,8 +409,10 @@ const handleAddNominee = async (e) => {
             dataToSave = {
                 bankDetails: localBankDetails
             };
-        } else {
-            return;
+        } else if (tab === 'Employment') {
+            dataToSave = {
+                employmentDetails: localEmploymentDetails
+            };
         }
 
         try {
@@ -439,11 +442,11 @@ const handleAddNominee = async (e) => {
     const aadhaarBackUrl = userData?.personalDetails?.aadhaarBackUrl;
 
     const getDetails = (tab) => {
-        if (tab === 'Personal') return editMode.Personal ? localPersonalDetails : userData.personalDetails;
-        if (tab === 'Bank') return editMode.Bank ? localBankDetails : userData.bankDetails;
-        if (tab === 'Employment') return userData.employmentDetails;
-        return {};
-    };
+    if (tab === 'Personal') return editMode.Personal ? localPersonalDetails : userData.personalDetails;
+    if (tab === 'Bank') return editMode.Bank ? localBankDetails : userData.bankDetails;
+    if (tab === 'Employment') return editMode.Employment ? localEmploymentDetails : userData.employmentDetails; // ✅ Fixed
+    return {};
+};
 
     const renderContent = () => {
         const commonClasses = "mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4";
@@ -487,7 +490,7 @@ const handleAddNominee = async (e) => {
 
                         <div className={commonClasses}>
                             <div><label className={labelClasses}>Full Name</label><input type="text" value={userData.personalDetails?.fullName || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'fullName', e.target.value)} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Date of Birth</label><input type="date" value={userData.personalDetails?.dateOfBirth || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'dateOfBirth', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Date of Birth</label><input type="date" value={userData.personalDetails?.dateOfBirth ? userData.personalDetails.dateOfBirth.split('T')[0] : ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'dateOfBirth', e.target.value)} className={inputClasses} /></div>
                             <div><label className={labelClasses}>Sex</label><input type="text" value={userData.personalDetails?.sex || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'sex', e.target.value)} className={inputClasses} /></div>
                             <div><label className={labelClasses}>Aadhaar Number</label><input type="text" value={userData.personalDetails?.aadhaarNumber || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'aadhaarNumber', e.target.value)} className={inputClasses} /></div>
 
@@ -563,33 +566,85 @@ const handleAddNominee = async (e) => {
                 );
 
             case 'Employment':
-                return (
-                    <div>
-                        <div className={commonClasses}>
-                            <div><label className={labelClasses}>State</label><input type="text" value={employmentDetails.state || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'state', e.target.value)} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>District</label><input type="text" value={employmentDetails.district || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'district', e.target.value)} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Department</label><input type="text" value={employmentDetails.department || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'department', e.target.value)} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Designation</label><input type="text" value={employmentDetails.designation || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'designation', e.target.value)} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Date of Joining</label><input type="date" value={employmentDetails.dateOfJoining || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'dateOfJoining', e.target.value)} className={inputClasses} /></div>
-                        </div>
-                        <div className="mt-6">
-                            <button 
-                                disabled={!canEditEmployment}
-                                onClick={() => editMode.Employment ? handleUpdate('Employment') : setEditMode({ ...editMode, Employment: true })}
-                                className={`px-4 py-2 text-white rounded-lg ${
-                                    !canEditEmployment 
-                                        ? 'bg-gray-400 cursor-not-allowed' 
-                                        : 'bg-teal-600 hover:bg-teal-700'
-                                }`}
-                            >
-                                {!canEditEmployment ? 'Edit Disabled (Verified)' : editMode.Employment ? 'Save Changes' : 'Edit Employment Info'}
-                            </button>
-                            {!canEditEmployment && (
-                                <p className="text-xs text-red-500 mt-2">Employment details cannot be edited after verification</p>
-                            )}
-                        </div>
-                    </div>
-                );
+    return (
+        <div>
+            <div className={commonClasses}>
+                <div>
+                    <label className={labelClasses}>State</label>
+                    <input 
+                        type="text" 
+                        value={employmentDetails.state || ''} 
+                        disabled={!canEditEmployment || !editMode.Employment} // ✅ This is correct
+                        onChange={e => handleLocalChange('Employment', 'state', e.target.value)} 
+                        className={inputClasses} 
+                    />
+                </div>
+                <div>
+                    <label className={labelClasses}>District</label>
+                    <input 
+                        type="text" 
+                        value={employmentDetails.district || ''} 
+                        disabled={!canEditEmployment || !editMode.Employment} 
+                        onChange={e => handleLocalChange('Employment', 'district', e.target.value)} 
+                        className={inputClasses} 
+                    />
+                </div>
+                <div>
+                    <label className={labelClasses}>Department</label>
+                    <input 
+                        type="text" 
+                        value={employmentDetails.department || ''} 
+                        disabled={!canEditEmployment || !editMode.Employment} 
+                        onChange={e => handleLocalChange('Employment', 'department', e.target.value)} 
+                        className={inputClasses} 
+                    />
+                </div>
+                <div>
+                    <label className={labelClasses}>Designation</label>
+                    <input 
+                        type="text" 
+                        value={employmentDetails.designation || ''} 
+                        disabled={!canEditEmployment || !editMode.Employment} 
+                        onChange={e => handleLocalChange('Employment', 'designation', e.target.value)} 
+                        className={inputClasses} 
+                    />
+                </div>
+                <div>
+                    <label className={labelClasses}>Date of Joining</label>
+                    <input 
+                        type="date" 
+                        value={employmentDetails.dateOfJoining ? employmentDetails.dateOfJoining.split('T')[0] : ''}
+                        disabled={!canEditEmployment || !editMode.Employment} 
+                        onChange={e => handleLocalChange('Employment', 'dateOfJoining', e.target.value)} 
+                        className={inputClasses} 
+                    />
+                </div>
+            </div>
+            <div className="mt-6">
+                <button 
+                    disabled={!canEditEmployment}
+                    onClick={() => editMode.Employment ? handleUpdate('Employment') : setEditMode({ ...editMode, Employment: true })}
+                    className={`px-4 py-2 text-white rounded-lg ${
+                        !canEditEmployment 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : editMode.Employment 
+                                ? 'bg-green-600 hover:bg-green-700' 
+                                : 'bg-teal-600 hover:bg-teal-700'
+                    }`}
+                >
+                    {!canEditEmployment 
+                        ? 'Edit Disabled (Verified)' 
+                        : editMode.Employment 
+                            ? 'Save Changes' 
+                            : 'Edit Employment Info'
+                    }
+                </button>
+                {!canEditEmployment && (
+                    <p className="text-xs text-red-500 mt-2">Employment details cannot be edited after verification</p>
+                )}
+            </div>
+        </div>
+    );
 
             case 'Bank':
                 return (
@@ -661,7 +716,7 @@ const handleAddNominee = async (e) => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div><label className={labelClasses}>Name</label><input className={inputClasses} value={editingNomineeLocal.name || ''} onChange={e => handleEditingNomineeChange('name', e.target.value)} /></div>
                                                 <div><label className={labelClasses}>Relation</label><select className={inputClasses} value={editingNomineeLocal.relation || ''} onChange={e => handleEditingNomineeChange('relation', e.target.value)}><option value="">Select relation</option>{RELATION_OPTIONS.map(opt => (<option key={opt} value={opt}>{opt}</option>))}</select></div>
-                                                <div><label className={labelClasses}>Date of Birth</label><input type="date" className={inputClasses} value={editingNomineeLocal.dateOfBirth || ''} onChange={e => handleEditingNomineeChange('dateOfBirth', e.target.value)} /></div>
+                                                <div><label className={labelClasses}>Date of Birth</label><input type="date" className={inputClasses} value={editingNomineeLocal.dateOfBirth ? editingNomineeLocal.dateOfBirth.split('T')[0] : ''} onChange={e => handleEditingNomineeChange('dateOfBirth', e.target.value)} /></div>
                                                 <div><label className={labelClasses}>Aadhaar</label><input className={inputClasses} value={editingNomineeLocal.aadhaarNumber || ''} onChange={e => handleEditingNomineeChange('aadhaarNumber', e.target.value)} /></div>
                                             </div>
 
