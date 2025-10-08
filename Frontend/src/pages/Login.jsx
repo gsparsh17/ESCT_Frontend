@@ -25,6 +25,7 @@ export default function Login() {
             if (user.isAdmin) {
                 navigate('/admin', { replace: true });
             } else {
+                localStorage.setItem('profileIncompleteModalShown', 'false');
                 navigate('/home', { replace: true });
             }
         } catch (e) {
