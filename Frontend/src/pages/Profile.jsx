@@ -25,6 +25,7 @@ const Profile = () => {
     
     const [localPersonalDetails, setLocalPersonalDetails] = useState({});
     const [localBankDetails, setLocalBankDetails] = useState({});
+    const [localEmploymentDetails, setLocalEmploymentDetails] = useState({});
 
     const [editMode, setEditMode] = useState({ Personal: false, Employment: false, Bank: false });
     
@@ -80,6 +81,7 @@ const Profile = () => {
                 setUserData(user);
                 setLocalPersonalDetails(user.personalDetails || {});
                 setLocalBankDetails(user.bankDetails || {});
+                setLocalEmploymentDetails(user.employmentDetails || {});
                 setNominees(noms);
             } catch (err) {
                 console.error("Fetch Data Error:", err);
@@ -102,6 +104,9 @@ const Profile = () => {
             setLocalPersonalDetails(prev => ({ ...prev, [field]: value }));
         } else if (tab === 'Bank') {
             setLocalBankDetails(prev => ({ ...prev, [field]: value }));
+        }
+        else if (tab === 'Employment') {
+            setLocalEmploymentDetails(prev => ({ ...prev, [field]: value }));
         }
     };
 
@@ -421,7 +426,7 @@ const handleAddNominee = async (e) => {
             console.error("Update Error:", err);
             if (tab === 'Personal') setLocalPersonalDetails(userData.personalDetails);
             if (tab === 'Bank') setLocalBankDetails(userData.bankDetails);
-            
+            if (tab === 'Employment') setLocalEmploymentDetails(userData.employmentDetails);
             setError('Failed to update profile.', err.message);
         }
     };
@@ -481,11 +486,11 @@ const handleAddNominee = async (e) => {
                         </div>
 
                         <div className={commonClasses}>
-                            <div><label className={labelClasses}>Full Name</label><input type="text" value={userData.personalDetails?.fullName || ''} disabled={true} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Date of Birth</label><input type="date" value={userData.personalDetails?.dateOfBirth || ''} disabled={true} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Sex</label><input type="text" value={userData.personalDetails?.sex || ''} disabled={true} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Aadhaar Number</label><input type="text" value={userData.personalDetails?.aadhaarNumber || ''} disabled={true} className={inputClasses} /></div>
-                            
+                            <div><label className={labelClasses}>Full Name</label><input type="text" value={userData.personalDetails?.fullName || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'fullName', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Date of Birth</label><input type="date" value={userData.personalDetails?.dateOfBirth || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'dateOfBirth', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Sex</label><input type="text" value={userData.personalDetails?.sex || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'sex', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Aadhaar Number</label><input type="text" value={userData.personalDetails?.aadhaarNumber || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'aadhaarNumber', e.target.value)} className={inputClasses} /></div>
+
                             <div><label className={labelClasses}>Phone</label><input type="text" value={personalDetails.phone || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'phone', e.target.value)} className={inputClasses} /></div>
                             <div><label className={labelClasses}>Email</label><input type="email" value={personalDetails.email || ''} disabled={!editMode.Personal || !canEditPersonal} onChange={e => handleLocalChange('Personal', 'email', e.target.value)} className={inputClasses} /></div>
                         </div>
@@ -561,22 +566,23 @@ const handleAddNominee = async (e) => {
                 return (
                     <div>
                         <div className={commonClasses}>
-                            <div><label className={labelClasses}>State</label><input type="text" value={employmentDetails.state || ''} disabled={true} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>District</label><input type="text" value={employmentDetails.district || ''} disabled={true} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Department</label><input type="text" value={employmentDetails.department || ''} disabled={true} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Designation</label><input type="text" value={employmentDetails.designation || ''} disabled={true} className={inputClasses} /></div>
-                            <div><label className={labelClasses}>Date of Joining</label><input type="date" value={employmentDetails.dateOfJoining || ''} disabled={true} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>State</label><input type="text" value={employmentDetails.state || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'state', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>District</label><input type="text" value={employmentDetails.district || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'district', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Department</label><input type="text" value={employmentDetails.department || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'department', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Designation</label><input type="text" value={employmentDetails.designation || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'designation', e.target.value)} className={inputClasses} /></div>
+                            <div><label className={labelClasses}>Date of Joining</label><input type="date" value={employmentDetails.dateOfJoining || ''} disabled={!canEditEmployment || !editMode.Employment} onChange={e => handleLocalChange('Employment', 'dateOfJoining', e.target.value)} className={inputClasses} /></div>
                         </div>
                         <div className="mt-6">
                             <button 
                                 disabled={!canEditEmployment}
+                                onClick={() => editMode.Employment ? handleUpdate('Employment') : setEditMode({ ...editMode, Employment: true })}
                                 className={`px-4 py-2 text-white rounded-lg ${
                                     !canEditEmployment 
                                         ? 'bg-gray-400 cursor-not-allowed' 
                                         : 'bg-teal-600 hover:bg-teal-700'
                                 }`}
                             >
-                                {!canEditEmployment ? 'Edit Disabled (Verified)' : 'Edit Employment Info'}
+                                {!canEditEmployment ? 'Edit Disabled (Verified)' : editMode.Employment ? 'Save Changes' : 'Edit Employment Info'}
                             </button>
                             {!canEditEmployment && (
                                 <p className="text-xs text-red-500 mt-2">Employment details cannot be edited after verification</p>

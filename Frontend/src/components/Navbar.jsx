@@ -24,9 +24,9 @@ export default function Navbar() {
 
   // Mock notifications data
   const notifications = [
-    { id: 1, message: 'Your donation for Retirement Farewell has been processed', time: '2 hours ago', read: false },
-    { id: 2, message: 'New claim submitted for Death During Service', time: '1 day ago', read: true },
-    { id: 3, message: 'Monthly contribution reminder', time: '2 days ago', read: false },
+    // { id: 1, message: 'Your donation for Retirement Farewell has been processed', time: '2 hours ago', read: false },
+    // { id: 2, message: 'New claim submitted for Death During Service', time: '1 day ago', read: true },
+    // { id: 3, message: 'Monthly contribution reminder', time: '2 days ago', read: false },
   ];
 
   const unreadCount = notifications.filter(n => !n.read).length;

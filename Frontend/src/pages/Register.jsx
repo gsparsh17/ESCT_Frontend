@@ -110,6 +110,7 @@ const Register = () => {
             }
 
             const states = await response.json();
+            states.sort((a, b) => a.name.localeCompare(b.name));
             setApiStates(states);
         } catch (error) {
             console.error('Error fetching states:', error);
