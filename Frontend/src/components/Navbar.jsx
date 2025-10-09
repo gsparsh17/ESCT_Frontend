@@ -32,13 +32,13 @@ export default function Navbar() {
 
   const handleLinkClick = () => setOpen(false);
 
-  // Check for incomplete profile fields
+  // Check for incomplete profile fields with pensioner support
   const checkIncompleteFields = (userData) => {
     const incomplete = [];
     
     if (!userData) return incomplete;
 
-    // Check personal details
+    // Check personal details (common for both user types)
     if (!userData.personalDetails?.fullName) incomplete.push('Full Name');
     if (!userData.personalDetails?.dateOfBirth) incomplete.push('Date of Birth');
     if (!userData.personalDetails?.sex) incomplete.push('Gender');
@@ -46,47 +46,52 @@ export default function Navbar() {
     if (!userData.personalDetails?.email) incomplete.push('Email');
     if (!userData.personalDetails?.aadhaarNumber) incomplete.push('Aadhaar Number');
     
-    // Check employment details (for employees)
+    // Check employment details based on user type
     if (userData.userType === 'EMPLOYEE') {
+      // Employee specific fields
       if (!userData.employmentDetails?.state) incomplete.push('Employment State');
       if (!userData.employmentDetails?.district) incomplete.push('Employment District');
       if (!userData.employmentDetails?.department) incomplete.push('Employment Department');
       if (!userData.employmentDetails?.designation) incomplete.push('Employment Designation');
       if (!userData.employmentDetails?.dateOfJoining) incomplete.push('Date of Joining');
+    } else if (userData.userType === 'PENSIONER') {
+      // Pensioner specific fields
+      if (!userData.employmentDetails?.state) incomplete.push('State');
+      if (!userData.employmentDetails?.dateOfRetirement) incomplete.push('Date of Retirement');
+      if (!userData.employmentDetails?.retirementDocumentUrl) incomplete.push('Retirement Document');
     }
     
-    // Check bank details
+    // Check bank details (common for both user types)
     if (!userData.bankDetails?.accountNumber) incomplete.push('Bank Account Number');
     if (!userData.bankDetails?.ifscCode) incomplete.push('IFSC Code');
     if (!userData.bankDetails?.bankName) incomplete.push('Bank Name');
     
-    // Check Aadhaar documents
+    // Check Aadhaar documents (common for both user types)
     if (!userData.personalDetails?.aadhaarFrontUrl) incomplete.push('Aadhaar Front Document');
     if (!userData.personalDetails?.aadhaarBackUrl) incomplete.push('Aadhaar Back Document');
     
-    // Check profile photo
+    // Check profile photo (common for both user types)
     if (!userData.photoUrl) incomplete.push('Profile Photo');
 
     return incomplete;
   };
 
   // Check if profile modal should be shown
-  // Check if profile modal should be shown
-const shouldShowProfileModal = (incompleteFields, nominees) => {
-  const modalShown = localStorage.getItem('profileIncompleteModalShown');
-  
-  // Check if modal was previously shown
-  const hasModalBeenShown = modalShown === 'true';
-  
-  // Show modal if: user is logged in, modal hasn't been shown before, AND profile is incomplete or has no nominees
-  if (token && !hasModalBeenShown && (incompleteFields.length > 0 || nominees.length === 0)) {
-    return true;
-  }
-  return false;
-};
+  const shouldShowProfileModal = (incompleteFields, nominees) => {
+    const modalShown = localStorage.getItem('profileIncompleteModalShown');
+    
+    // Check if modal was previously shown
+    const hasModalBeenShown = modalShown === 'true';
+    
+    // Show modal if: user is logged in, modal hasn't been shown before, AND profile is incomplete or has no nominees
+    if (token && !hasModalBeenShown && (incompleteFields.length > 0 || nominees.length === 0)) {
+      return true;
+    }
+    return false;
+  };
 
   // Generate notifications based on incomplete fields and nominees
-  const generateNotifications = (incompleteFields, nominees) => {
+  const generateNotifications = (incompleteFields, nominees, userData) => {
     const newNotifications = [];
     
     // Profile completion notifications
@@ -119,6 +124,20 @@ const shouldShowProfileModal = (incompleteFields, nominees) => {
         read: false,
         type: 'success'
       });
+    }
+
+    // User type specific notifications
+    if (userData?.userType === 'PENSIONER') {
+      if (!userData.employmentDetails?.retirementDocumentUrl) {
+        newNotifications.push({
+          id: 'retirement-doc-missing',
+          message: 'Please upload your retirement document to complete your pensioner profile.',
+          time: 'Just now',
+          read: false,
+          type: 'warning',
+          action: '/profile'
+        });
+      }
     }
 
     // Nominee notifications
@@ -172,7 +191,7 @@ const shouldShowProfileModal = (incompleteFields, nominees) => {
         setIncompleteFields(incomplete);
         
         // Generate notifications
-        const newNotifications = generateNotifications(incomplete, userNominees);
+        const newNotifications = generateNotifications(incomplete, userNominees, userProfile);
         setNotifications(newNotifications);
         
         // Check if we should show the modal popup
@@ -301,6 +320,14 @@ const shouldShowProfileModal = (incompleteFields, nominees) => {
   const handleModalClose = () => {
     localStorage.setItem('profileIncompleteModalShown', 'true');
     setShowProfileModal(false);
+  };
+
+  // Get user type display text
+  const getUserTypeDisplay = () => {
+    if (profileData?.userType === 'PENSIONER') {
+      return 'Pensioner';
+    }
+    return 'Employee';
   };
 
   return (
@@ -532,6 +559,11 @@ const shouldShowProfileModal = (incompleteFields, nominees) => {
                     <p className="text-sm text-yellow-700">
                       {incompleteFields.length} field(s) need to be completed in your profile.
                     </p>
+                    {profileData?.userType && (
+                      <p className="text-xs text-yellow-600 mt-1">
+                        User Type: {getUserTypeDisplay()}
+                      </p>
+                    )}
                   </div>
                 )}
                 
@@ -543,6 +575,21 @@ const shouldShowProfileModal = (incompleteFields, nominees) => {
                     </div>
                     <p className="text-sm text-blue-700">
                       Please add at least one nominee to complete your profile setup.
+                    </p>
+                  </div>
+                )}
+
+                {/* Pensioner specific reminder */}
+                {profileData?.userType === 'PENSIONER' && incompleteFields.some(field => 
+                  field.includes('Retirement') || field.includes('retirement')
+                ) && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <div className="flex items-center mb-2">
+                      <FaUserShield className="text-purple-500 mr-2" />
+                      <span className="font-medium text-purple-800">Pensioner Requirement</span>
+                    </div>
+                    <p className="text-sm text-purple-700">
+                      As a pensioner, please ensure you upload your retirement document.
                     </p>
                   </div>
                 )}
