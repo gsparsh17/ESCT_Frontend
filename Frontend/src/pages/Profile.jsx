@@ -356,73 +356,71 @@ const Profile = () => {
     };
 
     const saveEditedNominee = async () => {
-        if (!editingNomineeLocal || !editingNomineeId) return;
-        clearMessages();
+    if (!editingNomineeLocal || !editingNomineeId) return;
+    clearMessages();
+    
+    // Frontend validation
+    if (!editingNomineeLocal.name || !editingNomineeLocal.relation) {
+        setError('Name and relation are required fields.');
+        return;
+    }
+    
+    const acc = editingNomineeLocal.bankDetails?.accountNumber;
+    const accConfirm = editingNomineeLocal.bankDetails?.confirmAccountNumber;
+    if (acc || accConfirm) {
+        if (String(acc || '') !== String(accConfirm || '')) {
+            setError('Nominee account number and confirmation do not match.');
+            return;
+        }
+    }
+    
+    setUploadingFiles(prev => ({ ...prev, editingNominee: true }));
+    
+    try {
+        const formData = new FormData();
         
-        const acc = editingNomineeLocal.bankDetails?.accountNumber;
-        const accConfirm = editingNomineeLocal.bankDetails?.confirmAccountNumber;
-        if (acc || accConfirm) {
-            if (String(acc || '') !== String(accConfirm || '')) {
-                setError('Nominee account number and confirmation do not match.');
-                return;
-            }
+        // ✅ Use same structure as add nominee
+        formData.append('name', editingNomineeLocal.name);
+        formData.append('relation', editingNomineeLocal.relation);
+        if (editingNomineeLocal.dateOfBirth) formData.append('dateOfBirth', editingNomineeLocal.dateOfBirth);
+        if (editingNomineeLocal.aadhaarNumber) formData.append('aadhaarNumber', editingNomineeLocal.aadhaarNumber);
+        formData.append('isPrimary', editingNomineeLocal.isPrimary);
+        
+        // ✅ Use JSON string for bankDetails like add nominee does
+        const bankDetails = {
+            accountNumber: editingNomineeLocal.bankDetails?.accountNumber || '',
+            ifscCode: editingNomineeLocal.bankDetails?.ifscCode || '',
+            bankName: editingNomineeLocal.bankDetails?.bankName || '',
+            branchName: editingNomineeLocal.bankDetails?.branchName || '',
+        };
+        formData.append('bankDetails', JSON.stringify(bankDetails));
+        
+        // File uploads
+        if (editingNomineeLocal.aadhaarFront && editingNomineeLocal.aadhaarFront[0]) {
+            formData.append('aadhaarFront', editingNomineeLocal.aadhaarFront[0]);
+        }
+        if (editingNomineeLocal.aadhaarBack && editingNomineeLocal.aadhaarBack[0]) {
+            formData.append('aadhaarBack', editingNomineeLocal.aadhaarBack[0]);
         }
         
-        setUploadingFiles(prev => ({ ...prev, editingNominee: true }));
-        
-        try {
-            const formData = new FormData();
-            
-            // Append basic nominee data as individual fields
-            formData.append('name', editingNomineeLocal.name);
-            formData.append('relation', editingNomineeLocal.relation);
-            if (editingNomineeLocal.dateOfBirth) formData.append('dateOfBirth', editingNomineeLocal.dateOfBirth);
-            if (editingNomineeLocal.aadhaarNumber) formData.append('aadhaarNumber', editingNomineeLocal.aadhaarNumber);
-            formData.append('isPrimary', editingNomineeLocal.isPrimary);
-            
-            // Append bank details as individual fields
-            if (editingNomineeLocal.bankDetails?.bankName) formData.append('bankDetails[bankName]', editingNomineeLocal.bankDetails.bankName);
-            if (editingNomineeLocal.bankDetails?.accountNumber) formData.append('bankDetails[accountNumber]', editingNomineeLocal.bankDetails.accountNumber);
-            if (editingNomineeLocal.bankDetails?.ifscCode) formData.append('bankDetails[ifscCode]', editingNomineeLocal.bankDetails.ifscCode);
-            if (editingNomineeLocal.bankDetails?.branchName) formData.append('bankDetails[branchName]', editingNomineeLocal.bankDetails.branchName);
-            
-            // Append files if they exist
-            if (editingNomineeLocal.aadhaarFront && editingNomineeLocal.aadhaarFront[0]) {
-                formData.append('aadhaarFront', editingNomineeLocal.aadhaarFront[0]);
-            }
-            if (editingNomineeLocal.aadhaarBack && editingNomineeLocal.aadhaarBack[0]) {
-                formData.append('aadhaarBack', editingNomineeLocal.aadhaarBack[0]);
-            }
-
-            const updated = await updateNominee(editingNomineeId, formData);
-            setNominees(prev => prev.map(n => (n._id === editingNomineeId ? updated : n)));
-            setSuccessMessage('Nominee updated successfully.');
-            setEditingNomineeId(null);
-            setEditingNomineeLocal(null);
-        } catch (err) {
-            console.error('Update Nominee Error:', err);
-            const serverMessage = err?.response?.data?.message;
-            const serverErrors = err?.response?.data?.errors;
-            const errorMessage = serverMessage || err.message || 'Failed to update nominee.';
-
-            let validationSummary = '';
-            if (serverErrors && typeof serverErrors === 'object') {
-                try {
-                    if (Array.isArray(serverErrors)) {
-                        validationSummary = serverErrors.map(e => e.msg || e.message || JSON.stringify(e)).join('; ');
-                    } else {
-                        validationSummary = Object.values(serverErrors).flat().map(e => e.msg || e.message || JSON.stringify(e)).join('; ');
-                    }
-                } catch (e) {
-                    validationSummary = '';
-                }
-            }
-
-            setError(`Failed to update nominee: ${errorMessage}${validationSummary ? ' — ' + validationSummary : ''}`);
-        } finally {
-            setUploadingFiles(prev => ({ ...prev, editingNominee: false }));
+        console.log('Edit Nominee FormData entries:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
         }
-    };
+        
+        // ✅ Pass FormData directly without destructuring
+        const updated = await updateNominee(editingNomineeId, formData);
+        setNominees(prev => prev.map(n => (n._id === editingNomineeId ? updated : n)));
+        setSuccessMessage('Nominee updated successfully.');
+        setEditingNomineeId(null);
+        setEditingNomineeLocal(null);
+    } catch (err) {
+        console.error('Update Nominee Error:', err);
+        setError(`Failed to update nominee: ${err.message}`);
+    } finally {
+        setUploadingFiles(prev => ({ ...prev, editingNominee: false }));
+    }
+};
 
     const handleDeleteNominee = async (id) => {
         clearMessages();
