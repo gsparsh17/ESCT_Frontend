@@ -1,9 +1,10 @@
-// components/ForgotPassword.jsx
 import { useState } from 'react';
 import { forgotPassword } from '../lib/api/auth';
-import { FaEnvelope, FaSpinner, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
+import { useTranslation } from '../hooks/useTranslation';
+import { FaEnvelope, FaSpinner, FaCheck, FaExclamationTriangle, FaArrowLeft } from 'react-icons/fa';
 
 export default function ForgotPassword({ onBackToLogin }) {
+    const { t } = useTranslation();
     const [ehrmsCode, setEhrmsCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -24,7 +25,7 @@ export default function ForgotPassword({ onBackToLogin }) {
             // Clear form on success
             setEhrmsCode('');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to process request. Please try again.');
+            setError(err.response?.data?.message || t('FORGOT_PASSWORD.errors.requestFailed', 'Failed to process request. Please try again.'));
             setSuccess(false);
         } finally {
             setLoading(false);
@@ -37,17 +38,17 @@ export default function ForgotPassword({ onBackToLogin }) {
                 <div className="text-center">
                     <img src="/logo2.png" alt="ESCT" className="mx-auto drop-shadow-md" />
                     <h2 className="mt-4 text-2xl font-bold tracking-tight text-teal-800">
-                        Forgot Password
+                        {t('FORGOT_PASSWORD.title', 'Forgot Password')}
                     </h2>
                     <p className="mt-1 text-sm text-teal-600">
-                        Enter your EHRMS code to reset your password
+                        {t('FORGOT_PASSWORD.subtitle', 'Enter your EHRMS code to reset your password')}
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                     <div>
                         <label htmlFor="ehrms-code" className="block text-sm font-medium text-gray-700">
-                            EHRMS Code
+                            {t('FORGOT_PASSWORD.labels.ehrmsCode', 'EHRMS Code')}
                         </label>
                         <div className="relative mt-1">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -57,7 +58,7 @@ export default function ForgotPassword({ onBackToLogin }) {
                                 id="ehrms-code"
                                 type="text" 
                                 className="w-full rounded-lg border border-teal-300 bg-teal-50 py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
-                                placeholder="Your EHRMS Code"
+                                placeholder={t('FORGOT_PASSWORD.placeholders.ehrmsCode', 'Your EHRMS Code')}
                                 value={ehrmsCode} 
                                 onChange={(e) => setEhrmsCode(e.target.value)} 
                                 required 
@@ -101,10 +102,10 @@ export default function ForgotPassword({ onBackToLogin }) {
                         {loading ? (
                             <>
                                 <FaSpinner className="animate-spin" />
-                                <span>Sending...</span>
+                                <span>{t('FORGOT_PASSWORD.buttons.sending', 'Sending...')}</span>
                             </>
                         ) : (
-                            'Send Reset Link'
+                            t('FORGOT_PASSWORD.buttons.sendResetLink', 'Send Reset Link')
                         )}
                     </button>
 
@@ -112,9 +113,10 @@ export default function ForgotPassword({ onBackToLogin }) {
                         <button
                             type="button"
                             onClick={onBackToLogin}
-                            className="text-sm text-teal-600 hover:text-teal-800 font-medium transition-colors"
+                            className="flex items-center justify-center gap-2 text-sm text-teal-600 hover:text-teal-800 font-medium transition-colors mx-auto"
                         >
-                            ← Back to Login
+                            <FaArrowLeft className="h-3 w-3" />
+                            {t('FORGOT_PASSWORD.buttons.backToLogin', 'Back to Login')}
                         </button>
                     </div>
                 </form>

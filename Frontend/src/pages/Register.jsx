@@ -1,18 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageSelector from '../components/LanguageSelector';
 import Select from "react-select";
 import { FaUser, FaBuilding, FaWallet, FaUsers, FaArrowRight, FaArrowLeft, FaPlus, FaTrash, FaCheckCircle, FaSpinner, FaUpload, FaChevronDown, FaFilePdf } from 'react-icons/fa';
 import organisations from '../constants/organisations';
 import departments from '../constants/departments';
-
-// Updated Step Titles for clarity and UX (Step 2 is conditional)
-const STEP_TITLES = [
-  'Account Details',
-  'Personal Details',
-  'Employment / Bank Details', // Combined title
-  'Nominee Details',
-];
 
 const CSC_API_KEY = import.meta.env.VITE_CSC_API_KEY;
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -21,6 +15,7 @@ const COUNTRY_CODE = import.meta.env.VITE_COUNTRY_CODE;
 const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Step state
   const [currentStep, setCurrentStep] = useState(0);
@@ -38,7 +33,6 @@ const Register = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [profilePhoto, setProfilePhoto] = useState(null);
-  // Updated: Separate files for front and back Aadhaar
   const [aadhaarFront, setAadhaarFront] = useState(null);
   const [aadhaarBack, setAadhaarBack] = useState(null);
   
@@ -75,16 +69,18 @@ const Register = () => {
   const orgOptions = organisations.map((org) => ({ label: org, value: org }));
   const deptOptions = departments.map((dept) => ({ label: dept, value: dept }));
 
-  const RELATION_OPTIONS = [
-    'Spouse',
-    'Son',
-    'Daughter',
-    'Father',
-    'Mother',
-    'Brother',
-    'Sister',
-    'Other'
-  ];
+  // Step Titles with translation
+  const STEP_TITLES = t('STEP_TITLES', [
+    'Account Details',
+    'Personal Details',
+    'Employment / Bank Details',
+    'Nominee Details',
+  ]);
+
+  // Relation options with translation
+  const RELATION_OPTIONS = t('RELATION_OPTIONS', [
+    'Spouse', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Other'
+  ]);
 
   // Helper function to check if file is PDF
   const isPdfFile = (file) => {
@@ -98,14 +94,6 @@ const Register = () => {
       return <FaFilePdf className="h-6 w-6 text-red-500 mx-auto mb-2" />;
     }
     return <FaUpload className="h-6 w-6 text-gray-400 mx-auto mb-2" />;
-  };
-
-  // Helper function to get file type text
-  const getFileTypeText = (file) => {
-    if (file && isPdfFile(file)) {
-      return 'PDF';
-    }
-    return 'JPEG or PNG';
   };
 
   const calcAgeFromDob = (isoDate) => {
@@ -189,8 +177,8 @@ const Register = () => {
 
   // Adjust step flow dynamically for Pensioners
   const finalSteps = useMemo(() => {
-    return STEP_TITLES; // Keep all steps for both user types
-  }, [userType]);
+    return STEP_TITLES;
+  }, [userType, STEP_TITLES]);
 
   const handleUserTypeChange = (newType) => {
     setUserType(newType);
@@ -220,70 +208,70 @@ const Register = () => {
 
     if (currentStep === 0) { 
       if (!empState.trim()) {
-        newErrors.empState = 'Employment State is required.';
+        newErrors.empState = t('ERRORS.empStateRequired', 'Employment State is required.');
         isValid = false;
       }
       if (userType === 'EMPLOYEE' && !ehrmsCode.trim()) {
-        newErrors.ehrmsCode = 'EHRMS code is required.';
+        newErrors.ehrmsCode = t('ERRORS.ehrmsCodeRequired', 'EHRMS code is required.');
         isValid = false;
       }
       if (userType === 'PENSIONER' && !pensionerNumber.trim()) {
-        newErrors.pensionerNumber = 'Pensioner number is required.';
+        newErrors.pensionerNumber = t('ERRORS.pensionerNumberRequired', 'Pensioner number is required.');
         isValid = false;
       }
       if (!password.trim()) {
-        newErrors.password = 'Password is required.';
+        newErrors.password = t('ERRORS.passwordRequired', 'Password is required.');
         isValid = false;
       }
       if (!confirmPassword.trim()) {
-        newErrors.confirmPassword = 'Please confirm your password.';
+        newErrors.confirmPassword = t('ERRORS.confirmPasswordRequired', 'Please confirm your password.');
         isValid = false;
       }
       if (password !== confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match.';
+        newErrors.confirmPassword = t('ERRORS.passwordsNotMatch', 'Passwords do not match.');
         isValid = false;
       }
     } else if (currentStep === 1) { 
       if (fullName.trim() && fullName.trim().length < 2) {
-        newErrors.fullName = 'Full name must be at least 2 characters.';
+        newErrors.fullName = t('ERRORS.fullNameMinLength', 'Full name must be at least 2 characters.');
         isValid = false;
       }
       if (dateOfBirth) {
         const age = calcAgeFromDob(dateOfBirth);
         if (age === undefined || age < 18 || age > 120) {
-          newErrors.dateOfBirth = 'Invalid DOB. Must be 18-120 years old.';
+          newErrors.dateOfBirth = t('ERRORS.invalidDob', 'Invalid DOB. Must be 18-120 years old.');
           isValid = false;
         }
       }
       if (aadhaarNumber && !/^\d{12}$/.test(aadhaarNumber)) {
-        newErrors.aadhaarNumber = 'Aadhaar must be 12 digits.';
+        newErrors.aadhaarNumber = t('ERRORS.aadhaarInvalid', 'Aadhaar must be 12 digits.');
         isValid = false;
       }
       if (phone && !/^[6-9]\d{9}$/.test(phone)) {
-        newErrors.phone = 'Phone must be 10 digits starting with 6–9.';
+        newErrors.phone = t('ERRORS.phoneInvalid', 'Phone must be 10 digits starting with 6–9.');
         isValid = false;
       }
       if (email && !/\S+@\S+\.\S+/.test(email)) {
-        newErrors.email = 'Invalid email format.';
+        newErrors.email = t('ERRORS.emailInvalid', 'Invalid email format.');
         isValid = false;
       }
     } else if (currentStep === 2) {
       // Employment details validation for employees
       if (userType === 'EMPLOYEE') {
         if (empDistrict.trim() && empDistrict.trim().length < 2) {
-          newErrors.empDistrict = 'Employment District must be valid.';
+          newErrors.empDistrict = t('ERRORS.empDistrictInvalid', 'Employment District must be valid.');
           isValid = false;
         }
         if (empOrganisation.trim() && empOrganisation.trim().length < 2) {
-          newErrors.empOrganisation = 'Employment Organisation must be valid.';
+          newErrors.empOrganisation = t('ERRORS.empOrganisationInvalid', 'Employment Organisation must be valid.');
           isValid = false;
         }
         if (empDepartment.trim() && empDepartment.trim().length < 2) {
-          newErrors.empDepartment = 'Employment Department must be valid.';
+          newErrors.empDepartment = t('ERRORS.empDepartmentInvalid', 'Employment Department must be valid.');
           isValid = false;
         }
         if (empDesignation.trim() && empDesignation.trim().length < 2) {
-          newErrors.empDesignation = 'Employment Designation must be valid.';
+          newErrors.empDesignation = t('ERRORS.empDesignationInvalid', 'Employment Designation must be valid.');
           isValid = false;
         }
       }
@@ -291,26 +279,26 @@ const Register = () => {
       // Pensioner details validation
       if (userType === 'PENSIONER') {
         if (!dateOfRetirement) {
-          newErrors.dateOfRetirement = 'Date of retirement is required.';
+          newErrors.dateOfRetirement = t('ERRORS.dateOfRetirementRequired', 'Date of retirement is required.');
           isValid = false;
         }
       }
       
       // Bank details validation for both user types
       if (accountNumber.trim() && accountNumber.trim().length < 8) {
-        newErrors.accountNumber = 'Account number must be at least 8 digits.';
+        newErrors.accountNumber = t('ERRORS.accountNumberMinLength', 'Account number must be at least 8 digits.');
         isValid = false;
       }
       if (accountNumber.trim() && confirmAccountNumber.trim() && accountNumber.trim() !== confirmAccountNumber.trim()) { 
-        newErrors.confirmAccountNumber = 'Account numbers do not match.';
+        newErrors.confirmAccountNumber = t('ERRORS.accountNumbersNotMatch', 'Account numbers do not match.');
         isValid = false;
       }
       if (bankName.trim() && bankName.trim().length < 2) {
-        newErrors.bankName = 'Bank name must be valid.';
+        newErrors.bankName = t('ERRORS.bankNameInvalid', 'Bank name must be valid.');
         isValid = false;
       }
       if (ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode.toUpperCase())) {
-        newErrors.ifscCode = 'Invalid IFSC code (e.g., ABCD0EFGHIJ).';
+        newErrors.ifscCode = t('ERRORS.ifscInvalid', 'Invalid IFSC code (e.g., ABCD0EFGHIJ).');
         isValid = false;
       }
     } else if (currentStep === finalSteps.length - 1) {
@@ -320,36 +308,36 @@ const Register = () => {
           
           if (hasNomineeData) {
             if (!nominee.name?.trim()) {
-              newErrors[`nomineeName${index}`] = 'Nominee name is required if adding nominee.';
+              newErrors[`nomineeName${index}`] = t('ERRORS.nomineeNameRequired', 'Nominee name is required if adding nominee.');
               isValid = false;
             }
             if (!nominee.relation?.trim()) {
-              newErrors[`nomineeRelation${index}`] = 'Nominee relation is required if adding nominee.';
+              newErrors[`nomineeRelation${index}`] = t('ERRORS.nomineeRelationRequired', 'Nominee relation is required if adding nominee.');
               isValid = false;
             }
             if (!nominee.dateOfBirth) {
-              newErrors[`nomineeDob${index}`] = 'Nominee Date of Birth is required if adding nominee.';
+              newErrors[`nomineeDob${index}`] = t('ERRORS.nomineeDobRequired', 'Nominee Date of Birth is required if adding nominee.');
               isValid = false;
             }
             if (!nominee.aadhaarNumber || !/^\d{12}$/.test(nominee.aadhaarNumber)) {
-              newErrors[`nomineeAadhaar${index}`] = 'Nominee Aadhaar must be 12 digits.';
+              newErrors[`nomineeAadhaar${index}`] = t('ERRORS.nomineeAadhaarInvalid', 'Nominee Aadhaar must be 12 digits.');
               isValid = false;
             }
             
             if (!nominee.accountNumber?.trim()) {
-              newErrors[`nomineeAccount${index}`] = 'Account number is required for nominee.';
+              newErrors[`nomineeAccount${index}`] = t('ERRORS.nomineeAccountRequired', 'Account number is required for nominee.');
               isValid = false;
             }
             if (nominee.accountNumber.trim() && nominee.confirmAccountNumber.trim() && nominee.accountNumber.trim() !== nominee.confirmAccountNumber.trim()) {
-              newErrors[`nomineeConfirmAccount${index}`] = 'Account numbers do not match.';
+              newErrors[`nomineeConfirmAccount${index}`] = t('ERRORS.nomineeConfirmAccountNotMatch', 'Account numbers do not match.');
               isValid = false;
             }
             if (!nominee.bankName?.trim()) {
-              newErrors[`nomineeBankName${index}`] = 'Bank name is required for nominee.';
+              newErrors[`nomineeBankName${index}`] = t('ERRORS.nomineeBankNameRequired', 'Bank name is required for nominee.');
               isValid = false;
             }
             if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(nominee.ifscCode?.toUpperCase())) {
-              newErrors[`nomineeIfsc${index}`] = 'Invalid IFSC code.';
+              newErrors[`nomineeIfsc${index}`] = t('ERRORS.nomineeIfscInvalid', 'Invalid IFSC code.');
               isValid = false;
             }
           }
@@ -390,7 +378,6 @@ const Register = () => {
         bankName: '',      
         branchName: '',    
         isPrimary: nominees.length === 0,
-        // Add file states for nominee Aadhaar documents
         aadhaarFront: null,
         aadhaarBack: null
       }]);
@@ -507,7 +494,7 @@ const Register = () => {
         navigate('/home', { replace: true });
       }
     } catch (e) {
-      setErrors({ form: e.message || 'Registration failed. Please try again.' });
+      setErrors({ form: e.message || t('ERRORS.registrationFailed', 'Registration failed. Please try again.') });
     } finally {
       setLoading(false);
     }
@@ -520,7 +507,9 @@ const Register = () => {
       return (
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">State</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('LABELS.state', 'State')}
+            </label>
             <div className="relative">
               <select
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
@@ -529,7 +518,12 @@ const Register = () => {
                 disabled={isApiLoading || apiStates.length === 0}
               >
                 <option value="">
-                  {isApiLoading ? 'Loading States...' : apiStates.length === 0 ? 'No States Found (Check API Key)' : 'Select State'}
+                  {isApiLoading 
+                    ? t('LABELS.loadingStates', 'Loading States...') 
+                    : apiStates.length === 0 
+                      ? t('MESSAGES.noStatesFoundCheckApi', 'No States Found (Check API Key)') 
+                      : t('LABELS.selectState', 'Select State')
+                  }
                 </option>
                 {apiStates.map((state) => (
                   <option key={state.iso2} value={state.iso2}>
@@ -542,49 +536,63 @@ const Register = () => {
             {errors.empState && <p className="mt-1 text-xs text-red-600">{errors.empState}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">User Type</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('LABELS.userType', 'User Type')}
+            </label>
             <div className="relative">
               <select
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
                 value={userType}
                 onChange={(e) => handleUserTypeChange(e.target.value)}
               >
-                <option value="EMPLOYEE">Employee</option>
-                <option value="PENSIONER">Pensioner</option>
+                <option value="EMPLOYEE">{t('LABELS.employee', 'Employee')}</option>
+                <option value="PENSIONER">{t('LABELS.pensioner', 'Pensioner')}</option>
               </select>
               <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">{userType === 'EMPLOYEE' ? 'EHRMS Code' : 'Pensioner Number'}</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {userType === 'EMPLOYEE' 
+                ? t('LABELS.ehrmsCode', 'EHRMS Code') 
+                : t('LABELS.pensionerNumber', 'Pensioner Number')
+              }
+            </label>
             <input
               className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
               value={userType === 'EMPLOYEE' ? ehrmsCode : pensionerNumber}
               onChange={(e) => userType === 'EMPLOYEE' ? setEhrmsCode(e.target.value) : setPensionerNumber(e.target.value)}
-              placeholder={`Enter ${userType === 'EMPLOYEE' ? 'EHRMS code' : 'Pensioner number'}`}
+              placeholder={userType === 'EMPLOYEE' 
+                ? t('PLACEHOLDERS.enterEhrmsCode', 'Enter EHRMS code')
+                : t('PLACEHOLDERS.enterPensionerNumber', 'Enter Pensioner number')
+              }
             />
             {errors.ehrmsCode && <p className="mt-1 text-xs text-red-600">{errors.ehrmsCode}</p>}
             {errors.pensionerNumber && <p className="mt-1 text-xs text-red-600">{errors.pensionerNumber}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('LABELS.password', 'Password')}
+            </label>
             <input
               type="password"
               className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min 8 characters"
+              placeholder={t('PLACEHOLDERS.min8Characters', 'Min 8 characters')}
             />
             {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('LABELS.confirmPassword', 'Confirm Password')}
+            </label>
             <input
               type="password"
               className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
+              placeholder={t('PLACEHOLDERS.confirmYourPassword', 'Confirm your password')}
             />
             {errors.confirmPassword && <p className="mt-1 text-xs text-red-600">{errors.confirmPassword}</p>}
           </div>
@@ -606,13 +614,14 @@ const Register = () => {
             <label htmlFor="profilePhoto" className="cursor-pointer">
               <FaUpload className="h-8 w-8 text-gray-400 mx-auto mb-3" />
               <p className="text-sm font-medium text-gray-700">
-                {profilePhoto ? profilePhoto[0].name : 'Upload Profile Photo'}
+                {profilePhoto ? profilePhoto[0].name : t('FILE_UPLOAD.uploadProfilePhoto', 'Upload Profile Photo')}
               </p>
-              <p className="text-xs text-gray-500 mt-1">JPEG or PNG, max 5MB (Optional)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {t('FILE_UPLOAD.jpegPngMax5MB', 'JPEG or PNG, max 5MB')} ({t('LABELS.optional', 'Optional')})
+              </p>
             </label>
           </div>
 
-          {/* Updated: Separate Aadhaar Front and Back Uploads with PDF Support */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
               <input
@@ -625,9 +634,11 @@ const Register = () => {
               <label htmlFor="aadhaarFront" className="cursor-pointer">
                 {getFileIcon(aadhaarFront ? aadhaarFront[0] : null)}
                 <p className="text-sm font-medium text-gray-700">
-                  {aadhaarFront ? aadhaarFront[0].name : 'Upload Aadhaar Front'}
+                  {aadhaarFront ? aadhaarFront[0].name : t('FILE_UPLOAD.uploadAadhaarFront', 'Upload Aadhaar Front')}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF, max 5MB (Optional)</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t('FILE_UPLOAD.jpegPngPdfMax5MB', 'JPEG, PNG, or PDF, max 5MB')} ({t('LABELS.optional', 'Optional')})
+                </p>
               </label>
             </div>
 
@@ -642,26 +653,32 @@ const Register = () => {
               <label htmlFor="aadhaarBack" className="cursor-pointer">
                 {getFileIcon(aadhaarBack ? aadhaarBack[0] : null)}
                 <p className="text-sm font-medium text-gray-700">
-                  {aadhaarBack ? aadhaarBack[0].name : 'Upload Aadhaar Back'}
+                  {aadhaarBack ? aadhaarBack[0].name : t('FILE_UPLOAD.uploadAadhaarBack', 'Upload Aadhaar Back')}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF, max 5MB (Optional)</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t('FILE_UPLOAD.jpegPngPdfMax5MB', 'JPEG, PNG, or PDF, max 5MB')} ({t('LABELS.optional', 'Optional')})
+                </p>
               </label>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('LABELS.fullName', 'Full Name')}
+            </label>
             <input
               className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
+              placeholder={t('PLACEHOLDERS.enterFullName', 'Enter your full name')}
             />
             {errors.fullName && <p className="mt-1 text-xs text-red-600">{errors.fullName}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.dateOfBirth', 'Date of Birth')}
+              </label>
               <input
                 type="date"
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
@@ -671,16 +688,18 @@ const Register = () => {
               {errors.dateOfBirth && <p className="mt-1 text-xs text-red-600">{errors.dateOfBirth}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Sex</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.sex', 'Sex')}
+              </label>
               <div className="relative">
                 <select
                   className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
                   value={sex}
                   onChange={(e) => setSex(e.target.value)}
                 >
-                  <option value="MALE">MALE</option>
-                  <option value="FEMALE">FEMALE</option>
-                  <option value="OTHER">OTHER</option>
+                  <option value="MALE">{t('LABELS.male', 'MALE')}</option>
+                  <option value="FEMALE">{t('LABELS.female', 'FEMALE')}</option>
+                  <option value="OTHER">{t('LABELS.other', 'OTHER')}</option>
                 </select>
                 <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
@@ -688,36 +707,42 @@ const Register = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700">Aadhaar Number</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('LABELS.aadhaarNumber', 'Aadhaar Number')}
+            </label>
             <input
               className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
               value={aadhaarNumber}
               onChange={(e) => setAadhaarNumber(e.target.value)}
-              placeholder="12 digits"
+              placeholder={t('PLACEHOLDERS.twelveDigits', '12 digits')}
               inputMode="numeric"
             />
             {errors.aadhaarNumber && <p className="mt-1 text-xs text-red-600">{errors.aadhaarNumber}</p>}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Phone</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.phone', 'Phone')}
+              </label>
               <input
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="10 digits starting 6–9"
+                placeholder={t('PLACEHOLDERS.tenDigits', '10 digits starting 6–9')}
                 inputMode="tel"
               />
               {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.email', 'Email')}
+              </label>
               <input
                 type="email"
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('PLACEHOLDERS.youExampleCom', 'you@example.com')}
               />
               {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
             </div>
@@ -731,10 +756,14 @@ const Register = () => {
         <div className="space-y-6">
           {userType === 'EMPLOYEE' ? (
             <>
-              <h3 className="text-lg font-medium text-teal-800">Employment Details</h3>
+              <h3 className="text-lg font-medium text-teal-800">
+                {t('LABELS.employmentDetails', 'Employment Details')}
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">District (City)</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t('LABELS.district', 'District')} ({t('LABELS.city', 'City')})
+                  </label>
                   <div className="relative">
                     <select
                       className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm appearance-none pr-10 bg-white"
@@ -743,7 +772,12 @@ const Register = () => {
                       disabled={isApiLoading || apiCities.length === 0 || !selectedStateCode}
                     >
                       <option value="">
-                        {isApiLoading ? 'Loading Cities...' : apiCities.length === 0 && selectedStateCode ? 'No Cities Found' : 'Select District/City'}
+                        {isApiLoading 
+                          ? t('LABELS.loadingCities', 'Loading Cities...') 
+                          : apiCities.length === 0 && selectedStateCode 
+                            ? t('LABELS.noCitiesFound', 'No Cities Found') 
+                            : t('MESSAGES.selectDistrictCity', 'Select District/City')
+                        }
                       </option>
                       {apiCities.map((city) => (
                         <option key={city.id} value={city.name}>
@@ -756,39 +790,47 @@ const Register = () => {
                   {errors.empDistrict && <p className="mt-1 text-xs text-red-600">{errors.empDistrict}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Department</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t('LABELS.department', 'Department')}
+                  </label>
                   <Select
                     options={deptOptions}
                     value={deptOptions.find((d) => d.value === empDepartment)}
                     onChange={(selected) => setEmpDepartment(selected.value)}
-                    placeholder="-- Select Department --"
+                    placeholder={t('MESSAGES.selectDepartment', '-- Select Department --')}
                     isSearchable
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Organisation</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t('LABELS.organisation', 'Organisation')}
+                  </label>
                   <Select
                     options={orgOptions}
                     value={orgOptions.find((o) => o.value === empOrganisation)}
                     onChange={(selected) => setEmpOrganisation(selected.value)}
-                    placeholder="-- Select Organisation --"
+                    placeholder={t('MESSAGES.selectOrganisation', '-- Select Organisation --')}
                     isSearchable
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Designation</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t('LABELS.designation', 'Designation')}
+                  </label>
                   <input
                     className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                     value={empDesignation}
                     onChange={(e) => setEmpDesignation(e.target.value)}
-                    placeholder="Enter designation"
+                    placeholder={t('PLACEHOLDERS.enterDesignation', 'Enter designation')}
                   />
                   {errors.empDesignation && <p className="mt-1 text-xs text-red-600">{errors.empDesignation}</p>}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Date of Joining</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('LABELS.dateOfJoining', 'Date of Joining')}
+                </label>
                 <input
                   type="date"
                   className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
@@ -801,10 +843,14 @@ const Register = () => {
             </>
           ) : (
             <>
-              <h3 className="text-lg font-medium text-teal-800">Retirement Details</h3>
+              <h3 className="text-lg font-medium text-teal-800">
+                {t('LABELS.retirementDetails', 'Retirement Details')}
+              </h3>
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Date of Retirement</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t('LABELS.dateOfRetirement', 'Date of Retirement')}
+                  </label>
                   <input
                     type="date"
                     className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
@@ -814,7 +860,9 @@ const Register = () => {
                   {errors.dateOfRetirement && <p className="mt-1 text-xs text-red-600">{errors.dateOfRetirement}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Retirement Document</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t('LABELS.retirementDocument', 'Retirement Document')}
+                  </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-teal-400 transition-colors">
                     <input
                       type="file"
@@ -826,9 +874,11 @@ const Register = () => {
                     <label htmlFor="retirementDocument" className="cursor-pointer">
                       {getFileIcon(retirementDocument ? retirementDocument[0] : null)}
                       <p className="text-sm font-medium text-gray-700">
-                        {retirementDocument ? retirementDocument[0].name : 'Upload Retirement Document'}
+                        {retirementDocument ? retirementDocument[0].name : t('FILE_UPLOAD.uploadRetirementDocument', 'Upload Retirement Document')}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF, max 5MB (Required)</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {t('FILE_UPLOAD.jpegPngPdfMax5MB', 'JPEG, PNG, or PDF, max 5MB')} ({t('LABELS.required', 'Required')})
+                      </p>
                     </label>
                   </div>
                 </div>
@@ -837,10 +887,14 @@ const Register = () => {
             </>
           )}
 
-          <h3 className="text-lg font-medium text-teal-800 pt-4">Bank Details</h3>
+          <h3 className="text-lg font-medium text-teal-800 pt-4">
+            {t('LABELS.bankDetails', 'Bank Details')}
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Account Number</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.accountNumber', 'Account Number')}
+              </label>
               <input
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                 value={accountNumber}
@@ -850,7 +904,9 @@ const Register = () => {
               {errors.accountNumber && <p className="mt-1 text-xs text-red-600">{errors.accountNumber}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Confirm Account Number</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.confirmAccountNumber', 'Confirm Account Number')}
+              </label>
               <input
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                 value={confirmAccountNumber}
@@ -863,17 +919,21 @@ const Register = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">IFSC Code</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.ifscCode', 'IFSC Code')}
+              </label>
               <input
                 className="mt-1 w-full uppercase rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                 value={ifscCode}
                 onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
-                placeholder="ABCD0EFGHIJ"
+                placeholder={t('PLACEHOLDERS.ifscPlaceholder', 'ABCD0EFGHIJ')}
               />
               {errors.ifscCode && <p className="mt-1 text-xs text-red-600">{errors.ifscCode}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Bank Name</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('LABELS.bankName', 'Bank Name')}
+              </label>
               <input
                 className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                 value={bankName}
@@ -890,13 +950,16 @@ const Register = () => {
       return (
         <div className="space-y-6">
           {nominees.length === 0 && (
-            <p className="text-sm text-gray-500 italic">You can add nominees (optional).</p>
+            <p className="text-sm text-gray-500 italic">
+              {t('MESSAGES.youCanAddNominees', 'You can add nominees (optional).')}
+            </p>
           )}
           {nominees.map((nominee, index) => (
             <div key={index} className="relative p-6 border border-teal-200 rounded-lg shadow-xl bg-gray-50/50">
-              <h4 className="text-base font-bold text-teal-800 border-b border-teal-100 pb-2 mb-4">Nominee {index + 1}</h4>
+              <h4 className="text-base font-bold text-teal-800 border-b border-teal-100 pb-2 mb-4">
+                {t('LABELS.nominee', 'Nominee')} {index + 1}
+              </h4>
               
-              {/* Nominee Aadhaar Document Uploads with PDF Support */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-teal-400 transition-colors">
                   <input
@@ -909,9 +972,11 @@ const Register = () => {
                   <label htmlFor={`nomineeAadhaarFront_${index}`} className="cursor-pointer">
                     {getFileIcon(nominee.aadhaarFront ? nominee.aadhaarFront[0] : null)}
                     <p className="text-sm font-medium text-gray-700">
-                      {nominee.aadhaarFront ? nominee.aadhaarFront[0].name : 'Nominee Aadhaar Front'}
+                      {nominee.aadhaarFront ? nominee.aadhaarFront[0].name : t('FILE_UPLOAD.nomineeAadhaarFront', 'Nominee Aadhaar Front')}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('FILE_UPLOAD.jpegPngPdfMax5MB', 'JPEG, PNG, or PDF, max 5MB')} ({t('LABELS.optional', 'Optional')})
+                    </p>
                   </label>
                 </div>
 
@@ -926,39 +991,46 @@ const Register = () => {
                   <label htmlFor={`nomineeAadhaarBack_${index}`} className="cursor-pointer">
                     {getFileIcon(nominee.aadhaarBack ? nominee.aadhaarBack[0] : null)}
                     <p className="text-sm font-medium text-gray-700">
-                      {nominee.aadhaarBack ? nominee.aadhaarBack[0].name : 'Nominee Aadhaar Back'}
+                      {nominee.aadhaarBack ? nominee.aadhaarBack[0].name : t('FILE_UPLOAD.nomineeAadhaarBack', 'Nominee Aadhaar Back')}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">JPEG, PNG, or PDF (Optional)</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('FILE_UPLOAD.jpegPngPdfMax5MB', 'JPEG, PNG, or PDF, max 5MB')} ({t('LABELS.optional', 'Optional')})
+                    </p>
                   </label>
                 </div>
               </div>
 
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Personal Details */}
                 <div className='md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.nomineeName', 'Nominee Name')}
+                        </label>
                         <input
                             className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                             value={nominee.name}
                             onChange={(e) => handleNomineeChange(index, 'name', e.target.value)}
-                            placeholder="Nominee's full name"
+                            placeholder={t('PLACEHOLDERS.nomineeFullName', 'Nominee\'s full name')}
                         />
                         {errors[`nomineeName${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeName${index}`]}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Relation</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.relation', 'Relation')}
+                        </label>
                         <Select
                             className="mt-1"
                             options={RELATION_OPTIONS.map(opt => ({ value: opt, label: opt }))}
                             value={{ value: nominee.relation, label: nominee.relation }}
                             onChange={(selected) => handleNomineeChange(index, 'relation', selected.value)}
-                            placeholder="Select relation"
+                            placeholder={t('LABELS.selectRelation', 'Select relation')}
                         />
                         {errors[`nomineeRelation${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeRelation${index}`]}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.dateOfBirth', 'Date of Birth')}
+                        </label>
                         <input
                             type="date"
                             className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
@@ -968,61 +1040,82 @@ const Register = () => {
                         {errors[`nomineeDob${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeDob${index}`]}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Aadhaar Number</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.aadhaarNumber', 'Aadhaar Number')}
+                        </label>
                         <input
                             className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                             value={nominee.aadhaarNumber}
                             onChange={(e) => handleNomineeChange(index, 'aadhaarNumber', e.target.value)}
                             inputMode="numeric"
-                            placeholder="12 digits"
+                            placeholder={t('PLACEHOLDERS.twelveDigits', '12 digits')}
                         />
                         {errors[`nomineeAadhaar${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeAadhaar${index}`]}</p>}
                     </div>
                 </div>
 
-                {/* Bank Details */}
-                <h4 className="text-sm font-semibold text-teal-800 md:col-span-2 mt-4 pt-2 border-t border-teal-100">Nominee Bank Details</h4>
+                <h4 className="text-sm font-semibold text-teal-800 md:col-span-2 mt-4 pt-2 border-t border-teal-100">
+                  {t('LABELS.nomineeBankDetails', 'Nominee Bank Details')}
+                </h4>
                 
                 <div className='md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Account Number</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.accountNumber', 'Account Number')}
+                        </label>
                         <input
                             className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                             value={nominee.accountNumber}
                             onChange={(e) => handleNomineeChange(index, 'accountNumber', e.target.value)}
                             inputMode="numeric"
-                            placeholder="Nominee's account number"
+                            placeholder={t('PLACEHOLDERS.nomineeFullName', 'Nominee\'s account number')}
                         />
                         {errors[`nomineeAccount${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeAccount${index}`]}</p>}
                     </div>
-                    <div><label className={labelClasses}>Confirm A/C Number</label><input type="text" value={nominee.confirmAccountNumber || ''} onChange={e => handleNomineeChange(index, 'confirmAccountNumber', e.target.value)} className={inputClasses} /></div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">IFSC Code</label>
+                      <label className={labelClasses}>
+                        {t('LABELS.confirmAccountNumber', 'Confirm Account Number')}
+                      </label>
+                      <input 
+                        type="text" 
+                        value={nominee.confirmAccountNumber || ''} 
+                        onChange={e => handleNomineeChange(index, 'confirmAccountNumber', e.target.value)} 
+                        className={inputClasses} 
+                      />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.ifscCode', 'IFSC Code')}
+                        </label>
                         <input
                             className="mt-1 w-full uppercase rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                             value={nominee.ifscCode}
                             onChange={(e) => handleNomineeChange(index, 'ifscCode', e.target.value.toUpperCase())}
-                            placeholder="ABCD0EFGHIJ"
+                            placeholder={t('PLACEHOLDERS.ifscPlaceholder', 'ABCD0EFGHIJ')}
                         />
                         {errors[`nomineeIfsc${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeIfsc${index}`]}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Bank Name</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.bankName', 'Bank Name')}
+                        </label>
                         <input
                             className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                             value={nominee.bankName}
                             onChange={(e) => handleNomineeChange(index, 'bankName', e.target.value)}
-                            placeholder="Nominee's bank name"
+                            placeholder={t('PLACEHOLDERS.enterBankName', 'Enter bank name')}
                         />
                         {errors[`nomineeBankName${index}`] && <p className="mt-1 text-xs text-red-600">{errors[`nomineeBankName${index}`]}</p>}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Branch Name (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('LABELS.branchName', 'Branch Name')} ({t('LABELS.optional', 'Optional')})
+                        </label>
                         <input
                             className="mt-1 w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500 shadow-sm"
                             value={nominee.branchName}
                             onChange={(e) => handleNomineeChange(index, 'branchName', e.target.value)}
-                            placeholder="Branch name"
+                            placeholder={t('PLACEHOLDERS.enterBranchName', 'Enter branch name')}
                         />
                     </div>
                 </div>
@@ -1036,7 +1129,7 @@ const Register = () => {
                         onChange={(e) => handleNomineeChange(index, 'isPrimary', e.target.checked)}
                     />
                     <label htmlFor={`isPrimary-${index}`} className="ml-2 block text-sm font-medium text-gray-700">
-                        Primary Nominee
+                        {t('LABELS.primaryNominee', 'Primary Nominee')}
                     </label>
                 </div>
               </div>
@@ -1046,7 +1139,7 @@ const Register = () => {
                   type="button"
                   onClick={() => handleRemoveNominee(index)}
                   className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition-colors bg-white rounded-full p-2 shadow-md"
-                  aria-label="Remove nominee"
+                  aria-label={t('LABELS.remove', 'Remove')}
                 >
                   <FaTrash className="h-4 w-4" />
                 </button>
@@ -1060,7 +1153,7 @@ const Register = () => {
                 onClick={handleAddNominee}
                 className="flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-teal-700 border border-teal-300 hover:bg-teal-50 transition-colors shadow-sm"
               >
-                <FaPlus className="h-4 w-4" /> Add Nominee
+                <FaPlus className="h-4 w-4" /> {t('LABELS.addNominee', 'Add Nominee')}
               </button>
             </div>
           )}
@@ -1071,14 +1164,14 @@ const Register = () => {
 
   const renderForm = () => (
     <div className="w-full max-w-2xl rounded-xl bg-white p-6 sm:p-8 shadow-2xl border border-teal-100">
+      <LanguageSelector />
       <h2 className="text-2xl font-bold text-center text-teal-800">
-        New User Registration
+        {t('LABELS.newUserRegistration', 'New User Registration')}
       </h2>
       <p className="text-center text-sm text-gray-500 mt-1">
-        Step {currentStep + 1} of {finalSteps.length}: {currentStepTitle}
+        {t('LABELS.step', 'Step')} {currentStep + 1} {t('LABELS.of', 'of')} {finalSteps.length}: {currentStepTitle}
       </p>
       
-      {/* Step Progress Bar - Now clickable */}
       <div className="mt-8 flex justify-between items-center relative">
         <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 rounded-full"></div>
         <div 
@@ -1107,10 +1200,8 @@ const Register = () => {
       </div>
 
       <form onSubmit={(e) => e.preventDefault()} className="mt-8">
-        {/* Render current step's content */}
         {renderCurrentStep()}
 
-        {/* Navigation buttons */}
         <div className={`mt-8 flex ${currentStep > 0 ? 'justify-between' : 'justify-end'}`}>
           {currentStep > 0 && (
             <button
@@ -1118,7 +1209,7 @@ const Register = () => {
               onClick={handleBack}
               className="flex items-center gap-2 px-6 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors shadow-sm"
             >
-              <FaArrowLeft className="h-4 w-4" /> Back
+              <FaArrowLeft className="h-4 w-4" /> {t('LABELS.back', 'Back')}
             </button>
           )}
 
@@ -1128,7 +1219,7 @@ const Register = () => {
               onClick={handleNext}
               className={`${currentStep === 0 ? 'ml-auto' : ''} flex items-center gap-2 px-6 py-2 rounded-full bg-teal-600 text-white font-semibold shadow-md hover:bg-teal-700 transition-colors`}
             >
-              Next <FaArrowRight className="h-4 w-4" />
+              {t('LABELS.next', 'Next')} <FaArrowRight className="h-4 w-4" />
             </button>
           ) : (
             <button
@@ -1139,9 +1230,9 @@ const Register = () => {
             >
               {loading ? (
                 <>
-                  <FaSpinner className="animate-spin" /> Registering...
+                  <FaSpinner className="animate-spin" /> {t('LABELS.registering', 'Registering...')}
                 </>
-              ) : 'Complete Registration'}
+              ) : t('LABELS.completeRegistration', 'Complete Registration')}
             </button>
           )}
         </div>

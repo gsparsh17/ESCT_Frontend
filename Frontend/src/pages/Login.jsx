@@ -1,13 +1,14 @@
-// pages/Login.jsx - Add forgot password link
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../hooks/useTranslation';
 import { FaUserCircle, FaLock, FaSpinner } from 'react-icons/fa';
 import ForgotPassword from '../components/ForgotPassword';
 
 export default function Login() {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [ehrmsCode, setEhrmsCode] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -29,7 +30,7 @@ export default function Login() {
                 navigate('/home', { replace: true });
             }
         } catch (e) {
-            setError(e.message || 'Login failed. Please check your credentials.');
+            setError(e.message || t('LOGIN.errors.loginFailed', 'Login failed. Please check your credentials.'));
         } finally {
             setLoading(false);
         }
@@ -45,16 +46,16 @@ export default function Login() {
                 <div className="text-center">
                     <img src="/logo2.png" alt="ESCT" className="mx-auto drop-shadow-md" />
                     <h2 className="mt-4 text-2xl font-bold tracking-tight text-teal-800">
-                        Welcome Back!
+                        {t('LOGIN.title', 'Welcome Back!')}
                     </h2>
                     <p className="mt-1 text-sm text-teal-600">
-                        Sign in to access your dashboard.
+                        {t('LOGIN.subtitle', 'Sign in to access your dashboard.')}
                     </p>
                 </div>
                 <form onSubmit={onSubmit} className="mt-6 space-y-5">
                     <div>
                         <label htmlFor="ehrms-code" className="block text-sm font-medium text-gray-700">
-                            EHRMS Code
+                            {t('LOGIN.labels.ehrmsCode', 'EHRMS Code')}
                         </label>
                         <div className="relative mt-1">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -64,7 +65,7 @@ export default function Login() {
                                 id="ehrms-code"
                                 type="text" 
                                 className="w-full rounded-lg border border-teal-300 bg-teal-50 py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
-                                placeholder="Your EHRMS Code"
+                                placeholder={t('LOGIN.placeholders.ehrmsCode', 'Your EHRMS Code')}
                                 value={ehrmsCode} 
                                 onChange={(e) => setEhrmsCode(e.target.value)} 
                                 required 
@@ -73,7 +74,7 @@ export default function Login() {
                     </div>
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                            Password
+                            {t('LOGIN.labels.password', 'Password')}
                         </label>
                         <div className="relative mt-1">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -83,7 +84,7 @@ export default function Login() {
                                 id="password"
                                 type="password" 
                                 className="w-full rounded-lg border border-teal-300 bg-teal-50 py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors" 
-                                placeholder="Your Password"
+                                placeholder={t('LOGIN.placeholders.password', 'Your Password')}
                                 value={password} 
                                 onChange={(e) => setPassword(e.target.value)} 
                                 required 
@@ -99,7 +100,7 @@ export default function Login() {
                             onClick={() => setShowForgotPassword(true)}
                             className="text-sm text-teal-600 hover:text-teal-800 font-medium transition-colors"
                         >
-                            Forgot Password?
+                            {t('LOGIN.links.forgotPassword', 'Forgot Password?')}
                         </button>
                     </div>
                     
@@ -111,10 +112,10 @@ export default function Login() {
                         {loading ? (
                             <>
                                 <FaSpinner className="animate-spin" />
-                                <span>Logging In...</span>
+                                <span>{t('LOGIN.buttons.loggingIn', 'Logging In...')}</span>
                             </>
                         ) : (
-                            'Login'
+                            t('LOGIN.buttons.login', 'Login')
                         )}
                     </button>
                 </form>
