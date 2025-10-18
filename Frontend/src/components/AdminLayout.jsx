@@ -1,4 +1,3 @@
-// components/AdminLayout.jsx
 import { useState } from 'react';
 import { Link, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { 
@@ -12,25 +11,31 @@ import {
   FaTimes,
   FaMoneyCheckAlt,
   FaClipboardList,
-  FaUserShield
+  FaUserShield,
+  FaImages,
+  FaNewspaper,
+  FaSignOutAlt
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
-  const menuItems = [
-    { path: '/admin', icon: FaTachometerAlt, label: 'Dashboard' },
-    { path: '/admin/users', icon: FaUsers, label: 'User Management' },
-    { path: '/admin/claims', icon: FaFileAlt, label: 'Claims Verification' },
-    { path: '/admin/receipts', icon: FaReceipt, label: 'Receipts' },
-    { path: '/admin/subscriptions', icon: FaMoneyCheckAlt, label: 'Subscriptions' },
-    { path: '/admin/donation-caps', icon: FaClipboardList, label: 'Donation Caps' },
-    { path: '/admin/config', icon: FaCog, label: 'System Config' },
-    { path: '/admin/logs', icon: FaHistory, label: 'Audit Logs' },
-  ];
+const menuItems = [
+  { path: '/admin', icon: FaTachometerAlt, label: 'Dashboard' },
+  { path: '/admin/users', icon: FaUsers, label: 'User Management' },
+  { path: '/admin/claims', icon: FaFileAlt, label: 'Claims Verification' },
+  { path: '/admin/donations', icon: FaMoneyCheckAlt, label: 'Donations' }, // NEW
+  { path: '/admin/receipts', icon: FaReceipt, label: 'Receipts' },
+  { path: '/admin/subscriptions', icon: FaUserShield, label: 'Subscriptions' },
+  { path: '/admin/donation-caps', icon: FaClipboardList, label: 'Donation Caps' },
+  { path: '/admin/gallery', icon: FaImages, label: 'Gallery' }, // NEW
+  { path: '/admin/news', icon: FaNewspaper, label: 'News & Blogs' }, // NEW
+  { path: '/admin/config', icon: FaCog, label: 'System Config' },
+  { path: '/admin/logs', icon: FaHistory, label: 'Audit Logs' },
+];
 
   const isActive = (path) => {
     if (path === '/admin') {
@@ -52,6 +57,10 @@ const AdminLayout = () => {
   if (!user?.isAdmin) {
     return <Navigate to="/home" replace />;
   }
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex -m-3 sm:-m-4 lg:-m-6 ">
@@ -92,6 +101,17 @@ const AdminLayout = () => {
             );
           })}
         </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-teal-700">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-sm font-medium text-teal-100 hover:bg-teal-700/50 hover:text-white rounded-lg transition-colors"
+          >
+            <FaSignOutAlt className="h-5 w-5 mr-3" />
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -107,15 +127,22 @@ const AdminLayout = () => {
             </button>
             
             <div className="flex-1 flex justify-between items-center">
-              <h1 className="text-2xl m-2 font-bold text-teal-900">
+              <h1 className="text-2xl font-bold text-teal-900">
                 {menuItems.find(item => isActive(item.path))?.label || 'Admin'}
               </h1>
               
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  <FaUserShield className="inline mr-2" />
-                  Administrator
-                </span>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user.personalDetails?.fullName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {user.ehrmsCode || user.pensionerNumber}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                  <FaUserShield className="h-5 w-5 text-teal-600" />
+                </div>
               </div>
             </div>
           </div>
@@ -130,7 +157,7 @@ const AdminLayout = () => {
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

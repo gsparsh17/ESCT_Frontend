@@ -29,8 +29,13 @@ export const updateUserVerification = async (userId, isVerified) => {
   return response.data;
 };
 
-export const makeUserAdmin = async (userId) => {
-  const response = await api.put(`/admin/users/${userId}/make-admin`);
+export const makeUserAdmin = async (userId, isAdmin = true) => {
+  const response = await api.put(`/admin/users/${userId}/make-admin`, { isAdmin });
+  return response.data;
+};
+
+export const resetUserPassword = async (userId, newPassword) => {
+  const response = await api.put(`/admin/users/${userId}/reset-password`, { newPassword });
   return response.data;
 };
 
@@ -88,22 +93,18 @@ export const getPendingSubscriptions = async () => {
   return response.data;
 };
 
-export const verifyManualSubscription = async (subscriptionId, status, verificationNotes = '') => {
+export const verifyManualSubscription = async (subscriptionId, status, rejectionReason = '') => {
   const response = await api.put(`/admin/subscriptions/${subscriptionId}/verify`, {
     status,
-    verificationNotes
+    rejectionReason
   });
   return response.data;
 };
 
 // Donation Caps
-export const getDonationCaps = async (filters = {}) => {
+export const getDonationCaps = async (monthYear = null) => {
   const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      params.append(key, value);
-    }
-  });
+  if (monthYear) params.append('monthYear', monthYear);
   
   const response = await api.get(`/admin/donation-caps?${params}`);
   return response.data;
@@ -111,9 +112,21 @@ export const getDonationCaps = async (filters = {}) => {
 
 export const updateDonationCap = async (claimType, capAmount, monthYear) => {
   const response = await api.put(`/admin/donation-caps/${claimType}`, {
-    capAmount,
+    capAmount: Number(capAmount),
     monthYear
   });
+  return response.data;
+};
+
+export const getDonationCapHistory = async (filters = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.append(key, value);
+    }
+  });
+  
+  const response = await api.get(`/admin/donation-caps/history?${params}`);
   return response.data;
 };
 
@@ -124,15 +137,8 @@ export const getDonationQueue = async () => {
 };
 
 // System Config
-export const getAppConfig = async (filters = {}) => {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      params.append(key, value);
-    }
-  });
-  
-  const response = await api.get(`/admin/config?${params}`);
+export const getAppConfig = async () => {
+  const response = await api.get('/admin/config');
   return response.data;
 };
 
@@ -154,6 +160,124 @@ export const getAuditLogs = async (filters = {}) => {
   return response.data;
 };
 
+// ==================== NEW GALLERY MANAGEMENT ====================
+
+export const uploadGalleryPhoto = async (formData) => {
+  const response = await api.post('/admin/gallery', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const getGalleryPhotos = async (filters = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.append(key, value);
+    }
+  });
+  
+  const response = await api.get(`/admin/gallery?${params}`);
+  return response.data;
+};
+
+export const updateGalleryStatus = async (galleryId, isActive) => {
+  const response = await api.put(`/admin/gallery/${galleryId}/status`, { isActive });
+  return response.data;
+};
+
+export const deleteGalleryPhoto = async (galleryId) => {
+  const response = await api.delete(`/admin/gallery/${galleryId}`);
+  return response.data;
+};
+
+// ==================== NEW NEWS & BLOG MANAGEMENT ====================
+
+export const createNewsBlog = async (formData) => {
+  const response = await api.post('/admin/news', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const getNewsBlogs = async (filters = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params.append(key, value);
+    }
+  });
+  
+  const response = await api.get(`/admin/news?${params}`);
+  return response.data;
+};
+
+export const updateNewsBlog = async (newsId, formData) => {
+  const response = await api.put(`/admin/news/${newsId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const deleteNewsBlog = async (newsId) => {
+  const response = await api.delete(`/admin/news/${newsId}`);
+  return response.data;
+};
+
+export const toggleNewsPublish = async (newsId, isPublished) => {
+  const response = await api.put(`/admin/news/${newsId}/publish`, { isPublished });
+  return response.data;
+};
+
+// ==================== HELPER FUNCTIONS ====================
+
+// Helper function to create form data for file uploads
+export const createFormData = (data, fileFieldName = null, file = null) => {
+  const formData = new FormData();
+  
+  // Append all data fields
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (Array.isArray(value)) {
+        // Handle arrays (like tags)
+        value.forEach(item => formData.append(key, item));
+      } else {
+        formData.append(key, value);
+      }
+    }
+  });
+  
+  // Append file if provided
+  if (file && fileFieldName) {
+    formData.append(fileFieldName, file);
+  }
+  
+  return formData;
+};
+
+// Helper for gallery upload
+export const uploadGalleryWithData = async (galleryData, imageFile) => {
+  const formData = createFormData(galleryData, 'profilePhoto', imageFile);
+  return await uploadGalleryPhoto(formData);
+};
+
+// Helper for news blog creation/update
+export const createNewsWithData = async (newsData, imageFile) => {
+  const formData = createFormData(newsData, 'profilePhoto', imageFile);
+  return await createNewsBlog(formData);
+};
+
+export const updateNewsWithData = async (newsId, newsData, imageFile) => {
+  const formData = createFormData(newsData, 'profilePhoto', imageFile);
+  return await updateNewsBlog(newsId, formData);
+};
+
 // Export all functions for easier imports
 export default {
   // Dashboard
@@ -164,6 +288,7 @@ export default {
   updateUserStatus,
   updateUserVerification,
   makeUserAdmin,
+  resetUserPassword,
   
   // Claims
   getClaims,
@@ -192,5 +317,24 @@ export default {
   updateAppConfig,
   
   // Audit Logs
-  getAuditLogs
+  getAuditLogs,
+  
+  // Gallery Management
+  uploadGalleryPhoto,
+  getGalleryPhotos,
+  updateGalleryStatus,
+  deleteGalleryPhoto,
+  uploadGalleryWithData,
+  
+  // News & Blog Management
+  createNewsBlog,
+  getNewsBlogs,
+  updateNewsBlog,
+  deleteNewsBlog,
+  toggleNewsPublish,
+  createNewsWithData,
+  updateNewsWithData,
+  
+  // Helper functions
+  createFormData
 };

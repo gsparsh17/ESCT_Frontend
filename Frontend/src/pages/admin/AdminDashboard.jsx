@@ -1,4 +1,3 @@
-// pages/admin/AdminDashboard.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -10,7 +9,10 @@ import {
   FaHistory,
   FaCog,
   FaClock,
-  FaUserCheck
+  FaUserCheck,
+  FaImages,
+  FaNewspaper,
+  FaUserShield
 } from 'react-icons/fa';
 import { getAdminDashboard } from '../../lib/api/admin';
 
@@ -40,10 +42,10 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const data = await getAdminDashboard();
-        setStats(data.data);
+        const response = await getAdminDashboard();
+        setStats(response.data);
       } catch (err) {
-        setError(err.message || 'Failed to load dashboard data');
+        setError(err.response?.data?.message || err.message || 'Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -86,11 +88,11 @@ const AdminDashboard = () => {
           to="/admin/users"
         />
         <StatCard
-          title="Verified Users"
-          value={stats?.users?.verified || 0}
+          title="Active Users"
+          value={stats?.users?.active || 0}
           icon={FaUserCheck}
           color="bg-green-500"
-          to="/admin/users?isVerified=true"
+          to="/admin/users?isActive=true"
         />
         <StatCard
           title="Pending Verification"
@@ -108,31 +110,31 @@ const AdminDashboard = () => {
         />
         <StatCard
           title="Pending Claims"
-          value={stats?.claims?.pendingVerification || 0}
+          value={stats?.claims?.pending || 0}
           icon={FaFileAlt}
           color="bg-orange-500"
-          to="/admin/claims?status=pending"
+          to="/admin/claims?status=PENDING"
         />
         <StatCard
-          title="Approved Claims"
-          value={stats?.claims?.approved || 0}
+          title="Completed Claims"
+          value={stats?.claims?.completed || 0}
           icon={FaCheckCircle}
           color="bg-green-500"
-          to="/admin/claims?status=approved"
+          to="/admin/claims?status=COMPLETED"
         />
         <StatCard
           title="Total Donations"
           value={stats?.donations?.total || 0}
           icon={FaMoneyBillWave}
           color="bg-teal-500"
-          to="/admin/donation-caps"
+          to="/admin/donations"
         />
         <StatCard
-          title="Total Amount"
-          value={`₹${(stats?.donations?.totalAmount || 0).toLocaleString()}`}
+          title="Monthly Amount"
+          value={`₹${(stats?.donations?.monthlyAmount || 0).toLocaleString()}`}
           icon={FaMoneyBillWave}
           color="bg-indigo-500"
-          to="/admin/donation-caps"
+          to="/admin/donations"
         />
       </div>
 
@@ -145,31 +147,85 @@ const AdminDashboard = () => {
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <FaReceipt className="h-6 w-6 text-teal-600 mr-3" />
-            <span>Pending Receipts</span>
+            <div>
+              <div className="font-medium">Pending Receipts</div>
+              <div className="text-sm text-gray-500">{stats?.donations?.pendingReceipts || 0} pending</div>
+            </div>
           </Link>
           <Link
             to="/admin/subscriptions"
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <FaMoneyBillWave className="h-6 w-6 text-teal-600 mr-3" />
-            <span>Pending Subscriptions</span>
+            <FaUserShield className="h-6 w-6 text-teal-600 mr-3" />
+            <div>
+              <div className="font-medium">Subscriptions</div>
+              <div className="text-sm text-gray-500">Manage memberships</div>
+            </div>
+          </Link>
+          <Link
+            to="/admin/gallery"
+            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FaImages className="h-6 w-6 text-teal-600 mr-3" />
+            <div>
+              <div className="font-medium">Gallery</div>
+              <div className="text-sm text-gray-500">Manage photos</div>
+            </div>
+          </Link>
+          <Link
+            to="/admin/news"
+            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FaNewspaper className="h-6 w-6 text-teal-600 mr-3" />
+            <div>
+              <div className="font-medium">News & Blogs</div>
+              <div className="text-sm text-gray-500">Content management</div>
+            </div>
           </Link>
           <Link
             to="/admin/logs"
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <FaHistory className="h-6 w-6 text-teal-600 mr-3" />
-            <span>Audit Logs</span>
+            <div>
+              <div className="font-medium">Audit Logs</div>
+              <div className="text-sm text-gray-500">System activities</div>
+            </div>
           </Link>
           <Link
             to="/admin/config"
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <FaCog className="h-6 w-6 text-teal-600 mr-3" />
-            <span>System Config</span>
+            <div>
+              <div className="font-medium">System Config</div>
+              <div className="text-sm text-gray-500">Platform settings</div>
+            </div>
           </Link>
         </div>
       </div>
+
+      {/* Recent Activities */}
+      {stats?.recentActivities && stats.recentActivities.length > 0 && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activities</h2>
+          <div className="space-y-3">
+            {stats.recentActivities.slice(0, 5).map((activity, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-2 h-2 rounded-full ${
+                    activity.status === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
+                  <span className="text-sm text-gray-700">{activity.description}</span>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {new Date(activity.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
