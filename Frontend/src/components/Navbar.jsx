@@ -8,6 +8,7 @@ import { FaBars, FaTimes, FaBell, FaUserShield, FaExclamationTriangle, FaCheckCi
 import { getAllUsers } from '../lib/api/users';
 import { getMe } from '../lib/api/auth';
 import { getMyNominees } from '../lib/api/profile';
+import { getTotalMemberCount } from '../lib/api/users';
 
 export default function Navbar() {
   const { token, logout, user } = useAuth();
@@ -220,19 +221,19 @@ export default function Navbar() {
     return () => { mounted = false };
   }, [token]);
 
-  // Fetch total users count
+// Fetch total users count
   useEffect(() => {
     let mounted = true;
     const fetchUsers = async () => {
       setUsersLoading(true);
       setUsersError(null);
       try {
-        const all = await getAllUsers();
+        // Use the new function
+        const count = await getTotalMemberCount();
         if (!mounted) return;
-        if(all.total===0)
-        setUsers(all.total);
-        else
-        setUsers(all.total - 1);
+        
+        // The API now just returns a number
+        setUsers(count - 1); // Your logic to subtract 1 remains
       } catch (err) {
         if (!mounted) return;
         setUsersError(err.message || t('NAVBAR.errors.failedLoadUsers', 'Failed to load users'));
@@ -244,7 +245,7 @@ export default function Navbar() {
     fetchUsers();
 
     return () => { mounted = false };
-  }, [token]);
+  }, []); // <--- Remove 'token' from the dependency array
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

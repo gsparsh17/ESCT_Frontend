@@ -5,6 +5,7 @@ const USE_USERS_ENDPOINT = true
 
 let warnedMissingUsersEndpoint = false
 
+// LEAVE THIS FUNCTION AS IS - IT'S FOR YOUR ADMIN PANEL
 export async function getAllUsers() {
   if (!USE_USERS_ENDPOINT) {
     const claims = await fetchAllClaims()
@@ -19,7 +20,7 @@ export async function getAllUsers() {
 
   try {
     const res = await api.get('/admin/users') 
-    console.log(res)
+    console.log(res)
     return res.data?.data ?? res.data ?? []
   } catch (err) {
     const status = err?.response?.status
@@ -31,4 +32,18 @@ export async function getAllUsers() {
     
     throw err
   }
+}
+
+// ✨ ADD THIS NEW FUNCTION
+export async function getTotalMemberCount() {
+  try {
+    // This calls your new public endpoint
+    const res = await api.get('/public/stats'); 
+    // It returns the count from the 'totalMembers' field in the response
+    return res.data?.data?.totalMembers ?? 0;
+  } catch (err) {
+    console.error('Failed to fetch total member count:', err);
+    // If it fails, return 0 so the UI doesn't crash
+    return 0; 
+  }
 }
