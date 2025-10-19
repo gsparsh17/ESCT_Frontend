@@ -19,6 +19,11 @@ export const getUsers = async (filters = {}) => {
   return response.data;
 };
 
+export const getUser = async (userId) => {
+  const response = await api.get(`/admin/users/${userId}`);
+  return response.data;
+};
+
 export const updateUserStatus = async (userId, isActive) => {
   const response = await api.put(`/admin/users/${userId}/status`, { isActive });
   return response.data;
@@ -36,6 +41,63 @@ export const makeUserAdmin = async (userId, isAdmin = true) => {
 
 export const resetUserPassword = async (userId, newPassword) => {
   const response = await api.put(`/admin/users/${userId}/reset-password`, { newPassword });
+  return response.data;
+};
+
+// User Details Management
+export const updateUserDetails = async (userId, updateData) => {
+  const response = await api.put(`/admin/users/${userId}/details`, updateData);
+  return response.data;
+};
+
+// User Documents Management
+export const updateUserDocuments = async (userId, formData) => {
+  const response = await api.put(`/admin/users/${userId}/documents`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const getUserDocuments = async (userId) => {
+  const response = await api.get(`/admin/users/${userId}/documents`);
+  return response.data;
+};
+
+// ==================== NOMINEE MANAGEMENT ====================
+
+// Get all nominees for a user
+export const getUserNominees = async (userId) => {
+  const response = await api.get(`/admin/users/${userId}/nominees`);
+  return response.data;
+};
+
+// Create or update nominee
+export const createOrUpdateNominee = async (userId, nomineeData) => {
+  const response = await api.post(`/admin/users/${userId}/nominees`, nomineeData);
+  return response.data;
+};
+
+// Delete nominee
+export const deleteNominee = async (userId, nomineeId) => {
+  const response = await api.delete(`/admin/users/${userId}/nominees/${nomineeId}`);
+  return response.data;
+};
+
+// Update nominee documents
+export const updateNomineeDocuments = async (userId, nomineeId, formData) => {
+  const response = await api.put(`/admin/users/${userId}/nominees/${nomineeId}/documents`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+// Set primary nominee
+export const setPrimaryNominee = async (userId, nomineeId) => {
+  const response = await api.put(`/admin/users/${userId}/nominees/${nomineeId}/primary`);
   return response.data;
 };
 
@@ -160,7 +222,7 @@ export const getAuditLogs = async (filters = {}) => {
   return response.data;
 };
 
-// ==================== NEW GALLERY MANAGEMENT ====================
+// ==================== GALLERY MANAGEMENT ====================
 
 export const uploadGalleryPhoto = async (formData) => {
   const response = await api.post('/admin/gallery', formData, {
@@ -193,7 +255,7 @@ export const deleteGalleryPhoto = async (galleryId) => {
   return response.data;
 };
 
-// ==================== NEW NEWS & BLOG MANAGEMENT ====================
+// ==================== NEWS & BLOG MANAGEMENT ====================
 
 export const createNewsBlog = async (formData) => {
   const response = await api.post('/admin/news', formData, {
@@ -247,6 +309,9 @@ export const createFormData = (data, fileFieldName = null, file = null) => {
       if (Array.isArray(value)) {
         // Handle arrays (like tags)
         value.forEach(item => formData.append(key, item));
+      } else if (typeof value === 'object' && !(value instanceof File)) {
+        // Handle nested objects by stringifying
+        formData.append(key, JSON.stringify(value));
       } else {
         formData.append(key, value);
       }
@@ -259,6 +324,28 @@ export const createFormData = (data, fileFieldName = null, file = null) => {
   }
   
   return formData;
+};
+
+// Helper for user document upload
+export const uploadUserDocument = async (userId, documentType, action, file = null) => {
+  const formData = new FormData();
+  formData.append('documentType', documentType);
+  formData.append('action', action);
+  if (file) {
+    formData.append('document', file);
+  }
+  
+  return await updateUserDocuments(userId, formData);
+};
+
+// Helper for nominee document upload
+export const uploadNomineeDocument = async (userId, nomineeId, documentType, file) => {
+  const formData = new FormData();
+  formData.append('documentType', documentType);
+  formData.append('action', 'update');
+  formData.append('document', file);
+  
+  return await updateNomineeDocuments(userId, nomineeId, formData);
 };
 
 // Helper for gallery upload
@@ -285,10 +372,21 @@ export default {
   
   // Users
   getUsers,
+  getUser,
   updateUserStatus,
   updateUserVerification,
   makeUserAdmin,
   resetUserPassword,
+  updateUserDetails,
+  updateUserDocuments,
+  getUserDocuments,
+  
+  // Nominee Management
+  getUserNominees,
+  createOrUpdateNominee,
+  deleteNominee,
+  updateNomineeDocuments,
+  setPrimaryNominee,
   
   // Claims
   getClaims,
@@ -308,6 +406,7 @@ export default {
   // Donation Caps
   getDonationCaps,
   updateDonationCap,
+  getDonationCapHistory,
   
   // Donation Queue
   getDonationQueue,
@@ -336,5 +435,7 @@ export default {
   updateNewsWithData,
   
   // Helper functions
-  createFormData
+  createFormData,
+  uploadUserDocument,
+  uploadNomineeDocument
 };

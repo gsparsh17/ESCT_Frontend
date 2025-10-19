@@ -16,17 +16,19 @@ import {
 import { getAppConfig, updateAppConfig } from '../../lib/api/admin';
 
 // Configuration Update Modal
-const ConfigUpdateModal = ({ isOpen, onClose, onConfirm, configItem, currentValue, newValue }) => {
-  const [inputValue, setInputValue] = useState(newValue);
+const ConfigUpdateModal = ({ isOpen, onClose, onConfirm, configItem, currentValue }) => {
+  const [inputValue, setInputValue] = useState(currentValue);
 
   useEffect(() => {
-    if (isOpen) {
-      setInputValue(newValue);
+    if (isOpen && configItem) {
+      setInputValue(currentValue);
     }
-  }, [isOpen, newValue]);
+  }, [isOpen, configItem, currentValue]);
 
   const handleSubmit = () => {
-    onConfirm(inputValue);
+    if (configItem) {
+      onConfirm(inputValue);
+    }
     onClose();
   };
 
@@ -50,13 +52,16 @@ const ConfigUpdateModal = ({ isOpen, onClose, onConfirm, configItem, currentValu
       'MAX_CREDIT_SCORE': `Maximum achievable credit score is ${value}`,
       'MIN_CREDIT_SCORE': `Minimum credit score is ${value}`,
       'ON_TIME_PAYMENT_BONUS': `+${value} credit score points for on-time donations`,
-      'LATE_PAYMENT_PENALTY': `-${value} credit score points for late donations`
+      'LATE_PAYMENT_PENALTY': `-${value} credit score points for late donations`,
+      'APP_MAINTENANCE_MODE': value ? 'Application will be in maintenance mode' : 'Application will be operational',
+      'ALLOW_SIGNUPS': value ? 'New users can register' : 'New user registration disabled',
+      'CLAIM_VERIFICATION_REQUIRED': value ? 'Claims require manual verification' : 'Claims are auto-approved'
     };
     return descriptions[key] || `Setting value to: ${value}`;
   };
 
   const validateInput = (value, type, key) => {
-    if (!value && value !== 0 && value !== false) return 'Value is required';
+    if (value === null || value === undefined || value === '') return 'Value is required';
     
     if (type === 'number') {
       const numValue = Number(value);
@@ -67,6 +72,8 @@ const ConfigUpdateModal = ({ isOpen, onClose, onConfirm, configItem, currentValu
       if (key === 'PASSWORD_MIN_LENGTH' && numValue < 6) return 'Minimum 6 characters required';
       if (key === 'MAX_LOGIN_ATTEMPTS' && numValue < 1) return 'Minimum 1 attempt required';
       if (key === 'SESSION_TIMEOUT_MINUTES' && numValue < 5) return 'Minimum 5 minutes required';
+      if (key === 'DONATION_REMINDER_START_DAY' && (numValue < 1 || numValue > 31)) return 'Must be between 1 and 31';
+      if (key === 'DONATION_REMINDER_END_DAY' && (numValue < 1 || numValue > 31)) return 'Must be between 1 and 31';
     }
     
     if (type === 'boolean' && typeof value !== 'boolean') {
@@ -76,9 +83,10 @@ const ConfigUpdateModal = ({ isOpen, onClose, onConfirm, configItem, currentValu
     return null;
   };
 
-  const validationError = validateInput(inputValue, configItem.type, configItem.key);
+  // Add null check for configItem
+  if (!isOpen || !configItem) return null;
 
-  if (!isOpen) return null;
+  const validationError = validateInput(inputValue, configItem.type, configItem.key);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -135,11 +143,13 @@ const ConfigUpdateModal = ({ isOpen, onClose, onConfirm, configItem, currentValu
                 </div>
               ) : (
                 <input
-                  type={configItem.type}
+                  type={configItem.type === 'number' ? 'number' : 'text'}
                   value={inputValue}
                   onChange={(e) => setInputValue(configItem.type === 'number' ? Number(e.target.value) : e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   placeholder={`Enter ${configItem.label.toLowerCase()}...`}
+                  min={configItem.min}
+                  max={configItem.max}
                 />
               )}
               {validationError && (
@@ -206,7 +216,10 @@ const AdminConfig = () => {
       });
       setConfig(configObj);
     } catch (err) {
-      setError({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to load configuration' });
+      setError({ 
+        type: 'error', 
+        message: err.response?.data?.message || err.message || 'Failed to load configuration' 
+      });
     } finally {
       setLoading(false);
     }
@@ -217,9 +230,15 @@ const AdminConfig = () => {
       setSaving(true);
       await updateAppConfig(key, value);
       setConfig(prev => ({ ...prev, [key]: value }));
-      setError({ type: 'success', message: 'Configuration updated successfully' });
+      setError({ 
+        type: 'success', 
+        message: 'Configuration updated successfully' 
+      });
     } catch (err) {
-      setError({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to update configuration' });
+      setError({ 
+        type: 'error', 
+        message: err.response?.data?.message || err.message || 'Failed to update configuration' 
+      });
     } finally {
       setSaving(false);
     }
@@ -228,6 +247,12 @@ const AdminConfig = () => {
   const openUpdateModal = (configItem) => {
     setSelectedConfig(configItem);
     setShowUpdateModal(true);
+  };
+
+  const closeUpdateModal = () => {
+    setShowUpdateModal(false);
+    // Don't clear selectedConfig immediately to avoid flash
+    setTimeout(() => setSelectedConfig(null), 300);
   };
 
   const getCategoryIcon = (category) => {
@@ -299,7 +324,7 @@ const AdminConfig = () => {
 
     // DONATION CONFIGURATIONS
     {
-      key: 'DEFAULT_DONATION_AMOUNT',
+      key: 'DONATION_AMOUNT',
       label: 'Default Donation Amount',
       type: 'number',
       category: 'DONATION',
@@ -328,15 +353,6 @@ const AdminConfig = () => {
 
     // SUBSCRIPTION CONFIGURATIONS
     {
-      key: 'MEMBERSHIP_FEE',
-      label: 'Membership Fee',
-      type: 'number',
-      category: 'SUBSCRIPTION',
-      description: 'One-time membership fee for new members (INR)',
-      min: 0,
-      max: 1000
-    },
-    {
       key: 'ANNUAL_SUBSCRIPTION_FEE',
       label: 'Annual Subscription Fee',
       type: 'number',
@@ -364,6 +380,13 @@ const AdminConfig = () => {
       description: 'Minimum months of donations required to be eligible for claims',
       min: 0,
       max: 24
+    },
+    {
+      key: 'CLAIM_VERIFICATION_REQUIRED',
+      label: 'Claim Verification Required',
+      type: 'boolean',
+      category: 'CLAIM',
+      description: 'Whether claims require manual verification'
     },
 
     // NOTIFICATION CONFIGURATIONS
@@ -458,13 +481,6 @@ const AdminConfig = () => {
       type: 'boolean',
       category: 'SYSTEM',
       description: 'Allow new user registrations'
-    },
-    {
-      key: 'CLAIM_VERIFICATION_REQUIRED',
-      label: 'Claim Verification Required',
-      type: 'boolean',
-      category: 'SYSTEM',
-      description: 'Whether claims require manual verification'
     }
   ];
 
@@ -615,14 +631,15 @@ const AdminConfig = () => {
       </div>
 
       {/* Configuration Update Modal */}
-      <ConfigUpdateModal
-        isOpen={showUpdateModal}
-        onClose={() => setShowUpdateModal(false)}
-        onConfirm={(newValue) => handleConfigUpdate(selectedConfig?.key, newValue)}
-        configItem={selectedConfig}
-        currentValue={config[selectedConfig?.key]}
-        newValue={config[selectedConfig?.key]}
-      />
+      {selectedConfig && (
+        <ConfigUpdateModal
+          isOpen={showUpdateModal}
+          onClose={closeUpdateModal}
+          onConfirm={(newValue) => handleConfigUpdate(selectedConfig.key, newValue)}
+          configItem={selectedConfig}
+          currentValue={config[selectedConfig.key]}
+        />
+      )}
     </div>
   );
 };
