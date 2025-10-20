@@ -365,6 +365,40 @@ export const updateNewsWithData = async (newsId, newsData, imageFile) => {
   return await updateNewsBlog(newsId, formData);
 };
 
+export const getTestimonials = async (params = {}) => {
+  const response = await api.get('/admin/testimonials');
+  console.log("Testimonials response:", response);
+  return response.data;
+};
+
+export const createTestimonial = async (formData) => {
+  const response = await api.post('/admin/testimonials', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const updateTestimonial = async (id, formData) => {
+  const response = await api.put(`/admin/testimonials/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const deleteTestimonial = async (id) => {
+  const response = await api.delete(`/admin/testimonials/${id}`);
+  return response.data;
+};
+
+export const toggleTestimonialStatus = async (id, isActive) => {
+  const response = await api.put(`/admin/testimonials/${id}/status`, { isActive });
+  return response.data;
+};
+
 // Export all functions for easier imports
 export default {
   // Dashboard
@@ -437,5 +471,12 @@ export default {
   // Helper functions
   createFormData,
   uploadUserDocument,
-  uploadNomineeDocument
+  uploadNomineeDocument,
+
+  // Testimonials
+  getTestimonials,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  toggleTestimonialStatus
 };

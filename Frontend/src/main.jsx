@@ -34,6 +34,7 @@ import AdminGallery from './pages/admin/AdminGallery.jsx' // NEW
 import AdminNews from './pages/admin/AdminNews.jsx' // NEW
 import AdminDonations from './pages/admin/AdminDonations.jsx' // NEW
 import ResetPassword from './components/ResetPassword.jsx'
+import AdminTestimonials from './pages/admin/AdminTestimonials.jsx'
 
 const router = createBrowserRouter([
   {
@@ -74,6 +75,7 @@ const router = createBrowserRouter([
           { path: 'subscriptions', element: <AdminSubscriptions /> },
           { path: 'donation-caps', element: <AdminDonationCaps /> },
           { path: 'gallery', element: <AdminGallery /> }, // NEW
+          { path: 'testimonials', element: <AdminTestimonials /> }, // NEW
           { path: 'news', element: <AdminNews /> }, // NEW
           { path: 'config', element: <AdminConfig /> },
           { path: 'logs', element: <AdminLogs /> },

@@ -14,7 +14,8 @@ import {
   FaUserShield,
   FaImages,
   FaNewspaper,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaStar
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,12 +28,13 @@ const menuItems = [
   { path: '/admin', icon: FaTachometerAlt, label: 'Dashboard' },
   { path: '/admin/users', icon: FaUsers, label: 'User Management' },
   { path: '/admin/claims', icon: FaFileAlt, label: 'Claims Verification' },
-  { path: '/admin/donations', icon: FaMoneyCheckAlt, label: 'Donations' }, // NEW
+  { path: '/admin/donations', icon: FaMoneyCheckAlt, label: 'Donations' }, 
+  { path: '/admin/testimonials', icon: FaStar, label: 'Testimonials'},
   { path: '/admin/receipts', icon: FaReceipt, label: 'Receipts' },
   { path: '/admin/subscriptions', icon: FaUserShield, label: 'Subscriptions' },
   { path: '/admin/donation-caps', icon: FaClipboardList, label: 'Donation Caps' },
-  { path: '/admin/gallery', icon: FaImages, label: 'Gallery' }, // NEW
-  { path: '/admin/news', icon: FaNewspaper, label: 'News & Blogs' }, // NEW
+  { path: '/admin/gallery', icon: FaImages, label: 'Gallery' },
+  { path: '/admin/news', icon: FaNewspaper, label: 'News & Blogs' },
   { path: '/admin/config', icon: FaCog, label: 'System Config' },
   { path: '/admin/logs', icon: FaHistory, label: 'Audit Logs' },
 ];

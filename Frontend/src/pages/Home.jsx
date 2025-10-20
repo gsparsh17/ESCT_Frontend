@@ -4,6 +4,7 @@ import { fetchAllClaims } from '../lib/api/claims';
 import { getDonationQueue, getMe, getMyDonations } from '../lib/api/donations'; 
 import { getDonationCalendar } from '../lib/api/calendar'; // Import the calendar API
 import { useNavigate, Link } from 'react-router-dom';
+import { getGalleryPhotos, getNewsBlogs, getTestimonials } from '../lib/api/admin';
 
 // Assuming the fixed donation amount is 200 INR
 const DONATION_AMOUNT = 200;
@@ -116,79 +117,6 @@ const MonthBox = ({ month, status }) => {
         </div>
     );
 };
-
-
-const staticNews = [
-    // { id: 1, title: 'ESCT Reaches New Milestone in Donations', summary: 'The Employee Self Care Team has surpassed a major milestone in total donations collected for members in need.', image: 'https://picsum.photos/seed/news1/600/400' },
-    // { id: 2, title: 'Annual General Meeting Announced', summary: 'The Annual General Meeting will be held on December 10, 2025. All members are encouraged to attend.', image: 'https://picsum.photos/seed/news2/600/400' },
-    // { id: 3, title: 'New Membership Benefits Roll Out', summary: 'Exciting new benefits for all ESCT members are now live. Check out the new details in your dashboard.', image: 'https://picsum.photos/seed/news3/600/400' },
-    // { id: 4, title: 'Volunteer Drive This Weekend', summary: 'Join fellow members this weekend for a community volunteer drive. All skill levels welcome.', image: 'https://picsum.photos/seed/news4/600/400' },
-    // { id: 5, title: 'Health Camp Success', summary: 'Our free health camp provided checkups to over 300 members. See the full report and photos.', image: 'https://picsum.photos/seed/news5/600/400' },
-    // { id: 6, title: 'Policy Update: Claim Window', summary: 'A small update to claim submission timelines has been published. Please review the guidelines.', image: 'https://picsum.photos/seed/news6/600/400' },
-];
-
-const staticTestimonials = [
-    // {
-    //     id: 1,
-    //     name: 'R. K. Sharma',
-    //     role: 'Retired Member (Batch 1985)',
-    //     comment: "The ESCT team made my retirement farewell so special. The support from my colleagues was overwhelming. Thank you for everything!",
-    //     image: 'https://picsum.photos/seed/person1/100/100'
-    // },
-    // {
-    //     id: 2,
-    //     name: 'Anjali P.',
-    //     role: 'Member',
-    //     comment: "When my family faced a medical emergency, ESCT was our first line of support. The financial aid was processed quickly and saved us a lot of stress.",
-    //     image: 'https://picsum.photos/seed/person2/100/100'
-    // },
-    // {
-    //     id: 3,
-    //     name: 'Sunita Devi',
-    //     role: 'Beneficiary',
-    //     comment: "After my husband passed away, I was lost. The ESCT community helped me navigate the claims and provided incredible support for my family.",
-    //     image: 'https://picsum.photos/seed/person3/100/100'
-    // }
-];
-
-staticTestimonials.push(
-    // {
-    //     id: 4,
-    //     name: 'Arjun S.',
-    //     role: 'Member',
-    //     comment: 'A very helpful organisation. The donation process was transparent and quick.',
-    //     image: 'https://picsum.photos/seed/person4/100/100'
-    // },
-    // {
-    //     id: 5,
-    //     name: 'Lata M.',
-    //     role: 'Volunteer',
-    //     comment: 'Volunteering with ESCT has been a meaningful experience for me and my family.',
-    //     image: 'https://picsum.photos/seed/person5/100/100'
-    // },
-    // {
-    //     id: 6,
-    //     name: 'Vikram R.',
-    //     role: 'Beneficiary',
-    //     comment: 'Support received was timely and helped us during a tough time.',
-    //     image: 'https://picsum.photos/seed/person6/100/100'
-    // }
-);
-
-// This is the data for the gallery
-const galleryImages = [
-    // { id: 1, seed: 'gallery1' },
-    // { id: 2, seed: 'gallery2' },
-    // { id: 3, seed: 'gallery3' },
-    // { id: 4, seed: 'gallery4' },
-    // { id: 5, seed: 'gallery5' },
-    // { id: 6, seed: 'gallery6' },
-    // { id: 7, seed: 'gallery7' },
-    // { id: 8, seed: 'gallery8' },
-    // { id: 9, seed: 'gallery9' },
-    // { id: 10, seed: 'gallery10' },
-];
-
 
 const ClaimCard = ({ claim, type }) => {
     const isOutgoing = type === 'outgoing';
@@ -465,6 +393,14 @@ const Home = () => {
     const [calendarData, setCalendarData] = useState({}); // { year: [month events] }
     const [myDonations, setMyDonations] = useState([]);
 
+     // New state for dynamic content
+    const [galleryImages, setGalleryImages] = useState([]);
+    const [newsArticles, setNewsArticles] = useState([]);
+    const [testimonials, setTestimonials] = useState([]);
+    const [contentLoading, setContentLoading] = useState(true);
+    const [contentError, setContentError] = useState(null);
+
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -569,6 +505,40 @@ const memberCategoryCounts = useMemo(() => {
         return `/claims-list?category=${encodedCategory}`;
     }, []);
 
+        const fetchDynamicContent = useCallback(async () => {
+        try {
+            setContentLoading(true);
+            setContentError(null);
+
+            const [galleryRes, newsRes, testimonialsRes] = await Promise.allSettled([
+                getGalleryPhotos({ page: 1, limit: 12, isActive: 'true' }),
+                getNewsBlogs({ page: 1, limit: 6, isPublished: 'true' }),
+                getTestimonials({ page: 1, limit: 6, isActive: 'true' })
+            ]);
+
+            // Process gallery images
+            if (galleryRes.status === 'fulfilled' && galleryRes.value.data?.galleryItems) {
+                setGalleryImages(galleryRes.value.data.galleryItems);
+            }
+
+            // Process news articles
+            if (newsRes.status === 'fulfilled' && newsRes.value.data?.newsBlogs) {
+                setNewsArticles(newsRes.value.data.newsBlogs);
+            }
+
+            // Process testimonials
+            if (testimonialsRes.status === 'fulfilled' && testimonialsRes.value.data?.testimonials) {
+                setTestimonials(testimonialsRes.value.data.testimonials);
+            }
+
+        } catch (err) {
+            console.error('Error fetching dynamic content:', err);
+            setContentError('Failed to load some content');
+        } finally {
+            setContentLoading(false);
+        }
+    }, []);
+
 const fetchData = useCallback(async () => {
         try {
             setError(null);
@@ -633,7 +603,8 @@ const fetchData = useCallback(async () => {
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+        fetchDynamicContent();
+    }, [fetchData, fetchDynamicContent]);
 
     const upcomingClaims = allClaims.filter(c => c.status === 'Pending Verification');
     const ongoingClaims = allClaims.filter(c => c.status === 'Approved');
@@ -1200,168 +1171,245 @@ const fetchData = useCallback(async () => {
         
     </div>
 </section>
-<hr className="my-8" />
+{/* <hr className="my-8" /> */}
  <ImageModal isOpen={isModalOpen} content={modalContent} onClose={closeModal} />
-
-            {/* <section className="mt-8">
-                <h2 className="text-2xl font-bold text-teal-900 mb-4">Gallery</h2>
-                <div
-                    className="overflow-x-hidden carousel-container py-2"
-                    aria-label="Gallery carousel"
-                >
-                    <div className="flex w-max space-x-4 animate-scroll-gallery pause-on-hover">
-                        {galleryImages.map((img) => (
-                            <div key={img.id} className="flex-shrink-0 w-72">
-                                <a 
-                                    href="#" 
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        openModal({
-                                            type: 'gallery',
-                                            url: `https://picsum.photos/seed/${img.seed}/1200/800`, // Use larger image for modal
-                                            title: `Gallery Image ${img.id}`,
-                                            id: img.id,
-                                        });
-                                    }} 
-                                    title={`View Gallery Image ${img.id}`}
-                                >
-                                    <img 
-                                        className="rounded-2xl h-48 w-full object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] cursor-pointer" 
-                                        src={`https://picsum.photos/seed/${img.seed}/600/400`} 
-                                        alt={`Gallery image ${img.id}`} 
-                                    />
-                                </a>
+            {/* Gallery Section with Dynamic Data */}
+            { galleryImages.length > 0 && (
+            <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Gallery</h2>
+                        {contentLoading ? (
+                            <div className="flex space-x-4 overflow-x-hidden py-2">
+                                {[...Array(6)].map((_, i) => (
+                                    <div key={i} className="flex-shrink-0 w-72">
+                                        <div className="rounded-2xl h-48 w-full bg-gray-200 animate-pulse"></div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                        {galleryImages.map((img) => (
-                            <div key={`${img.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-72">
-                                <a 
-                                    href="#" 
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        openModal({
-                                            type: 'gallery',
-                                            url: `https://picsum.photos/seed/${img.seed}/1200/800`,
-                                            title: `Gallery Image ${img.id}`,
-                                            id: img.id,
-                                        });
-                                    }} 
-                                    title={`View Gallery Image ${img.id}`} 
-                                    tabIndex={-1}
-                                >
-                                    <img 
-                                        className="rounded-2xl h-48 w-full object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] cursor-pointer" 
-                                        src={`https://picsum.photos/seed/${img.seed}/600/400`} 
-                                        alt={`Gallery image ${img.id}`} 
-                                    />
-                                </a>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section> */}
-            
-            {/* --- LATEST NEWS CAROUSEL (Updated Section) --- */}
-            {/* <section className="mt-8">
-                <h2 className="text-2xl font-bold text-teal-900 mb-4">Latest News & Blog</h2>
-                <div className="overflow-x-hidden carousel-container py-2">
-                    <div className="flex w-max space-x-4 animate-scroll-news pause-on-hover">
-                        {staticNews.map((item, index) => (
-                            <a 
-                            key={index} 
-                                        href="#" 
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            openModal({
-                                                type: 'news',
-                                                title: item.title,
-                                                url: item.image,
-                                                summary: item.summary,
-                                                fullText: `This is the full text for the article titled "${item.title}". The summary is: ${item.summary}. Imagine a much longer blog post here with detailed information, links, and more. This text simulates the full content you would load for the modal.`, // Placeholder for full article content
-                                            });
-                                        }}>
-                            <div className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                                <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
-                                <div className="p-4">
-                                    <h3 className="text-lg font-bold text-teal-900 truncate">{item.title}</h3>
-                                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.summary}</p>
-                                    
-                                        <span className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
-                                
-                                        Read more →</span>
-                                    
+                        ) : galleryImages.length > 0 ? (
+                            <div className="overflow-x-hidden carousel-container py-2" aria-label="Gallery carousel">
+                                <div className="flex w-max space-x-4 animate-scroll-gallery pause-on-hover">
+                                    {galleryImages.map((image) => (
+                                        <div key={image._id} className="flex-shrink-0 w-72">
+                                            <a 
+                                                href="#" 
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    openModal({
+                                                        type: 'gallery',
+                                                        url: image.signedImageUrl || image.imageUrl,
+                                                        title: image.title,
+                                                        id: image._id,
+                                                    });
+                                                }} 
+                                                title={`View ${image.title}`}
+                                            >
+                                                <img 
+                                                    className="rounded-2xl h-48 w-full object-cover shadow-md transition-transform duration-300 hover:scale-[1.02] cursor-pointer" 
+                                                    src={image.signedImageUrl || image.imageUrl} 
+                                                    alt={image.title} 
+                                                />
+                                            </a>
+                                        </div>
+                                    ))}
+                                    {/* Duplicate for seamless loop */}
+                                    {/* {galleryImages.map((image) => (
+                                        <div key={`${image._id}-dup`} aria-hidden="true" className="flex-shrink-0 w-72">
+                                            <img 
+                                                className="rounded-2xl h-48 w-full object-cover shadow-md" 
+                                                src={image.signedImageUrl || image.imageUrl} 
+                                                alt={image.title} 
+                                            />
+                                        </div>
+                                    ))} */}
                                 </div>
                             </div>
-                            </a>
-                        ))}
-                        {staticNews.map(item => (
-                            <div key={`${item.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                                <img src={item.image} alt={item.title} className="w-full h-40 object-cover" />
-                                <div className="p-4">
-                                    <h3 className="text-lg font-bold text-teal-900 truncate">{item.title}</h3>
-                                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">{item.summary}</p>
-                                    <a 
-                                        href="#" 
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            openModal({
-                                                type: 'news',
-                                                title: item.title,
-                                                url: item.image,
-                                                summary: item.summary,
-                                                fullText: `This is the full text for the article titled "${item.title}". The summary is: ${item.summary}. Imagine a much longer blog post here with detailed information, links, and more. This text simulates the full content you would load for the modal.`,
-                                            });
-                                        }}
-                                        tabIndex={-1} 
-                                        className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors"
-                                    >
-                                        Read more →
-                                    </a>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                <p>No gallery images available at the moment.</p>
+                            </div>
+                        )}
+                    </section>
+            )}
+                    {/* News Section with Dynamic Data */}
+                    { newsArticles.length > 0 && (
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-4">Latest News & Blog</h2>
+                        {contentLoading ? (
+                            <div className="flex space-x-4 overflow-x-hidden py-2">
+                                {[...Array(3)].map((_, i) => (
+                                    <div key={i} className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                        <div className="w-full h-40 bg-gray-200 animate-pulse"></div>
+                                        <div className="p-4">
+                                            <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                                            <div className="h-3 bg-gray-200 rounded animate-pulse mb-1"></div>
+                                            <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3"></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : newsArticles.length > 0 ? (
+                            <div className="overflow-x-hidden carousel-container py-2">
+                                <div className="flex w-max space-x-4 animate-scroll-news pause-on-hover">
+                                    {newsArticles.map((article) => (
+                                        <a 
+                                            key={article._id} 
+                                            href="#" 
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                openModal({
+                                                    type: 'news',
+                                                    title: article.title,
+                                                    url: article.signedImageUrl || article.imageUrl,
+                                                    summary: article.summary,
+                                                    fullText: article.content,
+                                                    date: article.createdAt,
+                                                });
+                                            }}
+                                        >
+                                            <div className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                                <img 
+                                                    src={article.signedImageUrl || article.imageUrl} 
+                                                    alt={article.title} 
+                                                    className="w-full h-40 object-cover" 
+                                                />
+                                                <div className="p-4">
+                                                    <h3 className="text-lg font-bold text-teal-900 truncate">{article.title}</h3>
+                                                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">{article.summary}</p>
+                                                    <span className="mt-3 inline-block text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">
+                                                        Read more →
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    ))}
+                                    {/* Duplicate for seamless loop */}
+                                    {/* {newsArticles.map((article) => (
+                                        <div key={`${article._id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                                            <img 
+                                                src={article.signedImageUrl || article.imageUrl} 
+                                                alt={article.title} 
+                                                className="w-full h-40 object-cover" 
+                                            />
+                                            <div className="p-4">
+                                                <h3 className="text-lg font-bold text-teal-900 truncate">{article.title}</h3>
+                                                <p className="mt-2 text-sm text-gray-600 line-clamp-2">{article.summary}</p>
+                                            </div>
+                                        </div>
+                                    ))} */}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </section> */}
-                    
-{/* <hr className="my-8" />
-<section className="mt-8">
-    <h2 className="text-2xl font-bold text-teal-900 mb-6">Testimonials</h2>
-    <div className="overflow-x-hidden carousel-container py-2">
-        <div className="flex w-max space-x-4 animate-scroll-testimonials pause-on-hover">
-            {staticTestimonials.map(item => (
-                <div key={item.id} className="flex-shrink-0 w-80 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col transition-transform duration-300">
-                    <svg className="w-10 h-10 text-teal-400 mb-4 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13,10H8.5C7.3,10,6.9,10.2,6.5,11.2C6.1,12.2,6,13.8,6,16v6h7V10z M26,10h-4.5c-1.2,0-1.6,0.2-2,1.2c-0.4,1-0.5,2.6-0.5,4.8v6h7V10z"/>
-                    </svg>
-                    <p className="text-gray-700 italic text-lg mb-6 flex-grow">"{item.comment}"</p>
-                    <div className="flex items-center mt-auto">
-                        <img src={item.image} alt={item.name} className="w-12 h-12 rounded-full object-cover border-2 border-teal-100" />
-                        <div className="ml-4">
-                            <h4 className="font-bold text-teal-900">{item.name}</h4>
-                            <p className="text-sm text-gray-500">{item.role}</p>
-                        </div>
-                    </div>
-                </div>
-            ))}
-            {staticTestimonials.map(item => (
-                <div key={`${item.id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col transition-transform duration-300">
-                    <svg className="w-10 h-10 text-teal-400 mb-4 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13,10H8.5C7.3,10,6.9,10.2,6.5,11.2C6.1,12.2,6,13.8,6,16v6h7V10z M26,10h-4.5c-1.2,0-1.6,0.2-2,1.2c-0.4,1-0.5,2.6-0.5,4.8v6h7V10z"/>
-                    </svg>
-                    <p className="text-gray-700 italic text-lg mb-6 flex-grow">"{item.comment}"</p>
-                    <div className="flex items-center mt-auto">
-                        <img src={item.image} alt={item.name} className="w-12 h-12 rounded-full object-cover border-2 border-teal-100" />
-                        <div className="ml-4">
-                            <h4 className="font-bold text-teal-900">{item.name}</h4>
-                            <p className="text-sm text-gray-500">{item.role}</p>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    </div>
-</section> */}
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                <p>No news articles available at the moment.</p>
+                            </div>
+                        )}
+                    </section>
+                    )}
+                    {/* Testimonials Section with Dynamic Data */}
+                    {testimonials.length > 0 && (
+                    <section className="mt-8">
+                        <h2 className="text-2xl font-bold text-teal-900 mb-6">Testimonials</h2>
+                        {contentLoading ? (
+                            <div className="flex space-x-4 overflow-x-hidden py-2">
+                                {[...Array(3)].map((_, i) => (
+                                    <div key={i} className="flex-shrink-0 w-80 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col">
+                                        <div className="w-10 h-10 bg-gray-200 rounded animate-pulse mb-4"></div>
+                                        <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                                        <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                                        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                                        <div className="flex items-center mt-6">
+                                            <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+                                            <div className="ml-4">
+                                                <div className="h-4 bg-gray-200 rounded animate-pulse w-24 mb-1"></div>
+                                                <div className="h-3 bg-gray-200 rounded animate-pulse w-16"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : testimonials.length > 0 ? (
+                            <div className="overflow-x-hidden carousel-container py-2">
+                                <div className="flex w-max space-x-4 animate-scroll-testimonials pause-on-hover">
+                                    {testimonials.map((testimonial) => (
+                                        <div key={testimonial._id} className="flex-shrink-0 w-80 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col transition-transform duration-300">
+                                            <svg className="w-10 h-10 text-teal-400 mb-4 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M13,10H8.5C7.3,10,6.9,10.2,6.5,11.2C6.1,12.2,6,13.8,6,16v6h7V10z M26,10h-4.5c-1.2,0-1.6,0.2-2,1.2c-0.4,1-0.5,2.6-0.5,4.8v6h7V10z"/>
+                                            </svg>
+                                            <p className="text-gray-700 italic text-lg mb-6 flex-grow">"{testimonial.content}"</p>
+                                            <div className="flex items-center mt-auto">
+                                                {testimonial.imageUrl ? (
+                                                    <img 
+                                                        src={testimonial.signedImageUrl || testimonial.imageUrl} 
+                                                        alt={testimonial.name} 
+                                                        className="w-12 h-12 rounded-full object-cover border-2 border-teal-100" 
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
+                                                        <svg className="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                                <div className="ml-4">
+                                                    <h4 className="font-bold text-teal-900">{testimonial.name}</h4>
+                                                    <p className="text-sm text-gray-500">
+                                                        {[testimonial.position, testimonial.company].filter(Boolean).join(', ')}
+                                                    </p>
+                                                    <div className="flex items-center mt-1">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <svg 
+                                                                key={i}
+                                                                className={`w-4 h-4 ${i < testimonial.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                                                                fill="currentColor" 
+                                                                viewBox="0 0 20 20"
+                                                            >
+                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                            </svg>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {/* Duplicate for seamless loop */}
+                                    {/* {testimonials.map((testimonial) => (
+                                        <div key={`${testimonial._id}-dup`} aria-hidden="true" className="flex-shrink-0 w-80 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col">
+                                            <svg className="w-10 h-10 text-teal-400 mb-4 flex-shrink-0" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M13,10H8.5C7.3,10,6.9,10.2,6.5,11.2C6.1,12.2,6,13.8,6,16v6h7V10z M26,10h-4.5c-1.2,0-1.6,0.2-2,1.2c-0.4,1-0.5,2.6-0.5,4.8v6h7V10z"/>
+                                            </svg>
+                                            <p className="text-gray-700 italic text-lg mb-6 flex-grow">"{testimonial.content}"</p>
+                                            <div className="flex items-center mt-auto">
+                                                {testimonial.imageUrl ? (
+                                                    <img 
+                                                        src={testimonial.signedImageUrl || testimonial.imageUrl} 
+                                                        alt={testimonial.name} 
+                                                        className="w-12 h-12 rounded-full object-cover border-2 border-teal-100" 
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
+                                                        <svg className="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                                <div className="ml-4">
+                                                    <h4 className="font-bold text-teal-900">{testimonial.name}</h4>
+                                                    <p className="text-sm text-gray-500">
+                                                        {[testimonial.position, testimonial.company].filter(Boolean).join(', ')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))} */}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                <p>No testimonials available at the moment.</p>
+                            </div>
+                        )}
+                    </section>
+                    )}
                     <hr className="my-8" />
                     <section className="mt-8">
                         <h2 className="text-2xl font-bold text-teal-900 mb-4">Amount of Monthly Donations Raised</h2>
