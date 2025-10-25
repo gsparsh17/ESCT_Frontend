@@ -5,8 +5,9 @@ import { useTranslation } from '../hooks/useTranslation';
 import LanguageSelector from '../components/LanguageSelector';
 import Select from "react-select";
 import { FaUser, FaBuilding, FaWallet, FaUsers, FaArrowRight, FaArrowLeft, FaPlus, FaTrash, FaCheckCircle, FaSpinner, FaUpload, FaChevronDown, FaFilePdf } from 'react-icons/fa';
-import organisations from '../constants/organisations';
-import departments from '../constants/departments';
+// import organisations from '../constants/organisations';
+// import departments from '../constants/departments';
+import departmentOrgData from '../constants/top_level_subfolders.json';
 
 const CSC_API_KEY = import.meta.env.VITE_CSC_API_KEY;
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -63,11 +64,54 @@ const Register = () => {
   const [nominees, setNominees] = useState([]);
 
   // UI state
+  // const [errors, setErrors] = useState({});
+  // const [loading, setLoading] = useState(false);
+
+  // const orgOptions = organisations.map((org) => ({ label: org, value: org }));
+  // const deptOptions = departments.map((dept) => ({ label: dept, value: dept }));
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const orgOptions = organisations.map((org) => ({ label: org, value: org }));
-  const deptOptions = departments.map((dept) => ({ label: dept, value: dept }));
+  // NEW: State to hold the dynamic list of organisations
+  const [availableOrgOptions, setAvailableOrgOptions] = useState([]);
+
+  // NEW: Create department options from the JSON keys
+  // We use useMemo so this list isn't recalculated on every render
+  const deptOptions = useMemo(() => {
+    return Object.keys(departmentOrgData).map(key => ({
+      // 'Agriculture_Education' becomes 'Agriculture Education'
+      label: key.replace(/_/g, ' '), 
+      value: key
+    }));
+  }, []); // Empty dependency array means this runs only once
+
+  // NEW: This effect links the two dropdowns
+  useEffect(() => {
+    // Check if a valid department is selected
+    if (empDepartment && departmentOrgData[empDepartment]) {
+      // Get the list of organisations for the selected department
+      const orgs = departmentOrgData[empDepartment];
+      
+      // Format them for react-select
+      const options = orgs.map(org => ({
+        // 'AGRICULTURE_DIRECTORATE' becomes 'AGRICULTURE DIRECTORATE'
+        label: org.replace(/_/g, ' '), 
+        value: org
+      }));
+      
+      // Set the new options for the organisation dropdown
+      setAvailableOrgOptions(options);
+    } else {
+      // If no department is selected, clear the organisation options
+      setAvailableOrgOptions([]);
+    }
+    
+    // IMPORTANT: Always reset the selected organisation when the department changes
+    setEmpOrganisation('');
+    
+  }, [empDepartment]); // This hook runs every time empDepartment changes
+
 
   // Step Titles with translation
   const STEP_TITLES = t('STEP_TITLES', [
@@ -790,29 +834,41 @@ const Register = () => {
                   {errors.empDistrict && <p className="mt-1 text-xs text-red-600">{errors.empDistrict}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    {t('LABELS.department', 'Department')}
-                  </label>
-                  <Select
-                    options={deptOptions}
-                    value={deptOptions.find((d) => d.value === empDepartment)}
-                    onChange={(selected) => setEmpDepartment(selected.value)}
-                    placeholder={t('MESSAGES.selectDepartment', '-- Select Department --')}
-                    isSearchable
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    {t('LABELS.organisation', 'Organisation')}
-                  </label>
-                  <Select
-                    options={orgOptions}
-                    value={orgOptions.find((o) => o.value === empOrganisation)}
-                    onChange={(selected) => setEmpOrganisation(selected.value)}
-                    placeholder={t('MESSAGES.selectOrganisation', '-- Select Organisation --')}
-                    isSearchable
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('LABELS.department', 'Department')}
+                </label>
+                <Select
+                  options={deptOptions} // Uses new options from JSON keys
+                  // Find the selected object from our new options
+                  value={deptOptions.find((d) => d.value === empDepartment)}
+                  // Handle clearable select (selected might be null)
+                  onChange={(selected) => setEmpDepartment(selected ? selected.value : '')}
+                  placeholder={t('MESSAGES.selectDepartment', '-- Select Department --')}
+                  isSearchable
+                  isClearable // Good to add so the user can reset
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('LABELS.organisation', 'Organisation')}
+                </label>
+                <Select
+                  options={availableOrgOptions} // Uses new DYNAMIC state
+                  // Find the selected object from the dynamic options
+                  value={availableOrgOptions.find((o) => o.value === empOrganisation)}
+                  // Handle clearable select
+                  onChange={(selected) => setEmpOrganisation(selected ? selected.value : '')}
+                  placeholder={
+                    !empDepartment 
+                      ? t('MESSAGES.selectDepartmentFirst', 'Select a department first')
+                      : t('MESSAGES.selectOrganisation', '-- Select Organisation --')
+                  }
+                  isSearchable
+                  isClearable
+                  // Disable this dropdown until a department is selected
+                  isDisabled={!empDepartment || availableOrgOptions.length === 0}
+                />
+              </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
