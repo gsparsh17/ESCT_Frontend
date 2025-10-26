@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   FaEdit, 
   FaToggleOn, 
@@ -37,6 +37,7 @@ import {
   deleteNominee,
   updateNomineeDocuments
 } from '../../lib/api/admin';
+import departmentOrgData from '../../constants/top_level_subfolders.json';
 
 // ADD THESE CONSTANTS
 const CSC_API_KEY = import.meta.env.VITE_CSC_API_KEY;
@@ -810,40 +811,88 @@ const NomineeManagementModal = ({ isOpen, onClose, user, onSaveNominee, onDelete
                         </div>
                       )}
 
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/*';
-                            input.onchange = (e) => {
-                              if (e.target.files[0]) {
-                                handleDocumentUpdate(nominee._id, 'aadhaarFront', e.target.files[0]);
-                              }
-                            };
-                            input.click();
-                          }}
-                          className="text-sm text-teal-600 hover:text-teal-700"
-                        >
-                          {nominee.aadhaarFrontUrl ? 'Update Aadhaar Front' : 'Upload Aadhaar Front'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/*';
-                            input.onchange = (e) => {
-                              if (e.target.files[0]) {
-                                handleDocumentUpdate(nominee._id, 'aadhaarBack', e.target.files[0]);
-                              }
-                            };
-                            input.click();
-                          }}
-                          className="text-sm text-teal-600 hover:text-teal-700"
-                        >
-                          {nominee.aadhaarBackUrl ? 'Update Aadhaar Back' : 'Upload Aadhaar Back'}
-                        </button>
-                      </div>
+                      {/* --- START: Replacement for Aadhaar Documents --- */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            
+                            {/* Aadhaar Front */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Aadhaar Front
+                              </label>
+                              {nominee.aadhaarFrontUrl ? (
+                                <div className="border border-gray-200 rounded-lg p-2">
+                                  <a href={nominee.aadhaarFrontUrl} target="_blank" rel="noopener noreferrer" title="View full image">
+                                    <img
+                                      src={nominee.aadhaarFrontUrl}
+                                      alt="Aadhaar Front"
+                                      className="w-full h-24 object-cover rounded-md mb-1"
+                                    />
+                                  </a>
+                                </div>
+                              ) : (
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg h-24 flex flex-col items-center justify-center text-gray-500 p-2">
+                                  <FaFileImage className="h-6 w-6 mb-1" />
+                                  <span className="text-xs">No image</span>
+                                </div>
+                              )}
+                              <button
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/*';
+                                  input.onchange = (e) => {
+                                    if (e.target.files[0]) {
+                                      handleDocumentUpdate(nominee._id, 'aadhaarFront', e.target.files[0]);
+                                    }
+                                  };
+                                  input.click();
+                                }}
+                                className="text-sm text-teal-600 hover:text-teal-700 mt-2"
+                              >
+                                {nominee.aadhaarFrontUrl ? 'Update Image' : 'Upload Image'}
+                              </button>
+                            </div>
+
+                            {/* Aadhaar Back */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Aadhaar Back
+                              </label>
+                              {nominee.aadhaarBackUrl ? (
+                                <div className="border border-gray-200 rounded-lg p-2">
+                                  <a href={nominee.aadhaarBackUrl} target="_blank" rel="noopener noreferrer" title="View full image">
+                                    <img
+                                      src={nominee.aadhaarBackUrl}
+                                      alt="Aadhaar Back"
+                                      className="w-full h-24 object-cover rounded-md mb-1"
+                                    />
+                                  </a>
+                                </div>
+                              ) : (
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg h-24 flex flex-col items-center justify-center text-gray-500 p-2">
+                                  <FaFileImage className="h-6 w-6 mb-1" />
+                                  <span className="text-xs">No image</span>
+                                </div>
+                              )}
+                              <button
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/*';
+                                  input.onchange = (e) => {
+                                    if (e.target.files[0]) {
+                                      handleDocumentUpdate(nominee._id, 'aadhaarBack', e.target.files[0]);
+                                    }
+                                  };
+                                  input.click();
+                                }}
+                                className="text-sm text-teal-600 hover:text-teal-700 mt-2"
+                              >
+                                {nominee.aadhaarBackUrl ? 'Update Image' : 'Upload Image'}
+                              </button>
+                            </div>
+                          </div>
+                          {/* --- END: Replacement for Aadhaar Documents --- */}
                     </div>
                   ))}
                 </div>
@@ -1697,6 +1746,8 @@ const AdminUsers = () => {
     isActive: '',
     state: '',      // <-- Add this
     district: '',   // <-- Add this
+    department: '',    // <-- Add this
+    organisation: '',  // <-- Add this
   });
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -1705,6 +1756,7 @@ const AdminUsers = () => {
   const [apiDistricts, setApiDistricts] = useState([]);
   const [selectedStateCode, setSelectedStateCode] = useState(''); // To track the dropdown, not the filter value
   const [isGeoLoading, setIsGeoLoading] = useState(false);
+  const [availableOrgOptions, setAvailableOrgOptions] = useState([]);
   
   // Modal states
   const [selectedUser, setSelectedUser] = useState(null);
@@ -1716,6 +1768,14 @@ const AdminUsers = () => {
   const [showAdminConfirm, setShowAdminConfirm] = useState(false);
   const [showDocumentManagement, setShowDocumentManagement] = useState(false);
   const [showNomineeManagement, setShowNomineeManagement] = useState(false);
+
+  // --- ADD THIS useMemo ---
+  const deptOptions = useMemo(() => {
+    return Object.keys(departmentOrgData).map(key => ({
+      label: key.replace(/_/g, ' '), 
+      value: key // Use the original key with underscores as the value
+    }));
+  }, []);
 
   // Effect to fetch states on component mount
   useEffect(() => {
@@ -1770,6 +1830,26 @@ const AdminUsers = () => {
     fetchDistricts();
   }, [selectedStateCode]); // Runs whenever selectedStateCode changes
   // --- END OF NEW LOGIC ---
+  // --- ADD THIS useEffect ---
+  useEffect(() => {
+    // Check if a valid department filter is selected
+    if (filters.department && departmentOrgData[filters.department]) {
+      const orgs = departmentOrgData[filters.department];
+      const options = orgs.map(org => ({
+        label: org.replace(/_/g, ' '), 
+        value: org // Use the original org name with underscores as value
+      }));
+      setAvailableOrgOptions(options);
+    } else {
+      // If no department filter, clear organisation options
+      setAvailableOrgOptions([]);
+    }
+    
+    // NOTE: Don't automatically reset the organisation filter here
+    // Let the user clear it manually or when department changes below
+    
+  }, [filters.department]); // Runs when filters.department changes
+  // --- END ---
 
   useEffect(() => {
     fetchUsers();
@@ -1960,10 +2040,13 @@ const AdminUsers = () => {
       isActive: '',
       state: '',      // <-- Add this
       district: '',   // <-- Add this
+      department: '',    // <-- Add this
+      organisation: '',  // <-- Add this
     });
     // --- ADD THESE TWO LINES ---
     setSelectedStateCode(''); 
     setApiDistricts([]);
+    setAvailableOrgOptions([]); // Clear dynamic orgs
   };
 
   const handleStateFilterChange = (e) => {
@@ -2057,7 +2140,7 @@ const AdminUsers = () => {
               <option value="false">Inactive</option>
             </select>
           </div>
-{/* State Filter */}
+      {/* State Filter */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           State
@@ -2101,6 +2184,58 @@ const AdminUsers = () => {
         </select>
       </div>
         </div>
+        {/* --- ADD DEPARTMENT DROPDOWN --- */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Department
+      </label>
+      <select
+        value={filters.department}
+        onChange={(e) => setFilters(prev => ({ 
+            ...prev, 
+            department: e.target.value, 
+            organisation: '', // Reset organisation when department changes
+            page: 1 
+        }))}
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+      >
+        <option value="">All Departments</option>
+        {deptOptions.map((dept) => (
+          <option key={dept.value} value={dept.value}> 
+            {dept.label}
+          </option>
+        ))}
+      </select>
+    </div>
+    {/* --- END --- */}
+
+    {/* --- ADD ORGANISATION DROPDOWN --- */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Organisation
+      </label>
+      <select
+        value={filters.organisation}
+        onChange={(e) => setFilters(prev => ({ 
+            ...prev, 
+            organisation: e.target.value, 
+            page: 1 
+        }))}
+        // Disable if no department is selected OR options haven't loaded yet
+        disabled={!filters.department || availableOrgOptions.length === 0}
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-100"
+      >
+        <option value="">
+          {!filters.department ? 'Select Dept First' : 'All Organisations'}
+        </option>
+        {availableOrgOptions.map((org) => (
+          <option key={org.value} value={org.value}>
+            {org.label}
+          </option>
+        ))}
+      </select>
+    </div>
+    {/* --- END --- */}
         
         <div className="flex justify-between items-center mt-4">
           <span className="text-sm text-gray-500">
