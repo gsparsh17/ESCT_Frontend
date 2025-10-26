@@ -38,6 +38,11 @@ import {
   updateNomineeDocuments
 } from '../../lib/api/admin';
 
+// ADD THESE CONSTANTS
+const CSC_API_KEY = import.meta.env.VITE_CSC_API_KEY;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+const COUNTRY_CODE = import.meta.env.VITE_COUNTRY_CODE;
+
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirmText, confirmColor = 'bg-red-600' }) => {
   if (!isOpen) return null;
@@ -1689,9 +1694,17 @@ const AdminUsers = () => {
     search: '',
     userType: '',
     isVerified: '',
-    isActive: ''
+    isActive: '',
+    state: '',      // <-- Add this
+    district: '',   // <-- Add this
   });
   const [actionLoading, setActionLoading] = useState(null);
+
+  // --- ADD ALL THIS NEW LOGIC ---
+  const [apiStates, setApiStates] = useState([]);
+  const [apiDistricts, setApiDistricts] = useState([]);
+  const [selectedStateCode, setSelectedStateCode] = useState(''); // To track the dropdown, not the filter value
+  const [isGeoLoading, setIsGeoLoading] = useState(false);
   
   // Modal states
   const [selectedUser, setSelectedUser] = useState(null);
@@ -1703,6 +1716,60 @@ const AdminUsers = () => {
   const [showAdminConfirm, setShowAdminConfirm] = useState(false);
   const [showDocumentManagement, setShowDocumentManagement] = useState(false);
   const [showNomineeManagement, setShowNomineeManagement] = useState(false);
+
+  // Effect to fetch states on component mount
+  useEffect(() => {
+    if (!CSC_API_KEY) {
+      console.warn("API Key missing. Cannot fetch geographical data.");
+      return;
+    }
+    
+    const fetchStates = async () => {
+      setIsGeoLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/countries/${COUNTRY_CODE}/states`, {
+          headers: { 'X-CSCAPI-KEY': CSC_API_KEY }
+        });
+        if (!response.ok) throw new Error('Failed to fetch states');
+        const states = await response.json();
+        states.sort((a, b) => a.name.localeCompare(b.name));
+        setApiStates(states);
+      } catch (error) {
+        console.error('Error fetching states:', error);
+        setError({ type: 'error', message: 'Could not load state filter data.' });
+      } finally {
+        setIsGeoLoading(false);
+      }
+    };
+    fetchStates();
+  }, []); // Empty dependency array runs this once
+
+  // Effect to fetch districts when a state is selected
+  useEffect(() => {
+    if (!selectedStateCode || !CSC_API_KEY) {
+      setApiDistricts([]);
+      return;
+    }
+
+    const fetchDistricts = async () => {
+      setIsGeoLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/countries/${COUNTRY_CODE}/states/${selectedStateCode}/cities`, {
+          headers: { 'X-CSCAPI-KEY': CSC_API_KEY }
+        });
+        if (!response.ok) throw new Error('Failed to fetch districts');
+        const districts = await response.json();
+        districts.sort((a, b) => a.name.localeCompare(b.name));
+        setApiDistricts(districts);
+      } catch (error) {
+        console.error('Error fetching districts:', error);
+      } finally {
+        setIsGeoLoading(false);
+      }
+    };
+    fetchDistricts();
+  }, [selectedStateCode]); // Runs whenever selectedStateCode changes
+  // --- END OF NEW LOGIC ---
 
   useEffect(() => {
     fetchUsers();
@@ -1890,8 +1957,34 @@ const AdminUsers = () => {
       search: '',
       userType: '',
       isVerified: '',
-      isActive: ''
+      isActive: '',
+      state: '',      // <-- Add this
+      district: '',   // <-- Add this
     });
+    // --- ADD THESE TWO LINES ---
+    setSelectedStateCode(''); 
+    setApiDistricts([]);
+  };
+
+  const handleStateFilterChange = (e) => {
+    const stateCode = e.target.value;
+    const selectedState = apiStates.find(s => s.iso2 === stateCode);
+    const stateName = selectedState ? selectedState.name : '';
+
+    setSelectedStateCode(stateCode); // This triggers the district fetch
+    
+    // This updates the actual filter, resets the district filter, and goes to page 1
+    setFilters(prev => ({ 
+      ...prev, 
+      state: stateName, // Use the state's full name for filtering
+      district: '',       
+      page: 1 
+    }));
+    
+    // If user selected "All States", clear the district list
+    if (!stateCode) {
+      setApiDistricts([]);
+    }
   };
 
   return (
@@ -1906,7 +1999,7 @@ const AdminUsers = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Search Users
@@ -1964,7 +2057,51 @@ const AdminUsers = () => {
               <option value="false">Inactive</option>
             </select>
           </div>
+{/* State Filter */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          State
+        </label>
+        <select
+          value={selectedStateCode} 
+          onChange={handleStateFilterChange} 
+          disabled={isGeoLoading || apiStates.length === 0}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">
+            {isGeoLoading ? 'Loading States...' : 'All States'}
+          </option>
+          {apiStates.map((state) => (
+            <option key={state.iso2} value={state.iso2}>
+              {state.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* District Filter */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          District
+        </label>
+        <select
+          value={filters.district}
+          onChange={(e) => setFilters(prev => ({ ...prev, district: e.target.value, page: 1 }))}
+          disabled={isGeoLoading || apiDistricts.length === 0 || !selectedStateCode}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">
+            {isGeoLoading ? 'Loading...' : 'All Districts'}
+          </option>
+          {apiDistricts.map((district) => (
+            <option key={district.id} value={district.name}>
+              {district.name}
+            </option>
+          ))}
+        </select>
+      </div>
         </div>
+        
         <div className="flex justify-between items-center mt-4">
           <span className="text-sm text-gray-500">
             Showing {users.users?.length || 0} of {users.total || 0} users
